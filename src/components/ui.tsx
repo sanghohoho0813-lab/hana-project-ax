@@ -25,7 +25,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap ${TONE_CLASS[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[18px] font-semibold whitespace-nowrap ${TONE_CLASS[tone]} ${className}`}
     >
       {children}
     </span>
@@ -70,7 +70,7 @@ export function ProgressBar({
           : "bg-primary";
   return (
     <div
-      className={`${thick ? "h-2.5" : "h-1.5"} w-full overflow-hidden rounded-full bg-[#eceff2] ${className}`}
+      className={`${thick ? "h-[0.9rem]" : "h-[0.55rem]"} w-full overflow-hidden rounded-full bg-[#eceff2] ${className}`}
     >
       <div
         className={`bar-fill h-full rounded-full ${color}`}
@@ -145,7 +145,7 @@ export function Modal({
 
   if (!open) return null;
   const width =
-    size === "xl" ? "sm:max-w-3xl" : size === "lg" ? "sm:max-w-2xl" : "sm:max-w-lg";
+    size === "xl" ? "sm:max-w-[72rem]" : size === "lg" ? "sm:max-w-[60rem]" : "sm:max-w-[48rem]";
   return (
     <div
       className="overlay-in fixed inset-0 z-50 flex items-end justify-center bg-ink/45 backdrop-blur-[2px] sm:items-center sm:p-6"
@@ -157,15 +157,15 @@ export function Modal({
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-[19px] font-bold">{title}</h2>
-            {desc && <p className="mt-1 text-[13.5px] text-ink-2">{desc}</p>}
+            <h2 className="text-[28.5px] font-bold">{title}</h2>
+            {desc && <p className="mt-1 text-[20.2px] text-ink-2">{desc}</p>}
           </div>
           <button
             onClick={onClose}
             aria-label="닫기"
             className="-mt-1 shrink-0 rounded-full p-2 text-ink-3 transition-colors hover:bg-[#f2f4f6] hover:text-ink"
           >
-            <X size={18} />
+            <X size={27} />
           </button>
         </div>
         {children}
@@ -192,7 +192,7 @@ export function Field({
   const Wrapper = group ? "div" : "label";
   return (
     <Wrapper className="block" {...(group ? { role: "group", "aria-label": label } : {})}>
-      <span className="mb-1.5 block text-[13px] font-semibold text-ink-2">
+      <span className="mb-1.5 block text-[19.5px] font-semibold text-ink-2">
         {label}
         {required && <span className="ml-0.5 text-danger">*</span>}
         {hint && <span className="ml-1.5 font-medium text-ink-3">{hint}</span>}
@@ -203,7 +203,7 @@ export function Field({
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-[15px] outline-none transition-colors placeholder:text-ink-3 focus:border-primary focus:ring-2 focus:ring-primary/15";
+  "w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-[22.5px] outline-none transition-colors placeholder:text-ink-3 focus:border-primary focus:ring-2 focus:ring-primary/15";
 
 export function PrimaryButton({
   children,
@@ -213,7 +213,7 @@ export function PrimaryButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-all hover:bg-primary-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[21px] font-semibold text-white transition-all hover:bg-primary-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
     >
       {children}
     </button>
@@ -228,7 +228,7 @@ export function GhostButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[14px] font-semibold text-ink-2 transition-all hover:bg-[#e8ebee] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[21px] font-semibold text-ink-2 transition-all hover:bg-[#e8ebee] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
     >
       {children}
     </button>
@@ -244,7 +244,7 @@ export function SoftButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-[14px] font-semibold text-ink-2 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] active:translate-y-0 active:scale-[0.98] ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-[21px] font-semibold text-ink-2 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] active:translate-y-0 active:scale-[0.98] ${className}`}
     >
       {children}
     </button>
@@ -263,8 +263,8 @@ export function EmptyState({
 }) {
   return (
     <div className="card flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
-      <p className="text-[15.5px] font-bold text-ink-2">{title}</p>
-      {desc && <p className="max-w-md text-[13.5px] leading-relaxed text-ink-3">{desc}</p>}
+      <p className="text-[23.2px] font-bold text-ink-2">{title}</p>
+      {desc && <p className="max-w-[28rem] text-[20.2px] leading-relaxed text-ink-3">{desc}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -289,7 +289,7 @@ export function Segment<T extends string>({
           key={o.value}
           onClick={() => onChange(o.value)}
           className={`rounded-lg font-semibold whitespace-nowrap transition-all ${
-            size === "sm" ? "px-2.5 py-1 text-[12px]" : "px-3.5 py-1.5 text-[13px]"
+            size === "sm" ? "px-2.5 py-1 text-[18px]" : "px-3.5 py-1.5 text-[19.5px]"
           } ${value === o.value ? "bg-white text-ink shadow-sm" : "text-ink-3 hover:text-ink-2"}`}
         >
           {o.label}
@@ -309,7 +309,7 @@ export function PageIntro({
 }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-[15px] font-semibold text-ink-2">{message}</p>
+      <p className="text-[22.5px] font-semibold text-ink-2">{message}</p>
       {children && <div className="flex flex-wrap gap-2">{children}</div>}
     </div>
   );
@@ -332,15 +332,15 @@ export function StatTile({
   return (
     <div className="card card-hover flex items-start justify-between gap-3 p-5">
       <div className="min-w-0">
-        <p className="text-[12.5px] font-semibold text-ink-3">{label}</p>
+        <p className="text-[18.8px] font-semibold text-ink-3">{label}</p>
         <p
-          className={`mt-1.5 text-[21px] leading-tight font-extrabold tracking-tight ${
+          className={`mt-1.5 text-[31.5px] leading-tight font-extrabold tracking-tight ${
             tone === "danger" ? "text-danger" : tone === "success" ? "text-success" : ""
           }`}
         >
           {value}
         </p>
-        {sub && <p className="mt-1 text-[12px] text-ink-3">{sub}</p>}
+        {sub && <p className="mt-1 text-[18px] text-ink-3">{sub}</p>}
       </div>
       {icon && <span className="shrink-0 text-ink-3/60">{icon}</span>}
     </div>

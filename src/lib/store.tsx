@@ -34,6 +34,8 @@ interface AppState {
   toggleCloseoutDoc: (projectId: string, docName: string) => void;
   opportunities: Opportunity[];
   addOpportunity: (o: Opportunity) => void;
+  /** 공개 서비스몰에서 들어온 리드를 내부 문의·견적 파이프라인에 넣는다 */
+  addLead: (o: Opportunity) => void;
   updateOpportunity: (id: string, patch: Partial<Opportunity>) => void;
   changeOrders: ChangeOrder[];
   addChangeOrder: (c: ChangeOrder) => void;
@@ -112,6 +114,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ),
       opportunities,
       addOpportunity: (o) => setOpportunities((os) => [o, ...os]),
+      addLead: (o) => setOpportunities((os) => [o, ...os]),
       updateOpportunity: (id, patch) =>
         setOpportunities((os) => os.map((o) => (o.id === id ? { ...o, ...patch } : o))),
       changeOrders,

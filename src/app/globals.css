@@ -32,9 +32,29 @@ html {
   background: var(--color-bg);
 }
 
+/*
+ * 글자 크기 3단계
+ *  기본     : --app-scale 1     (설계 기준 크기)
+ *  크게     : --app-scale 1.2   (기본보다 20% 크게)
+ *  매우 크게 : --app-scale 1.4   (기본보다 40% 크게)
+ * zoom을 쓰면 글자뿐 아니라 아이콘·여백·카드까지 함께 커져 비율이 유지된다.
+ */
+:root {
+  --app-scale: 1;
+}
+html[data-font-scale="large"] {
+  --app-scale: 1.2;
+}
+html[data-font-scale="xlarge"] {
+  --app-scale: 1.4;
+}
+html {
+  zoom: var(--app-scale);
+}
+
 body {
   color: var(--color-ink);
-  font-size: 15px;
+  font-size: 22.5px;
   -webkit-font-smoothing: antialiased;
   font-family: var(--font-sans);
 }

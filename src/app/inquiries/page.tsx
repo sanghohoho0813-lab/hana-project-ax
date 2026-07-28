@@ -1,7 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarCheck, HelpCircle, Phone, Plus, Send, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import {
+  CalendarCheck,
+  HelpCircle,
+  Phone,
+  Plus,
+  Send,
+  Store as Storefront,
+  TrendingUp,
+} from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatDate, formatMoney } from "@/lib/format";
 import { companyKpi, needsFollowUp, weightedAmount } from "@/lib/calc";
@@ -18,6 +27,12 @@ const STAGES: { key: StageKey; label: string }[] = [
   { key: "won", label: "계약" },
   { key: "hold", label: "보류·실패" },
 ];
+
+function leadTone(t?: string): Tone {
+  if (t === "주문요청") return "success";
+  if (t === "견적문의") return "warning";
+  return "info";
+}
 
 function probTone(p: number): Tone {
   if (p >= 70) return "success";
@@ -36,6 +51,12 @@ export default function InquiriesPage() {
     () => companyKpi(projects, opportunities, changeOrders),
     [projects, opportunities, changeOrders]
   );
+
+  // 서비스몰 유입 — 주문요청 > 견적문의 > 상담신청 순으로 보여준다
+  const LEAD_PRIORITY: Record<string, number> = { 주문요청: 0, 견적문의: 1, 상담신청: 2 };
+  const storeLeads = opportunities
+    .filter((o) => o.source === "서비스몰" && o.stage !== "won" && o.stage !== "hold")
+    .sort((a, b) => (LEAD_PRIORITY[a.leadType ?? ""] ?? 9) - (LEAD_PRIORITY[b.leadType ?? ""] ?? 9));
 
   const stale = opportunities.filter(needsFollowUp);
   const highChance = opportunities.filter(
@@ -90,41 +111,110 @@ export default function InquiriesPage() {
       <PageIntro message="문의가 들어온 순간부터 계약될 때까지 놓치지 않습니다.">
         <button
           onClick={() => setMemoOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-[14px] font-semibold text-ink-2 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-[21px] font-semibold text-ink-2 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]"
         >
-          <Phone size={15} className="text-primary" /> 전화메모 정리
+          <Phone size={22} className="text-primary" /> 전화메모 정리
         </button>
         <button
           onClick={() => setInquiryOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[21px] font-semibold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
         >
-          <Plus size={16} /> 새 문의 등록
+          <Plus size={24} /> 새 문의 등록
         </button>
       </PageIntro>
 
+      {/* 서비스몰 유입 */}
+      {storeLeads.length > 0 && (
+        <section className="card border border-primary/20 bg-primary-light/30 p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-2 text-[25.5px] font-bold text-primary-dark">
+                <Storefront size={26} /> 서비스몰에서 들어온 문의 {storeLeads.length}건
+              </h3>
+              <p className="mt-1 text-[19.5px] text-ink-2">
+                고객이 직접 남긴 요청입니다. 주문요청부터 먼저 연락하세요.
+              </p>
+            </div>
+            <Link
+              href="/store"
+              className="rounded-xl bg-white px-4 py-2.5 text-[18.8px] font-semibold text-ink-2 shadow-sm transition-shadow hover:shadow-md"
+            >
+              서비스몰 보기
+            </Link>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {storeLeads.map((o) => (
+              <div key={o.id} className="rounded-2xl bg-white p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="info">서비스몰 유입</Badge>
+                  <Badge tone={leadTone(o.leadType)}>{o.leadType}</Badge>
+                  <p className="text-[21px] font-bold">{o.customer}</p>
+                </div>
+                <div className="mt-3 grid gap-x-6 gap-y-1.5 text-[19px] sm:grid-cols-2">
+                  <p className="text-ink-2">
+                    <span className="text-ink-3">관심 서비스 </span>
+                    <b>{o.interestService}</b>
+                  </p>
+                  <p className="text-ink-2">
+                    <span className="text-ink-3">지역 </span>
+                    {o.region}
+                  </p>
+                  <p className="text-ink-2">
+                    <span className="text-ink-3">예산 </span>
+                    {o.budgetRange ?? "미정"}
+                  </p>
+                  <p className="text-ink-2">
+                    <span className="text-ink-3">연락처 </span>
+                    {o.contact ?? "-"}
+                  </p>
+                </div>
+                {o.memo && (
+                  <p className="mt-2.5 rounded-xl bg-[#f7f8fa] px-4 py-3 text-[18.8px] leading-relaxed text-ink-2">
+                    {o.memo}
+                  </p>
+                )}
+                <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-[18.8px] font-bold text-primary-dark">
+                    다음 행동 · {o.nextAction}
+                  </p>
+                  <button
+                    onClick={() =>
+                      act(o, "현장 방문 일정 확정", { visitConfirmed: true, stage: "visit" }, "연락 완료로 기록하고 현장 확인 단계로 옮겼어요")
+                    }
+                    className="rounded-xl bg-primary px-4 py-2.5 text-[18px] font-bold text-white transition-colors hover:bg-primary-dark"
+                  >
+                    연락 완료 · 현장 확인으로
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 이번 달 놓치면 안 되는 영업기회 */}
       <section>
-        <h3 className="mb-3 text-[17px] font-bold">이번 달 놓치면 안 되는 영업기회</h3>
+        <h3 className="mb-3 text-[25.5px] font-bold">이번 달 놓치면 안 되는 영업기회</h3>
         <div className="grid gap-3 lg:grid-cols-3">
           {OPPORTUNITY_BOXES.map((box) => (
             <div key={box.key} className="card p-5">
               <div className="mb-3 flex items-start justify-between gap-2">
                 <div>
-                  <p className="text-[14px] font-bold">{box.title}</p>
-                  <p className="mt-0.5 text-[12.5px] text-ink-3">{box.desc}</p>
+                  <p className="text-[21px] font-bold">{box.title}</p>
+                  <p className="mt-0.5 text-[18.8px] text-ink-3">{box.desc}</p>
                 </div>
                 <Badge tone={box.tone}>{box.items.length}건</Badge>
               </div>
               {box.items.length === 0 ? (
-                <p className="rounded-xl bg-[#f7f8fa] px-3.5 py-3 text-[12.5px] text-ink-3">
+                <p className="rounded-xl bg-[#f7f8fa] px-3.5 py-3 text-[18.8px] text-ink-3">
                   지금은 해당하는 건이 없어요.
                 </p>
               ) : (
                 <div className="space-y-2">
                   {box.items.slice(0, 3).map((o) => (
                     <div key={o.id} className="rounded-xl bg-[#f7f8fa] p-3.5">
-                      <p className="truncate text-[13.5px] font-bold">{o.customer}</p>
-                      <p className="mt-0.5 text-[12.5px] text-ink-2">
+                      <p className="truncate text-[20.2px] font-bold">{o.customer}</p>
+                      <p className="mt-0.5 text-[18.8px] text-ink-2">
                         {formatMoney(o.amount)} · 수주 가능성 {o.probability}%
                         {box.key === "stale" && ` · 발송 후 ${o.sentDaysAgo}일`}
                       </p>
@@ -136,7 +226,7 @@ export default function InquiriesPage() {
                               ? act(o, "현장 방문", { visitConfirmed: true, stage: "visit" }, "방문 일정을 확정했어요")
                               : act(o, "계약서 준비", {}, "계약 준비 단계로 표시했어요")
                         }
-                        className="mt-2 rounded-lg bg-white px-3 py-1.5 text-[12px] font-bold text-primary-dark shadow-sm transition-shadow hover:shadow-md"
+                        className="mt-2 rounded-lg bg-white px-3 py-1.5 text-[18px] font-bold text-primary-dark shadow-sm transition-shadow hover:shadow-md"
                       >
                         {box.key === "stale"
                           ? "재연락 등록"
@@ -163,55 +253,61 @@ export default function InquiriesPage() {
           { label: "이번 달 수주전환율", value: "33%" },
         ].map((k) => (
           <div key={k.label} className="card p-4.5">
-            <p className="text-[12.5px] font-semibold text-ink-3">{k.label}</p>
-            <p className="mt-1 text-[19px] font-extrabold tracking-tight">{k.value}</p>
+            <p className="text-[18.8px] font-semibold text-ink-3">{k.label}</p>
+            <p className="mt-1 text-[28.5px] font-extrabold tracking-tight">{k.value}</p>
           </div>
         ))}
       </div>
 
       {/* 파이프라인 */}
       <section>
-        <h3 className="mb-3 text-[17px] font-bold">영업 파이프라인</h3>
+        <h3 className="mb-3 text-[25.5px] font-bold">영업 파이프라인</h3>
         <div className="-mx-4 overflow-x-auto px-4 pb-2 lg:-mx-8 lg:px-8">
           <div className="flex min-w-max gap-3">
             {STAGES.map((stage) => {
               const items = opportunities.filter((o) => o.stage === stage.key);
               return (
-                <div key={stage.key} className="w-[16.5rem] shrink-0">
+                <div key={stage.key} className="w-[24.75rem] shrink-0">
                   <div className="mb-2 flex items-center justify-between px-1">
-                    <span className="text-[13px] font-bold text-ink-2">{stage.label}</span>
-                    <span className="rounded-full bg-[#e8ebee] px-2 py-0.5 text-[11.5px] font-bold text-ink-3">
+                    <span className="text-[19.5px] font-bold text-ink-2">{stage.label}</span>
+                    <span className="rounded-full bg-[#e8ebee] px-2 py-0.5 text-[17.2px] font-bold text-ink-3">
                       {items.length}
                     </span>
                   </div>
                   <div className="min-h-28 space-y-2.5 rounded-2xl bg-[#eceff2]/70 p-2.5">
                     {items.length === 0 ? (
-                      <p className="px-2 py-7 text-center text-[12px] text-ink-3">
+                      <p className="px-2 py-7 text-center text-[18px] text-ink-3">
                         해당 단계 없음
                       </p>
                     ) : (
                       items.map((o) => (
                         <div key={o.id} className="card card-hover p-4">
-                          <p className="text-[13.5px] leading-snug font-bold">{o.customer}</p>
-                          <p className="mt-0.5 text-[12px] text-ink-3">
+                          {o.source === "서비스몰" && (
+                            <div className="mb-1.5 flex flex-wrap gap-1.5">
+                              <Badge tone="info">서비스몰</Badge>
+                              {o.leadType && <Badge tone={leadTone(o.leadType)}>{o.leadType}</Badge>}
+                            </div>
+                          )}
+                          <p className="text-[20.2px] leading-snug font-bold">{o.customer}</p>
+                          <p className="mt-0.5 text-[18px] text-ink-3">
                             {o.region} · {o.workType}
                           </p>
 
                           {/* 다음 행동을 가장 크게 */}
                           <div className="mt-3 rounded-xl bg-primary-light/60 px-3 py-2.5">
-                            <p className="text-[11px] font-semibold text-primary-dark/70">
+                            <p className="text-[16.5px] font-semibold text-primary-dark/70">
                               다음 행동
                             </p>
-                            <p className="text-[13.5px] font-bold text-primary-dark">
+                            <p className="text-[20.2px] font-bold text-primary-dark">
                               {o.nextAction}
                             </p>
-                            <p className="mt-0.5 text-[11.5px] text-ink-3">
+                            <p className="mt-0.5 text-[17.2px] text-ink-3">
                               {formatDate(o.nextDate)} · {o.manager}
                             </p>
                           </div>
 
                           <div className="mt-2.5 flex items-center justify-between">
-                            <span className="text-[13px] font-extrabold">
+                            <span className="text-[19.5px] font-extrabold">
                               {formatMoney(o.amount)}
                             </span>
                             <Badge tone={probTone(o.probability)}>{o.probability}%</Badge>
@@ -227,7 +323,7 @@ export default function InquiriesPage() {
                                   `'${o.nextAction}' 처리로 기록했어요`
                                 )
                               }
-                              className="mt-2.5 w-full rounded-lg bg-[#f2f4f6] py-2 text-[12px] font-bold text-ink-2 transition-colors hover:bg-primary-light hover:text-primary-dark"
+                              className="mt-2.5 w-full rounded-lg bg-[#f2f4f6] py-2 text-[18px] font-bold text-ink-2 transition-colors hover:bg-primary-light hover:text-primary-dark"
                             >
                               처리 완료로 기록
                             </button>
@@ -246,23 +342,23 @@ export default function InquiriesPage() {
       {/* 매출 예측 */}
       <section className="card p-6">
         <div className="mb-1 flex items-center gap-2">
-          <TrendingUp size={17} className="text-primary" />
-          <h3 className="text-[16.5px] font-bold">다음 달 매출 예측</h3>
+          <TrendingUp size={26} className="text-primary" />
+          <h3 className="text-[24.8px] font-bold">다음 달 매출 예측</h3>
           <button
             onClick={() => setTipOpen((v) => !v)}
             aria-label="계산 방식 안내"
             className="relative rounded-full p-1 text-ink-3 transition-colors hover:bg-[#f2f4f6] hover:text-ink-2"
           >
-            <HelpCircle size={15} />
+            <HelpCircle size={22} />
             {tipOpen && (
-              <span className="absolute top-full left-1/2 z-20 mt-1.5 w-60 -translate-x-1/2 rounded-xl bg-ink px-3.5 py-2.5 text-left text-[12px] leading-relaxed font-medium text-white shadow-lg">
+              <span className="absolute top-full left-1/2 z-20 mt-1.5 w-[22.5rem] -translate-x-1/2 rounded-xl bg-ink px-3.5 py-2.5 text-left text-[18px] leading-relaxed font-medium text-white shadow-lg">
                 예상금액 × 수주 가능성을 반영한 내부 예측치입니다. 확정 계약은 100%로
                 계산합니다.
               </span>
             )}
           </button>
         </div>
-        <p className="mb-4 text-[13px] text-ink-3">
+        <p className="mb-4 text-[19.5px] text-ink-3">
           확정된 계약과 가능성 가중금액을 구분해서 보여줍니다.
         </p>
 
@@ -287,23 +383,23 @@ export default function InquiriesPage() {
             },
           ].map((f) => (
             <div key={f.label} className="rounded-2xl bg-[#f7f8fa] p-4">
-              <p className="text-[12.5px] font-semibold text-ink-3">{f.label}</p>
+              <p className="text-[18.8px] font-semibold text-ink-3">{f.label}</p>
               <p
-                className={`mt-1 text-[19px] font-extrabold tracking-tight ${f.accent ? "text-primary" : ""}`}
+                className={`mt-1 text-[28.5px] font-extrabold tracking-tight ${f.accent ? "text-primary" : ""}`}
               >
                 {formatMoney(f.value)}
               </p>
-              <p className="mt-1 text-[11.5px] text-ink-3">{f.note}</p>
+              <p className="mt-1 text-[17.2px] text-ink-3">{f.note}</p>
             </div>
           ))}
         </div>
 
-        <p className="mt-4 rounded-xl bg-primary-light/60 px-4 py-3 text-[13.5px] font-semibold text-primary-dark">
+        <p className="mt-4 rounded-xl bg-primary-light/60 px-4 py-3 text-[20.2px] font-semibold text-primary-dark">
           현재 문의와 견적을 기준으로 다음 달 약 {formatMoney(kpi.nextMonthOrders)}의 신규수주가
           예상됩니다.
         </p>
 
-        <div className="mt-3 grid gap-2 text-[12.5px] text-ink-3 sm:grid-cols-3">
+        <div className="mt-3 grid gap-2 text-[18.8px] text-ink-3 sm:grid-cols-3">
           {opportunities
             .filter((o) => o.stage !== "hold")
             .slice(0, 3)

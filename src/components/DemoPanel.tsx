@@ -55,10 +55,10 @@ export function DemoPanel() {
   };
 
   return (
-    <div className="float-in fixed right-4 bottom-4 z-40 w-[min(23rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-ink text-white shadow-[var(--shadow-modal)]">
+    <div className="float-in fixed right-4 bottom-4 z-40 w-[min(34.5rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-ink text-white shadow-[var(--shadow-modal)]">
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5">
-        <span className="inline-flex items-center gap-1.5 text-[12px] font-bold text-[#8fbcff]">
-          <PlayCircle size={13} /> 시연 모드 · {demoStep + 1} / {DEMO_STEPS.length}
+        <span className="inline-flex items-center gap-1.5 text-[18px] font-bold text-[#8fbcff]">
+          <PlayCircle size={20} /> 시연 모드 · {demoStep + 1} / {DEMO_STEPS.length}
         </span>
         <div className="flex items-center gap-0.5">
           <button
@@ -66,28 +66,28 @@ export function DemoPanel() {
             aria-label="처음 단계로"
             className="rounded-lg p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
           >
-            <RotateCcw size={14} />
+            <RotateCcw size={21} />
           </button>
           <button
             onClick={() => setDemoMode(false)}
             aria-label="시연 모드 종료"
             className="rounded-lg p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
           >
-            <X size={15} />
+            <X size={22} />
           </button>
         </div>
       </div>
 
       <div className="px-4 pt-2 pb-3.5">
-        <p className="text-[15px] leading-snug font-bold">{step.title}</p>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-white/70">{step.desc}</p>
+        <p className="text-[22.5px] leading-snug font-bold">{step.title}</p>
+        <p className="mt-1 text-[18.8px] leading-relaxed text-white/70">{step.desc}</p>
       </div>
 
       <div className="flex gap-1 px-4">
         {DEMO_STEPS.map((_, i) => (
           <span
             key={i}
-            className={`h-1 flex-1 rounded-full transition-colors ${
+            className={`h-[0.35rem] flex-1 rounded-full transition-colors ${
               i <= demoStep ? "bg-[#5b9dff]" : "bg-white/15"
             }`}
           />
@@ -98,16 +98,16 @@ export function DemoPanel() {
         <button
           onClick={() => go(demoStep - 1)}
           disabled={demoStep === 0}
-          className="inline-flex items-center gap-1 rounded-xl bg-white/10 px-3 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-35"
+          className="inline-flex items-center gap-1 rounded-xl bg-white/10 px-3 py-2 text-[19.5px] font-semibold text-white transition-colors hover:bg-white/15 disabled:opacity-35"
         >
-          <ChevronLeft size={14} /> 이전
+          <ChevronLeft size={21} /> 이전
         </button>
         <button
           onClick={() => (demoStep === DEMO_STEPS.length - 1 ? setDemoMode(false) : go(demoStep + 1))}
-          className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary px-3 py-2 text-[13px] font-bold text-white transition-colors hover:bg-[#4a92f8] active:scale-[0.98]"
+          className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary px-3 py-2 text-[19.5px] font-bold text-white transition-colors hover:bg-[#4a92f8] active:scale-[0.98]"
         >
           {demoStep === DEMO_STEPS.length - 1 ? "시연 마치기" : "다음 화면"}
-          {demoStep < DEMO_STEPS.length - 1 && <ChevronRight size={14} />}
+          {demoStep < DEMO_STEPS.length - 1 && <ChevronRight size={21} />}
         </button>
       </div>
     </div>

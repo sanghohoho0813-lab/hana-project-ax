@@ -185,7 +185,7 @@ export function NewInquiryModal({
               <button
                 key={String(o.v)}
                 onClick={() => set("needsVisit", o.v)}
-                className={`rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors ${
+                className={`rounded-xl px-3.5 py-2 text-[19.5px] font-semibold transition-colors ${
                   form.needsVisit === o.v
                     ? "bg-primary-light text-primary-dark"
                     : "bg-[#f2f4f6] text-ink-3"
@@ -360,14 +360,14 @@ export function DailyLogModal({
               {[...Array(form.photos)].map((_, i) => (
                 <span
                   key={i}
-                  className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary-light text-primary"
+                  className="flex h-[5.25rem] w-[5.25rem] items-center justify-center rounded-xl bg-primary-light text-primary"
                 >
-                  <ImageIcon size={20} />
+                  <ImageIcon size={30} />
                 </span>
               ))}
               <button
                 onClick={() => set("photos", Math.min(12, form.photos + 1))}
-                className="flex h-14 w-14 items-center justify-center rounded-xl border-2 border-dashed border-line text-[20px] text-ink-3 transition-colors hover:border-primary hover:text-primary"
+                className="flex h-[5.25rem] w-[5.25rem] items-center justify-center rounded-xl border-2 border-dashed border-line text-[30px] text-ink-3 transition-colors hover:border-primary hover:text-primary"
               >
                 +
               </button>
@@ -398,7 +398,7 @@ export function DailyLogModal({
           disabled={!form.work.trim() || generating}
           className="w-full !bg-primary-light !text-primary-dark hover:!bg-[#dcebfd]"
         >
-          <Sparkles size={15} />
+          <Sparkles size={22} />
           {generating ? "보고서를 정리하고 있어요..." : "AI 현장보고서 만들기"}
         </GhostButton>
         {generating && (
@@ -414,10 +414,10 @@ export function DailyLogModal({
         )}
         {aiReport && (
           <div className="rise-in mt-3 rounded-2xl border border-primary/15 bg-primary-light/60 p-4">
-            <p className="mb-1.5 flex items-center gap-1.5 text-[12.5px] font-bold text-primary-dark">
-              <Sparkles size={13} /> AI 현장보고서
+            <p className="mb-1.5 flex items-center gap-1.5 text-[18.8px] font-bold text-primary-dark">
+              <Sparkles size={20} /> AI 현장보고서
             </p>
-            <p className="text-[14px] leading-relaxed">{aiReport}</p>
+            <p className="text-[21px] leading-relaxed">{aiReport}</p>
           </div>
         )}
       </div>
@@ -594,7 +594,7 @@ export function PhoneMemoModal({
             disabled={!memo.trim() || analyzing}
             className="mt-3 w-full"
           >
-            <Sparkles size={15} />
+            <Sparkles size={22} />
             {analyzing ? "메모를 정리하고 있어요..." : "AI로 정리하기"}
           </PrimaryButton>
 
@@ -612,10 +612,10 @@ export function PhoneMemoModal({
 
           {parsed && (
             <div className="rise-in mt-4 rounded-2xl border border-primary/15 bg-primary-light/45 p-5">
-              <p className="mb-3 flex items-center gap-1.5 text-[12.5px] font-bold text-primary-dark">
-                <Sparkles size={13} /> AI 정리 결과
+              <p className="mb-3 flex items-center gap-1.5 text-[18.8px] font-bold text-primary-dark">
+                <Sparkles size={20} /> AI 정리 결과
               </p>
-              <dl className="stagger space-y-2 text-[14px]">
+              <dl className="stagger space-y-2 text-[21px]">
                 {(
                   [
                     ["고객 및 담당자", parsed.customer],
@@ -631,7 +631,7 @@ export function PhoneMemoModal({
                   ] as [string, string][]
                 ).map(([k, v]) => (
                   <div key={k} className="flex gap-3">
-                    <dt className="w-28 shrink-0 font-semibold text-ink-3">{k}</dt>
+                    <dt className="w-[10.5rem] shrink-0 font-semibold text-ink-3">{k}</dt>
                     <dd
                       className={`font-medium ${k === "승인상태" ? "text-danger" : "text-ink"}`}
                     >
@@ -655,14 +655,14 @@ export function PhoneMemoModal({
           <div className="rise-in">
             <button
               onClick={() => setConfirming(false)}
-              className="mb-4 inline-flex items-center gap-1 text-[13px] font-semibold text-ink-3 hover:text-ink"
+              className="mb-4 inline-flex items-center gap-1 text-[19.5px] font-semibold text-ink-3 hover:text-ink"
             >
-              <ArrowLeft size={14} /> 정리 결과로 돌아가기
+              <ArrowLeft size={21} /> 정리 결과로 돌아가기
             </button>
 
-            <p className="text-[15px] font-bold">이 내용으로 추가공사를 등록할까요?</p>
-            <p className="mt-1 text-[13.5px] text-ink-2">{parsed.projectName}</p>
-            <p className="mt-0.5 text-[13.5px] font-semibold">
+            <p className="text-[22.5px] font-bold">이 내용으로 추가공사를 등록할까요?</p>
+            <p className="mt-1 text-[20.2px] text-ink-2">{parsed.projectName}</p>
+            <p className="mt-0.5 text-[20.2px] font-semibold">
               {parsed.change} · {parsed.qty}
             </p>
 
@@ -677,8 +677,8 @@ export function PhoneMemoModal({
                 },
               ].map((x) => (
                 <div key={x.label} className="rounded-2xl bg-[#f7f8fa] p-3.5">
-                  <p className="text-[12px] text-ink-3">{x.label}</p>
-                  <p className={`mt-0.5 text-[16px] font-extrabold ${x.tone}`}>
+                  <p className="text-[18px] text-ink-3">{x.label}</p>
+                  <p className={`mt-0.5 text-[24px] font-extrabold ${x.tone}`}>
                     {formatMoney(x.v)}
                   </p>
                 </div>
@@ -686,24 +686,24 @@ export function PhoneMemoModal({
             </div>
 
             <div className="mt-3 space-y-2 rounded-2xl bg-danger-bg/60 p-4">
-              <p className="flex items-start gap-2 text-[13.5px] font-bold text-danger">
-                <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+              <p className="flex items-start gap-2 text-[20.2px] font-bold text-danger">
+                <AlertTriangle size={22} className="mt-0.5 shrink-0" />
                 서면승인이 필요한 요청입니다
               </p>
-              <p className="text-[13px] leading-relaxed text-ink-2">
+              <p className="text-[19.5px] leading-relaxed text-ink-2">
                 지금은 전화로만 받은 상태입니다. 견적서를 보내고 승인을 받은 뒤 시공해야
                 청구할 때 문제가 생기지 않습니다.
               </p>
-              <p className="text-[13px] font-semibold text-ink-2">
+              <p className="text-[19.5px] font-semibold text-ink-2">
                 견적 발송 예정일 · 2026년 7월 29일 (수) · 회신기한 {parsed.due}
               </p>
             </div>
 
             <div className="mt-4 rounded-2xl bg-[#f7f8fa] p-4">
-              <p className="mb-2 flex items-center gap-1.5 text-[12.5px] font-bold text-ink-2">
-                <TrendingUp size={13} className="text-primary" /> 등록하면 이렇게 반영됩니다
+              <p className="mb-2 flex items-center gap-1.5 text-[18.8px] font-bold text-ink-2">
+                <TrendingUp size={20} className="text-primary" /> 등록하면 이렇게 반영됩니다
               </p>
-              <ul className="space-y-1 text-[13px] text-ink-2">
+              <ul className="space-y-1 text-[19.5px] text-ink-2">
                 <li>· 오늘 할 일에 서면승인 항목이 추가됩니다</li>
                 <li>· 추가공사 목록과 건수가 늘어납니다</li>
                 <li>· 위험·누락 가능금액에 {formatMoney(parsed.estimate)}이 반영됩니다</li>

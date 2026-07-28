@@ -93,6 +93,11 @@ export type StageKey =
   | "won"
   | "hold";
 
+/** 문의가 들어온 경로 */
+export type LeadSource = "전화" | "서비스몰" | "직접 등록";
+/** 서비스몰에서 선택한 문의 유형 */
+export type LeadType = "상담신청" | "견적문의" | "주문요청";
+
 export interface Opportunity {
   id: string;
   customer: string;
@@ -113,6 +118,19 @@ export interface Opportunity {
   needsVisit?: boolean;
   /** 현장방문 일정이 확정됐는지 */
   visitConfirmed?: boolean;
+  /** 유입 경로 — 서비스몰에서 들어온 건은 '서비스몰' */
+  source?: LeadSource;
+  /** 서비스몰 문의 유형 */
+  leadType?: LeadType;
+  /** 서비스몰에서 고른 관심 서비스 */
+  interestService?: string;
+  interestServiceSlug?: string;
+  /** 예산 범위 (서비스몰 입력) */
+  budgetRange?: string;
+  /** 희망 일정 */
+  desiredSchedule?: string;
+  /** 접수 일시 표시용 */
+  receivedAt?: string;
 }
 
 export type ChangeOrderStatus =

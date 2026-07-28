@@ -70,11 +70,11 @@ export function GuideOverlay({
 
   return (
     <div className="pointer-events-none fixed inset-0 z-40 flex items-end justify-end p-4 lg:p-6">
-      <div className="float-in pointer-events-auto w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-[var(--shadow-modal)]">
+      <div className="float-in pointer-events-auto w-full max-w-[24rem] overflow-hidden rounded-3xl bg-white shadow-[var(--shadow-modal)]">
         <div className="flex items-start justify-between gap-3 px-5 pt-5">
           <div>
-            <p className="text-[16.5px] font-bold">처음 보셔도 괜찮습니다</p>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+            <p className="text-[24.8px] font-bold">처음 보셔도 괜찮습니다</p>
+            <p className="mt-1 text-[19.5px] leading-relaxed text-ink-2">
               이 화면은 오늘 처리해야 할 공사 운영 순서를 정리해 보여줍니다.
             </p>
           </div>
@@ -83,7 +83,7 @@ export function GuideOverlay({
             aria-label="안내 닫기"
             className="-mt-1 shrink-0 rounded-full p-2 text-ink-3 transition-colors hover:bg-[#f2f4f6] hover:text-ink"
           >
-            <X size={17} />
+            <X size={26} />
           </button>
         </div>
 
@@ -91,31 +91,31 @@ export function GuideOverlay({
           {ITEMS.map((it) => (
             <div key={it.title} className="flex gap-3 rounded-2xl bg-[#f7f8fa] p-3.5">
               <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${it.bg} ${it.tone}`}
+                className={`flex h-[3.0rem] w-[3.0rem] shrink-0 items-center justify-center rounded-xl ${it.bg} ${it.tone}`}
               >
-                <it.icon size={15} />
+                <it.icon size={22} />
               </span>
               <div className="min-w-0">
-                <p className="text-[13.5px] font-bold">{it.title}</p>
-                <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-2">{it.desc}</p>
+                <p className="text-[20.2px] font-bold">{it.title}</p>
+                <p className="mt-0.5 text-[18.8px] leading-relaxed text-ink-2">{it.desc}</p>
               </div>
             </div>
           ))}
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-line px-5 py-4">
-          <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-medium text-ink-2">
+          <label className="flex cursor-pointer items-center gap-2 text-[18.8px] font-medium text-ink-2">
             <input
               type="checkbox"
               checked={dontShow}
               onChange={(e) => setDontShow(e.target.checked)}
-              className="h-4 w-4 rounded border-line accent-[#3182f6]"
+              className="h-[1.5rem] w-[1.5rem] rounded border-line accent-[#3182f6]"
             />
             다시 보지 않기
           </label>
           <button
             onClick={close}
-            className="rounded-xl bg-primary px-4 py-2 text-[13px] font-bold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
+            className="rounded-xl bg-primary px-4 py-2 text-[19.5px] font-bold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
           >
             닫기
           </button>

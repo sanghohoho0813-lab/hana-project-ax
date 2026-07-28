@@ -107,16 +107,16 @@ export default function ConsultingPage() {
     <button
       key={label}
       onClick={() => onChange(!checked)}
-      className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13.5px] font-semibold transition-colors ${
+      className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[20.2px] font-semibold transition-colors ${
         checked ? "bg-primary-light text-primary-dark" : "bg-[#f2f4f6] text-ink-3 hover:text-ink-2"
       }`}
     >
       <span
-        className={`flex h-4 w-4 items-center justify-center rounded-md ${
+        className={`flex h-[1.5rem] w-[1.5rem] items-center justify-center rounded-md ${
           checked ? "bg-primary text-white" : "bg-white"
         }`}
       >
-        {checked && <CheckCircle2 size={11} />}
+        {checked && <CheckCircle2 size={16} />}
       </span>
       {label}
     </button>
@@ -127,29 +127,29 @@ export default function ConsultingPage() {
       <PageIntro message="수행 업무와 산출물을 기준으로 용역을 관리하세요." />
 
       {/* 역할 안내 */}
-      <div className="card grid gap-4 p-5 md:grid-cols-2">
+      <div className="card grid min-w-0 gap-4 p-5 md:grid-cols-2">
         <div className="flex gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-info-bg text-info">
-            <Building2 size={19} />
+          <span className="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-2xl bg-info-bg text-info">
+            <Building2 size={28} />
           </span>
           <div>
-            <p className="text-[14.5px] font-bold">
-              하나정보통신 <span className="text-[12.5px] font-semibold text-ink-3">계약·시공·준공 책임</span>
+            <p className="text-[21.8px] font-bold">
+              하나정보통신 <span className="text-[18.8px] font-semibold text-ink-3">계약·시공·준공 책임</span>
             </p>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+            <p className="mt-1 text-[19.5px] leading-relaxed text-ink-2">
               고객 계약, 실제 시공, 자재와 인력, 안전관리, 공사대금 청구를 담당합니다.
             </p>
           </div>
         </div>
         <div className="flex gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-success-bg text-success">
-            <Handshake size={19} />
+          <span className="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-2xl bg-success-bg text-success">
+            <Handshake size={28} />
           </span>
           <div>
-            <p className="text-[14.5px] font-bold">
-              하나컨설팅 <span className="text-[12.5px] font-semibold text-ink-3">기획·운영·자료관리</span>
+            <p className="text-[21.8px] font-bold">
+              하나컨설팅 <span className="text-[18.8px] font-semibold text-ink-3">기획·운영·자료관리</span>
             </p>
-            <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+            <p className="mt-1 text-[19.5px] leading-relaxed text-ink-2">
               사전 검토, 공정·일정 관리, 원가 분석, 변경사항 정리, 준공자료 취합을 지원합니다.
             </p>
           </div>
@@ -157,7 +157,7 @@ export default function ConsultingPage() {
       </div>
 
       {/* KPI */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-5">
         {[
           { label: "이번 달 예정 용역매출", value: formatMoney(kpi.monthRevenue) },
           { label: "미정산 용역비", value: formatMoney(kpi.unsettled) },
@@ -166,15 +166,15 @@ export default function ConsultingPage() {
           { label: "산출물", value: `${kpi.deliverables}건` },
         ].map((k) => (
           <div key={k.label} className="card p-4.5">
-            <p className="text-[12.5px] font-semibold text-ink-3">{k.label}</p>
-            <p className="mt-1 text-[19px] font-extrabold tracking-tight">{k.value}</p>
+            <p className="text-[18.8px] font-semibold text-ink-3">{k.label}</p>
+            <p className="mt-1 text-[28.5px] font-extrabold tracking-tight">{k.value}</p>
           </div>
         ))}
       </div>
 
       {/* 정산 리스트 */}
       <section>
-        <h3 className="mb-3 text-[17px] font-bold">프로젝트별 정산</h3>
+        <h3 className="mb-3 text-[25.5px] font-bold">프로젝트별 정산</h3>
         <div className="space-y-2.5">
           {managed.map((p) => (
             <Link
@@ -184,20 +184,20 @@ export default function ConsultingPage() {
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
-                  <p className="text-[14.5px] font-bold">{p.name}</p>
-                  <p className="mt-1 text-[12.5px] text-ink-3">
+                  <p className="text-[21.8px] font-bold">{p.name}</p>
+                  <p className="mt-1 text-[18.8px] text-ink-3">
                     하나정보통신 계약 {formatMoney(p.contractAmount)} · 업무범위{" "}
                     {p.consulting.scope.join(" · ")}
                   </p>
-                  <p className="mt-1 flex items-start gap-1.5 text-[12.5px] text-ink-2">
-                    <FileText size={12} className="mt-0.5 shrink-0 text-ink-3" />
+                  <p className="mt-1 flex items-start gap-1.5 text-[18.8px] text-ink-2">
+                    <FileText size={18} className="mt-0.5 shrink-0 text-ink-3" />
                     {p.consulting.deliverables.join(", ")}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-4">
                   <div className="lg:text-right">
-                    <p className="text-[11.5px] text-ink-3">용역비</p>
-                    <p className="text-[17px] font-extrabold">{formatMoney(p.consulting.fee)}</p>
+                    <p className="text-[17.2px] text-ink-3">용역비</p>
+                    <p className="text-[25.5px] font-extrabold">{formatMoney(p.consulting.fee)}</p>
                   </div>
                   <Badge
                     tone={
@@ -220,15 +220,15 @@ export default function ConsultingPage() {
       {/* 계산기 */}
       <section className="card p-6">
         <div className="mb-1 flex items-center gap-2">
-          <Calculator size={17} className="text-primary" />
-          <h3 className="text-[16.5px] font-bold">관리용역비 계산기</h3>
+          <Calculator size={26} className="text-primary" />
+          <h3 className="text-[24.8px] font-bold">관리용역비 계산기</h3>
         </div>
-        <p className="mb-5 text-[13.5px] text-ink-2">
+        <p className="mb-5 text-[20.2px] text-ink-2">
           공사금액을 나누는 방식이 아니라, 실제 업무량과 산출물 기준으로 관리용역비를
           계산합니다.
         </p>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_33rem]">
           {/* 입력 */}
           <div>
             {/* 단계 */}
@@ -242,11 +242,11 @@ export default function ConsultingPage() {
                   }`}
                 >
                   <span
-                    className={`block text-[11px] font-bold ${step === i ? "text-white/65" : "text-ink-3"}`}
+                    className={`block text-[16.5px] font-bold ${step === i ? "text-white/65" : "text-ink-3"}`}
                   >
                     {i + 1}단계
                   </span>
-                  <span className="block text-[13px] font-bold">{s}</span>
+                  <span className="block text-[19.5px] font-bold">{s}</span>
                 </button>
               ))}
             </div>
@@ -263,7 +263,7 @@ export default function ConsultingPage() {
                     onChange={(e) => setContract(Number(e.target.value))}
                     className="w-full accent-[#3182f6]"
                   />
-                  <div className="mt-1 flex justify-between text-[11.5px] text-ink-3">
+                  <div className="mt-1 flex justify-between text-[17.2px] text-ink-3">
                     <span>1,000만 원</span>
                     <span>3억 원</span>
                   </div>
@@ -291,9 +291,9 @@ export default function ConsultingPage() {
                             : "bg-[#f2f4f6] text-ink-2 hover:bg-[#e8ebee]"
                         }`}
                       >
-                        <span className="block text-[14px] font-bold">{d.key}</span>
+                        <span className="block text-[21px] font-bold">{d.key}</span>
                         <span
-                          className={`block text-[11px] ${difficulty === d.key ? "text-white/75" : "text-ink-3"}`}
+                          className={`block text-[16.5px] ${difficulty === d.key ? "text-white/75" : "text-ink-3"}`}
                         >
                           {d.desc}
                         </span>
@@ -315,7 +315,7 @@ export default function ConsultingPage() {
                     {toggle("준공자료 관리", closeoutMgmt, setCloseoutMgmt)}
                   </div>
                 </Field>
-                <p className="mt-3 text-[12.5px] leading-relaxed text-ink-3">
+                <p className="mt-3 text-[18.8px] leading-relaxed text-ink-3">
                   선택한 업무에 따라 산출물과 용역비가 함께 바뀝니다. 시공·안전관리·준공
                   책임은 하나정보통신이 담당합니다.
                 </p>
@@ -358,14 +358,14 @@ export default function ConsultingPage() {
               <button
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={step === 0}
-                className="rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-[#e8ebee] disabled:opacity-40"
+                className="rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[20.2px] font-semibold text-ink-2 transition-colors hover:bg-[#e8ebee] disabled:opacity-40"
               >
                 이전
               </button>
               <button
                 onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
                 disabled={step === STEPS.length - 1}
-                className="rounded-xl bg-primary px-4 py-2.5 text-[13.5px] font-bold text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
+                className="rounded-xl bg-primary px-4 py-2.5 text-[20.2px] font-bold text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
               >
                 다음 단계
               </button>
@@ -374,8 +374,8 @@ export default function ConsultingPage() {
 
           {/* 결과 */}
           <div className="rounded-2xl bg-[#f7f8fa] p-5">
-            <p className="text-[13px] font-bold text-ink-2">계산 결과</p>
-            <div className="mt-3 space-y-2 text-[13.5px]">
+            <p className="text-[19.5px] font-bold text-ink-2">계산 결과</p>
+            <div className="mt-3 space-y-2 text-[20.2px]">
               {(
                 [
                   ["기본 프로젝트 관리비", calc.basic],
@@ -393,8 +393,8 @@ export default function ConsultingPage() {
             </div>
 
             <div className="mt-4 border-t border-line pt-4">
-              <p className="text-[13px] font-bold">하나컨설팅 예상 용역비</p>
-              <p className="mt-1 text-[30px] leading-none font-extrabold tracking-tight text-primary">
+              <p className="text-[19.5px] font-bold">하나컨설팅 예상 용역비</p>
+              <p className="mt-1 text-[45px] leading-none font-extrabold tracking-tight text-primary">
                 <CountUp value={calc.total} format={(v) => formatMoney(Math.round(v))} />
               </p>
             </div>
@@ -406,19 +406,19 @@ export default function ConsultingPage() {
                 ["예상 보고", `${reports + meetings}회`],
               ].map(([l, v]) => (
                 <div key={l}>
-                  <p className="text-[11px] text-ink-3">{l}</p>
-                  <p className="mt-0.5 text-[14px] font-bold">{v}</p>
+                  <p className="text-[16.5px] text-ink-3">{l}</p>
+                  <p className="mt-0.5 text-[21px] font-bold">{v}</p>
                 </div>
               ))}
             </div>
 
             {/* 공사이익 변화 */}
             <div className="mt-4 rounded-2xl bg-white p-4">
-              <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] font-bold text-ink-2">
-                <TrendingDown size={13} className="text-ink-3" /> 용역비를 지급하면 얼마가
+              <p className="mb-2.5 flex items-center gap-1.5 text-[18.8px] font-bold text-ink-2">
+                <TrendingDown size={20} className="text-ink-3" /> 용역비를 지급하면 얼마가
                 남을까요?
               </p>
-              <div className="space-y-2 text-[13.5px]">
+              <div className="space-y-2 text-[20.2px]">
                 <div className="flex justify-between">
                   <span className="text-ink-2">용역비 반영 전 예상 공사이익</span>
                   <span className="font-semibold">{formatMoney(calc.grossProfit)}</span>
@@ -430,22 +430,22 @@ export default function ConsultingPage() {
                 <div className="flex justify-between border-t border-line pt-2">
                   <span className="font-bold">용역비 반영 후 공사이익</span>
                   <span
-                    className={`text-[16px] font-extrabold ${calc.netProfit > 0 ? "text-success" : "text-danger"}`}
+                    className={`text-[24px] font-extrabold ${calc.netProfit > 0 ? "text-success" : "text-danger"}`}
                   >
                     {formatMoney(calc.netProfit)}
                   </span>
                 </div>
-                <p className="text-right text-[11.5px] text-ink-3">
+                <p className="text-right text-[17.2px] text-ink-3">
                   계약금액 대비 {calc.netRate.toFixed(1)}%
                 </p>
               </div>
             </div>
 
             <div className="mt-4">
-              <p className="mb-2 text-[12.5px] font-bold text-ink-3">예상 산출물</p>
+              <p className="mb-2 text-[18.8px] font-bold text-ink-3">예상 산출물</p>
               <div className="flex flex-wrap gap-1.5">
                 {deliverables.length === 0 ? (
-                  <p className="text-[12.5px] text-ink-3">수행 업무를 선택하면 표시됩니다.</p>
+                  <p className="text-[18.8px] text-ink-3">수행 업무를 선택하면 표시됩니다.</p>
                 ) : (
                   deliverables.map((d) => (
                     <Badge key={d} tone="success">
@@ -460,20 +460,20 @@ export default function ConsultingPage() {
 
         {/* 산출물 미리보기 */}
         <div className="mt-6 border-t border-line pt-5">
-          <p className="mb-3 text-[14px] font-bold">실제로 이런 문서를 받게 됩니다</p>
-          <div className="grid gap-3 md:grid-cols-3">
+          <p className="mb-3 text-[21px] font-bold">실제로 이런 문서를 받게 됩니다</p>
+          <div className="grid min-w-0 gap-3 md:grid-cols-3">
             {SAMPLE_REPORTS.map((r) => (
               <button
                 key={r.key}
                 onClick={() => setPreview(r)}
-                className="card card-hover p-5 text-left"
+                className="card card-hover min-w-0 p-5 text-left"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-success-bg text-success">
-                  <FileText size={17} />
+                <span className="flex h-[3.375rem] w-[3.375rem] items-center justify-center rounded-xl bg-success-bg text-success">
+                  <FileText size={26} />
                 </span>
-                <p className="mt-3 text-[14px] font-bold">{r.title}</p>
-                <p className="mt-1 truncate text-[12.5px] text-ink-3">{r.subtitle}</p>
-                <span className="mt-2.5 inline-block text-[12.5px] font-semibold text-primary">
+                <p className="mt-3 truncate text-[21px] font-bold">{r.title}</p>
+                <p className="mt-1 truncate text-[18.8px] text-ink-3">{r.subtitle}</p>
+                <span className="mt-2.5 inline-block text-[18.8px] font-semibold text-primary">
                   미리 보기
                 </span>
               </button>
@@ -481,7 +481,7 @@ export default function ConsultingPage() {
           </div>
         </div>
 
-        <p className="mt-5 text-center text-[12px] text-ink-3">
+        <p className="mt-5 text-center text-[18px] text-ink-3">
           본 계산은 프로젝트 업무량과 산출물을 기준으로 한 내부 참고용 예시입니다.
         </p>
       </section>
@@ -499,15 +499,15 @@ export default function ConsultingPage() {
             <div className="grid grid-cols-2 gap-y-2 rounded-2xl bg-[#f7f8fa] p-4 sm:grid-cols-4">
               {preview.meta.map((m) => (
                 <div key={m.label}>
-                  <p className="text-[11.5px] text-ink-3">{m.label}</p>
-                  <p className="text-[13px] font-semibold">{m.value}</p>
+                  <p className="text-[17.2px] text-ink-3">{m.label}</p>
+                  <p className="text-[19.5px] font-semibold">{m.value}</p>
                 </div>
               ))}
             </div>
             <div className="mt-5 space-y-5">
               {preview.sections.map((s) => (
                 <div key={s.heading}>
-                  <p className="mb-2 text-[14.5px] font-bold">{s.heading}</p>
+                  <p className="mb-2 text-[21.8px] font-bold">{s.heading}</p>
                   {s.rows && (
                     <div className="overflow-hidden rounded-2xl border border-line">
                       {s.rows.map(([k, v], i) => (
@@ -517,10 +517,10 @@ export default function ConsultingPage() {
                             i % 2 === 1 ? "bg-[#fafbfc]" : ""
                           }`}
                         >
-                          <span className="w-52 shrink-0 text-[13px] font-semibold text-ink-3">
+                          <span className="w-[19.5rem] shrink-0 text-[19.5px] font-semibold text-ink-3">
                             {k}
                           </span>
-                          <span className="text-[13.5px]">{v}</span>
+                          <span className="text-[20.2px]">{v}</span>
                         </div>
                       ))}
                     </div>
@@ -528,8 +528,8 @@ export default function ConsultingPage() {
                   {s.body && (
                     <ul className="space-y-1.5">
                       {s.body.map((b) => (
-                        <li key={b} className="flex gap-2 text-[13.5px] leading-relaxed text-ink-2">
-                          <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-ink-3" />
+                        <li key={b} className="flex gap-2 text-[20.2px] leading-relaxed text-ink-2">
+                          <span className="mt-2 h-[0.45rem] w-[0.45rem] shrink-0 rounded-full bg-ink-3" />
                           {b}
                         </li>
                       ))}
@@ -538,7 +538,7 @@ export default function ConsultingPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-6 rounded-xl bg-[#f7f8fa] px-4 py-3 text-[12px] text-ink-3">
+            <p className="mt-6 rounded-xl bg-[#f7f8fa] px-4 py-3 text-[18px] text-ink-3">
               {preview.footer}
             </p>
           </div>

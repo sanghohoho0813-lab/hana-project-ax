@@ -46,7 +46,7 @@ export default function ProjectsPage() {
   );
 
   const selectClass =
-    "rounded-xl border border-line bg-white px-3 py-2 text-[13px] font-semibold text-ink-2 outline-none focus:border-primary";
+    "rounded-xl border border-line bg-white px-3 py-2 text-[19.5px] font-semibold text-ink-2 outline-none focus:border-primary";
 
   return (
     <div className="page-in space-y-5">
@@ -58,7 +58,7 @@ export default function ProjectsPage() {
             <button
               key={f.key}
               onClick={() => setStatus(f.key)}
-              className={`rounded-xl px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`rounded-xl px-3.5 py-1.5 text-[19.5px] font-semibold transition-colors ${
                 status === f.key
                   ? "bg-primary text-white"
                   : "bg-[#f2f4f6] text-ink-2 hover:bg-[#e8ebee]"
@@ -69,7 +69,7 @@ export default function ProjectsPage() {
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Filter size={14} className="text-ink-3" />
+          <Filter size={21} className="text-ink-3" />
           <select className={selectClass} value={region} onChange={(e) => setRegion(e.target.value)}>
             {regions.map((r) => (
               <option key={r} value={r}>
@@ -114,23 +114,23 @@ export default function ProjectsPage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                 <div className="min-w-0 lg:w-[32%]">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-[15px] font-bold">{p.name}</p>
+                    <p className="text-[22.5px] font-bold">{p.name}</p>
                     <Badge tone={statusTone(p.statusKey)}>{p.statusLabel}</Badge>
                   </div>
-                  <p className="mt-1 text-[12.5px] text-ink-3">
+                  <p className="mt-1 text-[18.8px] text-ink-3">
                     {p.client} · {p.region} · {p.manager}
                   </p>
                 </div>
                 <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
                   <div>
-                    <p className="text-[11.5px] text-ink-3">계약금액</p>
-                    <p className="text-[14.5px] font-extrabold">{formatMoney(p.contractAmount)}</p>
+                    <p className="text-[17.2px] text-ink-3">계약금액</p>
+                    <p className="text-[21.8px] font-extrabold">{formatMoney(p.contractAmount)}</p>
                   </div>
                   <div>
-                    <p className="text-[11.5px] text-ink-3">
+                    <p className="text-[17.2px] text-ink-3">
                       {business === "consulting" ? "관리용역비" : "현재 예상이익"}
                     </p>
-                    <p className="text-[14.5px] font-extrabold text-success">
+                    <p className="text-[21.8px] font-extrabold text-success">
                       {business === "consulting"
                         ? p.consulting.fee > 0
                           ? formatMoney(p.consulting.fee)
@@ -139,9 +139,9 @@ export default function ProjectsPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[11.5px] text-ink-3">원가 투입률</p>
+                    <p className="text-[17.2px] text-ink-3">원가 투입률</p>
                     <p
-                      className={`text-[14.5px] font-extrabold ${
+                      className={`text-[21.8px] font-extrabold ${
                         costRiskGap(p) >= 8 && p.statusKey !== "done" ? "text-danger" : ""
                       }`}
                     >
@@ -149,12 +149,12 @@ export default function ProjectsPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[11.5px] text-ink-3">수금률</p>
-                    <p className="text-[14.5px] font-extrabold">{formatPercent(collectRate(p))}</p>
+                    <p className="text-[17.2px] text-ink-3">수금률</p>
+                    <p className="text-[21.8px] font-extrabold">{formatPercent(collectRate(p))}</p>
                   </div>
                 </div>
-                <div className="w-full lg:w-44">
-                  <div className="mb-1 flex justify-between text-[12px] font-semibold">
+                <div className="w-full lg:w-[16.5rem]">
+                  <div className="mb-1 flex justify-between text-[18px] font-semibold">
                     <span className="text-ink-3">진행률</span>
                     <span>{formatPercent(p.progress)}</span>
                   </div>
@@ -171,7 +171,7 @@ export default function ProjectsPage() {
                     }
                   />
                 </div>
-                <ChevronRight size={17} className="hidden shrink-0 text-ink-3 lg:block" />
+                <ChevronRight size={26} className="hidden shrink-0 text-ink-3 lg:block" />
               </div>
             </Link>
           ))}

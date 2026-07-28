@@ -141,9 +141,9 @@ function ProjectDetailInner() {
     <div className="page-in space-y-5">
       <Link
         href="/projects"
-        className="inline-flex items-center gap-1 text-[13.5px] font-semibold text-ink-3 hover:text-ink"
+        className="inline-flex items-center gap-1 text-[20.2px] font-semibold text-ink-3 hover:text-ink"
       >
-        <ArrowLeft size={15} /> 프로젝트 목록
+        <ArrowLeft size={22} /> 프로젝트 목록
       </Link>
 
       {/* 헤더 */}
@@ -151,26 +151,26 @@ function ProjectDetailInner() {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-[20px] font-extrabold">{p.name}</h2>
+              <h2 className="text-[30px] font-extrabold">{p.name}</h2>
               <Badge tone={statusTone(p.statusKey)}>{p.statusLabel}</Badge>
             </div>
-            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-ink-2">
+            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-[19.5px] text-ink-2">
               <span className="inline-flex items-center gap-1">
-                <MapPin size={13} className="text-ink-3" /> {p.region} · {p.workType}
+                <MapPin size={20} className="text-ink-3" /> {p.region} · {p.workType}
               </span>
               <span className="inline-flex items-center gap-1">
-                <CalendarDays size={13} className="text-ink-3" /> {p.period}
+                <CalendarDays size={20} className="text-ink-3" /> {p.period}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Building2 size={13} className="text-ink-3" /> {p.client}
+                <Building2 size={20} className="text-ink-3" /> {p.client}
               </span>
               <span className="inline-flex items-center gap-1">
-                <User size={13} className="text-ink-3" /> {p.manager}
+                <User size={20} className="text-ink-3" /> {p.manager}
               </span>
             </div>
             {p.risk && (
               <p
-                className={`mt-3.5 inline-flex items-start gap-2 rounded-xl px-4 py-2.5 text-[13.5px] font-semibold ${
+                className={`mt-3.5 inline-flex items-start gap-2 rounded-xl px-4 py-2.5 text-[20.2px] font-semibold ${
                   p.statusKey === "closeout"
                     ? "bg-success-bg text-success"
                     : p.statusKey === "delayed"
@@ -178,24 +178,24 @@ function ProjectDetailInner() {
                       : "bg-warning-bg text-warning"
                 }`}
               >
-                <AlertTriangle size={15} className="mt-0.5 shrink-0" /> {p.risk}
+                <AlertTriangle size={22} className="mt-0.5 shrink-0" /> {p.risk}
               </p>
             )}
           </div>
           <div className="grid shrink-0 grid-cols-3 gap-5 lg:gap-7">
             <div>
-              <p className="text-[11.5px] text-ink-3">계약금액</p>
-              <p className="text-[19px] font-extrabold tracking-tight">
+              <p className="text-[17.2px] text-ink-3">계약금액</p>
+              <p className="text-[28.5px] font-extrabold tracking-tight">
                 {formatMoney(p.contractAmount)}
               </p>
             </div>
             <div>
-              <p className="text-[11.5px] text-ink-3">진행률</p>
-              <p className="text-[19px] font-extrabold tracking-tight">{p.progress}%</p>
+              <p className="text-[17.2px] text-ink-3">진행률</p>
+              <p className="text-[28.5px] font-extrabold tracking-tight">{p.progress}%</p>
             </div>
             <div>
-              <p className="text-[11.5px] text-ink-3">현재 예상이익</p>
-              <p className="text-[19px] font-extrabold tracking-tight text-success">
+              <p className="text-[17.2px] text-ink-3">현재 예상이익</p>
+              <p className="text-[28.5px] font-extrabold tracking-tight text-success">
                 {formatMoney(currentProfit(p))}
               </p>
             </div>
@@ -214,19 +214,19 @@ function ProjectDetailInner() {
       <div className="grid gap-3 md:grid-cols-2">
         <div className="card p-5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-info-bg text-info">
-              <Building2 size={17} />
+            <span className="flex h-[3.375rem] w-[3.375rem] items-center justify-center rounded-xl bg-info-bg text-info">
+              <Building2 size={26} />
             </span>
             <div>
-              <p className="text-[14.5px] font-bold">하나정보통신</p>
-              <p className="text-[12px] text-ink-3">계약·시공·준공 책임</p>
+              <p className="text-[21.8px] font-bold">하나정보통신</p>
+              <p className="text-[18px] text-ink-3">계약·시공·준공 책임</p>
             </div>
           </div>
           <div className="mt-3.5 flex flex-wrap gap-1.5">
             {HANA_TASKS.map((t) => (
               <span
                 key={t}
-                className="rounded-lg bg-[#f2f4f6] px-2.5 py-1.5 text-[12.5px] font-semibold text-ink-2"
+                className="rounded-lg bg-[#f2f4f6] px-2.5 py-1.5 text-[18.8px] font-semibold text-ink-2"
               >
                 {t}
               </span>
@@ -235,19 +235,19 @@ function ProjectDetailInner() {
         </div>
         <div className="card p-5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-success-bg text-success">
-              <Handshake size={17} />
+            <span className="flex h-[3.375rem] w-[3.375rem] items-center justify-center rounded-xl bg-success-bg text-success">
+              <Handshake size={26} />
             </span>
             <div>
-              <p className="text-[14.5px] font-bold">하나컨설팅</p>
-              <p className="text-[12px] text-ink-3">기획·운영·자료관리</p>
+              <p className="text-[21.8px] font-bold">하나컨설팅</p>
+              <p className="text-[18px] text-ink-3">기획·운영·자료관리</p>
             </div>
           </div>
           <div className="mt-3.5 flex flex-wrap gap-1.5">
             {CONSULTING_TASKS.map((t) => (
               <span
                 key={t}
-                className="rounded-lg bg-[#f2f4f6] px-2.5 py-1.5 text-[12.5px] font-semibold text-ink-2"
+                className="rounded-lg bg-[#f2f4f6] px-2.5 py-1.5 text-[18.8px] font-semibold text-ink-2"
               >
                 {t}
               </span>
@@ -263,7 +263,7 @@ function ProjectDetailInner() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`rounded-xl px-3.5 py-2 text-[13.5px] font-semibold whitespace-nowrap transition-all ${
+              className={`rounded-xl px-3.5 py-2 text-[20.2px] font-semibold whitespace-nowrap transition-all ${
                 tab === t.key ? "bg-white text-ink shadow-sm" : "text-ink-3 hover:text-ink-2"
               }`}
             >
@@ -298,30 +298,30 @@ function ProjectDetailInner() {
               },
             ].map((k) => (
               <div key={k.label} className="card p-4.5">
-                <p className="text-[12.5px] font-semibold text-ink-3">{k.label}</p>
+                <p className="text-[18.8px] font-semibold text-ink-3">{k.label}</p>
                 <p
-                  className={`mt-1 text-[19px] font-extrabold tracking-tight ${k.warn ? "text-danger" : ""}`}
+                  className={`mt-1 text-[28.5px] font-extrabold tracking-tight ${k.warn ? "text-danger" : ""}`}
                 >
                   {k.value}
                 </p>
-                <p className="mt-1 text-[11.5px] text-ink-3">{k.sub}</p>
+                <p className="mt-1 text-[17.2px] text-ink-3">{k.sub}</p>
               </div>
             ))}
           </div>
 
           {isCostRisk(p) && (
             <div className="card border border-danger/15 p-5">
-              <p className="flex items-center gap-2 text-[14.5px] font-bold text-danger">
-                <AlertTriangle size={16} /> 공사는 {p.progress}% 진행됐지만 원가는 {inputRate}%
+              <p className="flex items-center gap-2 text-[21.8px] font-bold text-danger">
+                <AlertTriangle size={24} /> 공사는 {p.progress}% 진행됐지만 원가는 {inputRate}%
                 투입됐습니다.
               </p>
-              <p className="mt-1.5 text-[13.5px] text-ink-2">
+              <p className="mt-1.5 text-[20.2px] text-ink-2">
                 자재비와 외주비를 확인하세요. 지금 추세면 예상이익이{" "}
                 {formatMoney(profitDrop(p))} 줄어듭니다.
               </p>
               <button
                 onClick={() => setTab("cost")}
-                className="mt-3 rounded-xl bg-danger px-4 py-2 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+                className="mt-3 rounded-xl bg-danger px-4 py-2 text-[19.5px] font-bold text-white transition-opacity hover:opacity-90"
               >
                 원가 자세히 보기
               </button>
@@ -329,8 +329,8 @@ function ProjectDetailInner() {
           )}
 
           <div className="card p-5">
-            <p className="mb-3 text-[14.5px] font-bold">이 프로젝트 한눈에 보기</p>
-            <div className="grid gap-x-8 gap-y-2.5 text-[13.5px] sm:grid-cols-2">
+            <p className="mb-3 text-[21.8px] font-bold">이 프로젝트 한눈에 보기</p>
+            <div className="grid gap-x-8 gap-y-2.5 text-[20.2px] sm:grid-cols-2">
               {[
                 ["계약금액", formatMoney(p.contractAmount)],
                 ["최초 예상원가", formatMoney(totalBudget(p))],
@@ -360,7 +360,7 @@ function ProjectDetailInner() {
             p.phases.map((ph, i) => (
               <div key={ph.name} className="card flex items-center gap-4 p-4.5">
                 <span
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${
+                  className={`flex h-[3.375rem] w-[3.375rem] shrink-0 items-center justify-center rounded-full text-[19.5px] font-bold ${
                     ph.status === "완료"
                       ? "bg-success-bg text-success"
                       : ph.status === "진행"
@@ -370,24 +370,24 @@ function ProjectDetailInner() {
                           : "bg-[#f2f4f6] text-ink-3"
                   }`}
                 >
-                  {ph.status === "완료" ? <CheckCircle2 size={16} /> : i + 1}
+                  {ph.status === "완료" ? <CheckCircle2 size={24} /> : i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-[14.5px] font-bold">{ph.name}</p>
+                    <p className="text-[21.8px] font-bold">{ph.name}</p>
                     <Badge tone={phaseTone(ph.status)}>
                       {ph.status}
                       {ph.delayDays ? ` ${ph.delayDays}일 지연` : ""}
                     </Badge>
                   </div>
-                  <p className="mt-0.5 text-[12.5px] text-ink-3">
+                  <p className="mt-0.5 text-[18.8px] text-ink-3">
                     예정 {formatDate(ph.plannedDate)}
                     {ph.doneDate && ` · 완료 ${formatDate(ph.doneDate)}`} · {ph.manager}
                     {ph.memo && ` · ${ph.memo}`}
                   </p>
                 </div>
-                <div className="hidden w-36 shrink-0 sm:block">
-                  <div className="mb-1 text-right text-[12px] font-semibold text-ink-3">
+                <div className="hidden w-[13.5rem] shrink-0 sm:block">
+                  <div className="mb-1 text-right text-[18px] font-semibold text-ink-3">
                     {ph.progress}%
                   </div>
                   <ProgressBar
@@ -419,9 +419,9 @@ function ProjectDetailInner() {
               ].map((m) => (
                 <div key={m.label} className="rounded-2xl bg-[#f7f8fa] p-4">
                   <div className="mb-2 flex items-baseline justify-between">
-                    <span className="text-[13px] font-semibold text-ink-2">{m.label}</span>
+                    <span className="text-[19.5px] font-semibold text-ink-2">{m.label}</span>
                     <span
-                      className={`text-[26px] leading-none font-extrabold tracking-tight ${
+                      className={`text-[39px] leading-none font-extrabold tracking-tight ${
                         m.tone === "danger" ? "text-danger" : ""
                       }`}
                     >
@@ -435,15 +435,15 @@ function ProjectDetailInner() {
 
             {isCostRisk(p) && (
               <div className="mt-4 rounded-2xl border border-danger/15 bg-danger-bg/50 p-5">
-                <p className="flex items-center gap-2 text-[14.5px] font-bold text-danger">
-                  <AlertTriangle size={16} /> 공사는 {p.progress}% 진행됐지만 원가는{" "}
+                <p className="flex items-center gap-2 text-[21.8px] font-bold text-danger">
+                  <AlertTriangle size={24} /> 공사는 {p.progress}% 진행됐지만 원가는{" "}
                   {inputRate}% 투입됐습니다.
                 </p>
                 <div className="mt-3 space-y-1.5">
                   {overruns.map((o) => (
                     <div
                       key={o.name}
-                      className="flex flex-wrap items-center justify-between gap-1 rounded-xl bg-white px-4 py-2.5 text-[13px]"
+                      className="flex flex-wrap items-center justify-between gap-1 rounded-xl bg-white px-4 py-2.5 text-[19.5px]"
                     >
                       <span className="font-semibold">{o.name}</span>
                       <span className="text-ink-3">
@@ -460,8 +460,8 @@ function ProjectDetailInner() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="card p-5">
-              <p className="mb-3 text-[14.5px] font-bold">금액 요약</p>
-              <div className="space-y-2 text-[13.5px]">
+              <p className="mb-3 text-[21.8px] font-bold">금액 요약</p>
+              <div className="space-y-2 text-[20.2px]">
                 {[
                   ["계약금액", formatMoney(p.contractAmount)],
                   ["최초 예상원가", formatMoney(totalBudget(p))],
@@ -476,8 +476,8 @@ function ProjectDetailInner() {
               </div>
             </div>
             <div className="card p-5">
-              <p className="mb-3 text-[14.5px] font-bold">이익 변화</p>
-              <div className="space-y-2 text-[13.5px]">
+              <p className="mb-3 text-[21.8px] font-bold">이익 변화</p>
+              <div className="space-y-2 text-[20.2px]">
                 <div className="flex justify-between">
                   <span className="text-ink-2">최초 예상이익</span>
                   <span className="font-semibold">{formatMoney(initialProfit(p))}</span>
@@ -492,9 +492,9 @@ function ProjectDetailInner() {
                 </div>
                 {p.profitRisks.length > 0 && (
                   <div className="mt-2 space-y-1.5 border-t border-line pt-3">
-                    <p className="text-[12.5px] font-bold text-ink-3">감소 원인</p>
+                    <p className="text-[18.8px] font-bold text-ink-3">감소 원인</p>
                     {p.profitRisks.map((r) => (
-                      <div key={r.reason} className="flex justify-between text-[13px]">
+                      <div key={r.reason} className="flex justify-between text-[19.5px]">
                         <span className="text-ink-2">{r.reason}</span>
                         <span className="font-bold text-danger">-{formatMoney(r.amount)}</span>
                       </div>
@@ -506,22 +506,22 @@ function ProjectDetailInner() {
           </div>
 
           <div className="card p-5">
-            <p className="text-[14.5px] font-bold">원가 항목별 예상 대 투입</p>
-            <p className="mt-1 mb-3 text-[12.5px] text-ink-3">단위: 만원</p>
+            <p className="text-[21.8px] font-bold">원가 항목별 예상 대 투입</p>
+            <p className="mt-1 mb-3 text-[18.8px] text-ink-3">단위: 만원</p>
             <div className="w-full overflow-x-auto">
-              <div className="h-72 min-w-[560px]">
+              <div className="h-72 min-w-[840px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={costChartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#eceff2" vertical={false} />
                     <XAxis
                       dataKey="name"
-                      tick={{ fontSize: 11, fill: "#8b95a1" }}
+                      tick={{ fontSize: 16.5, fill: "#8b95a1" }}
                       tickLine={false}
                       axisLine={{ stroke: "#e5e8eb" }}
                       interval={0}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: "#8b95a1" }}
+                      tick={{ fontSize: 16.5, fill: "#8b95a1" }}
                       tickLine={false}
                       axisLine={false}
                       width={46}
@@ -532,11 +532,11 @@ function ProjectDetailInner() {
                       contentStyle={{
                         borderRadius: 12,
                         border: "1px solid #e5e8eb",
-                        fontSize: 13,
+                        fontSize: 19.5,
                         boxShadow: "0 8px 24px rgba(25,31,40,0.1)",
                       }}
                     />
-                    <Legend wrapperStyle={{ fontSize: 12.5 }} />
+                    <Legend wrapperStyle={{ fontSize: 18.8 }} />
                     <Bar dataKey="예상원가" fill="#b0b8c1" radius={[4, 4, 0, 0]} maxBarSize={22} />
                     <Bar dataKey="투입원가" fill="#3182f6" radius={[4, 4, 0, 0]} maxBarSize={22} />
                   </BarChart>
@@ -553,9 +553,9 @@ function ProjectDetailInner() {
           <div className="flex justify-end">
             <button
               onClick={() => setLogOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[13.5px] font-semibold text-white transition-colors hover:bg-primary-dark"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[20.2px] font-semibold text-white transition-colors hover:bg-primary-dark"
             >
-              <ClipboardList size={15} /> 현장일보 작성
+              <ClipboardList size={22} /> 현장일보 작성
             </button>
           </div>
           {projectLogs.length === 0 ? (
@@ -567,35 +567,35 @@ function ProjectDetailInner() {
             projectLogs.map((d) => (
               <div key={d.id} className="card p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[14.5px] font-bold">{formatDate(d.date)}</p>
-                  <span className="text-[12.5px] text-ink-3">
+                  <p className="text-[21.8px] font-bold">{formatDate(d.date)}</p>
+                  <span className="text-[18.8px] text-ink-3">
                     인원 {d.headcount}명 · {d.hours}시간
                   </span>
                 </div>
-                <p className="mt-2 text-[14px]">{d.work}</p>
-                {d.materials && <p className="mt-1 text-[13px] text-ink-2">자재: {d.materials}</p>}
+                <p className="mt-2 text-[21px]">{d.work}</p>
+                {d.materials && <p className="mt-1 text-[19.5px] text-ink-2">자재: {d.materials}</p>}
                 {d.issues && (
-                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-warning-bg px-2.5 py-1.5 text-[12.5px] font-semibold text-warning">
-                    <AlertTriangle size={12} /> {d.issues}
+                  <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-warning-bg px-2.5 py-1.5 text-[18.8px] font-semibold text-warning">
+                    <AlertTriangle size={18} /> {d.issues}
                   </p>
                 )}
                 <div className="mt-3 flex items-center gap-1.5">
                   {[...Array(Math.min(6, d.photoCount))].map((_, i) => (
                     <span
                       key={i}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary-light text-primary"
+                      className="flex h-[4.125rem] w-[4.125rem] items-center justify-center rounded-lg bg-primary-light text-primary"
                     >
-                      <ImageIcon size={16} />
+                      <ImageIcon size={24} />
                     </span>
                   ))}
                   {d.photoCount > 0 && (
-                    <span className="ml-1 inline-flex items-center gap-1 text-[12.5px] text-ink-3">
-                      <Camera size={13} /> {d.photoCount}장
+                    <span className="ml-1 inline-flex items-center gap-1 text-[18.8px] text-ink-3">
+                      <Camera size={20} /> {d.photoCount}장
                     </span>
                   )}
                 </div>
                 {d.aiReport && (
-                  <div className="mt-3 rounded-xl bg-primary-light/60 p-3.5 text-[13.5px] leading-relaxed">
+                  <div className="mt-3 rounded-xl bg-primary-light/60 p-3.5 text-[20.2px] leading-relaxed">
                     <span className="font-bold text-primary-dark">AI 보고서 · </span>
                     {d.aiReport}
                   </div>
@@ -621,11 +621,11 @@ function ProjectDetailInner() {
                 className={`card p-5 ${c.verbalOnly ? "pulse-danger border border-danger/15" : ""}`}
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-[14.5px] font-bold">{c.content}</p>
+                  <p className="text-[21.8px] font-bold">{c.content}</p>
                   <Badge tone={coTone(c.status)}>{c.status}</Badge>
                   {c.verbalOnly && <Badge tone="danger">전화 요청 · 서면 미승인</Badge>}
                 </div>
-                <p className="mt-1 text-[12.5px] text-ink-3">
+                <p className="mt-1 text-[18.8px] text-ink-3">
                   {formatDate(c.requestDate)} · 요청자 {c.requester}
                   {c.dueDate && ` · 회신기한 ${formatDate(c.dueDate)}`}
                 </p>
@@ -636,9 +636,9 @@ function ProjectDetailInner() {
                     { label: "남는 돈", v: c.addRevenue - c.addCost, accent: true },
                   ].map((x) => (
                     <div key={x.label} className="rounded-xl bg-[#f7f8fa] p-3.5">
-                      <p className="text-[11.5px] text-ink-3">{x.label}</p>
+                      <p className="text-[17.2px] text-ink-3">{x.label}</p>
                       <p
-                        className={`mt-0.5 text-[15px] font-extrabold ${x.accent ? "text-success" : ""}`}
+                        className={`mt-0.5 text-[22.5px] font-extrabold ${x.accent ? "text-success" : ""}`}
                       >
                         {formatMoney(x.v)}
                       </p>
@@ -647,7 +647,7 @@ function ProjectDetailInner() {
                 </div>
                 {c.verbalOnly && (
                   <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-danger-bg px-4 py-3.5">
-                    <p className="text-[13px] font-semibold text-danger">
+                    <p className="text-[19.5px] font-semibold text-danger">
                       작업 전 서면승인이 필요합니다. 견적서를 보내고 승인을 받으세요.
                     </p>
                     <button
@@ -659,7 +659,7 @@ function ProjectDetailInner() {
                         });
                         showToast("추가견적을 발송 처리했어요");
                       }}
-                      className="shrink-0 rounded-lg bg-danger px-3.5 py-2 text-[12.5px] font-bold text-white transition-opacity hover:opacity-90"
+                      className="shrink-0 rounded-lg bg-danger px-3.5 py-2 text-[18.8px] font-bold text-white transition-opacity hover:opacity-90"
                     >
                       추가견적 발송
                     </button>
@@ -676,12 +676,12 @@ function ProjectDetailInner() {
         <div className="rise-in grid gap-4 lg:grid-cols-2">
           <div className="card p-5">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-[14.5px] font-bold">준공 체크리스트</p>
+              <p className="text-[21.8px] font-bold">준공 체크리스트</p>
               <Badge tone={doneDocs === p.closeoutDocs.length ? "success" : "warning"}>
                 {doneDocs}/{p.closeoutDocs.length} 완료
               </Badge>
             </div>
-            <p className="mb-2 text-[12.5px] text-ink-3">
+            <p className="mb-2 text-[18.8px] text-ink-3">
               항목을 누르면 완료 여부가 바로 반영됩니다.
             </p>
             <ul className="space-y-0.5">
@@ -689,12 +689,12 @@ function ProjectDetailInner() {
                 <li key={d.name}>
                   <button
                     onClick={() => toggleCloseoutDoc(p.id, d.name)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[14px] transition-colors hover:bg-[#f7f8fa]"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[21px] transition-colors hover:bg-[#f7f8fa]"
                   >
                     {d.done ? (
-                      <CheckCircle2 size={18} className="shrink-0 text-success" />
+                      <CheckCircle2 size={27} className="shrink-0 text-success" />
                     ) : (
-                      <Circle size={18} className="shrink-0 text-ink-3" />
+                      <Circle size={27} className="shrink-0 text-ink-3" />
                     )}
                     <span className={d.done ? "text-ink-3 line-through" : "font-semibold"}>
                       {d.name}
@@ -707,8 +707,8 @@ function ProjectDetailInner() {
 
           <div className="space-y-4">
             <div className="card p-5">
-              <p className="mb-3 text-[14.5px] font-bold">수금 현황</p>
-              <div className="space-y-2 text-[13.5px]">
+              <p className="mb-3 text-[21.8px] font-bold">수금 현황</p>
+              <div className="space-y-2 text-[20.2px]">
                 {[
                   ["계약금액", p.contractAmount],
                   ["선금", p.payment.advance],
@@ -725,13 +725,13 @@ function ProjectDetailInner() {
                 <div className="flex justify-between border-t border-line pt-2.5">
                   <span className="font-bold">미수금</span>
                   <span
-                    className={`text-[15px] font-extrabold ${receivable(p) > 0 ? "text-danger" : "text-success"}`}
+                    className={`text-[22.5px] font-extrabold ${receivable(p) > 0 ? "text-danger" : "text-success"}`}
                   >
                     {receivable(p) > 0 ? formatMoney(receivable(p)) : "없음"}
                   </span>
                 </div>
                 {p.payment.expectedNote && (
-                  <p className="rounded-xl bg-[#f7f8fa] px-3.5 py-2.5 text-[12.5px] text-ink-2">
+                  <p className="rounded-xl bg-[#f7f8fa] px-3.5 py-2.5 text-[18.8px] text-ink-2">
                     {p.payment.expectedNote}
                   </p>
                 )}
@@ -740,10 +740,10 @@ function ProjectDetailInner() {
 
             {p.payment.balanceClaimable && (
               <div className="card border border-success/20 bg-success-bg/40 p-5">
-                <p className="text-[15px] font-bold text-success">
+                <p className="text-[22.5px] font-bold text-success">
                   잔금 {formatMoney(p.payment.balance)}을 지금 청구할 수 있어요
                 </p>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-2">
+                <p className="mt-1.5 text-[20.2px] leading-relaxed text-ink-2">
                   준공서류 {doneDocs}/{p.closeoutDocs.length} 완료.{" "}
                   {doneDocs === p.closeoutDocs.length
                     ? "서류가 모두 준비됐습니다. 대표 승인만 받으면 청구서가 나갑니다."
@@ -751,7 +751,7 @@ function ProjectDetailInner() {
                 </p>
                 <Link
                   href="/approvals"
-                  className="mt-3.5 inline-block rounded-xl bg-success px-4 py-2.5 text-[13px] font-bold text-white transition-opacity hover:opacity-90"
+                  className="mt-3.5 inline-block rounded-xl bg-success px-4 py-2.5 text-[19.5px] font-bold text-white transition-opacity hover:opacity-90"
                 >
                   승인함에서 잔금 청구 승인
                 </Link>
@@ -769,12 +769,12 @@ function ProjectDetailInner() {
           ) : (
             projectDocs.map((d) => (
               <div key={d.id} className="card flex items-center gap-3.5 p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-info-bg text-info">
-                  <FileText size={17} />
+                <span className="flex h-[3.75rem] w-[3.75rem] shrink-0 items-center justify-center rounded-xl bg-info-bg text-info">
+                  <FileText size={26} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-bold">{d.name}</p>
-                  <p className="text-[12.5px] text-ink-3">
+                  <p className="truncate text-[21px] font-bold">{d.name}</p>
+                  <p className="text-[18.8px] text-ink-3">
                     {formatDate(d.date)} · {d.owner}
                   </p>
                 </div>
@@ -797,7 +797,7 @@ function ProjectDetailInner() {
             <>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="card p-5">
-                  <p className="mb-3 text-[14.5px] font-bold">수행 업무</p>
+                  <p className="mb-3 text-[21.8px] font-bold">수행 업무</p>
                   <div className="flex flex-wrap gap-1.5">
                     {p.consulting.scope.map((s) => (
                       <Badge key={s} tone="success">
@@ -805,17 +805,17 @@ function ProjectDetailInner() {
                       </Badge>
                     ))}
                   </div>
-                  <p className="mt-4 text-[12.5px] leading-relaxed text-ink-3">
+                  <p className="mt-4 text-[18.8px] leading-relaxed text-ink-3">
                     하나컨설팅은 프로젝트 기획·운영관리와 자료·원가 관리를 지원합니다. 시공,
                     안전관리, 준공 책임은 하나정보통신이 담당합니다.
                   </p>
                 </div>
                 <div className="card p-5">
-                  <p className="mb-3 text-[14.5px] font-bold">산출물</p>
-                  <ul className="space-y-1.5 text-[13.5px] text-ink-2">
+                  <p className="mb-3 text-[21.8px] font-bold">산출물</p>
+                  <ul className="space-y-1.5 text-[20.2px] text-ink-2">
                     {p.consulting.deliverables.map((d) => (
                       <li key={d} className="flex items-center gap-2">
-                        <FileText size={13} className="shrink-0 text-success" /> {d}
+                        <FileText size={20} className="shrink-0 text-success" /> {d}
                       </li>
                     ))}
                   </ul>
@@ -823,11 +823,11 @@ function ProjectDetailInner() {
               </div>
               <div className="card flex flex-wrap items-center justify-between gap-3 p-5">
                 <div>
-                  <p className="text-[12px] text-ink-3">관리용역비</p>
-                  <p className="text-[22px] font-extrabold tracking-tight">
+                  <p className="text-[18px] text-ink-3">관리용역비</p>
+                  <p className="text-[33px] font-extrabold tracking-tight">
                     {formatMoney(p.consulting.fee)}
                   </p>
-                  <p className="mt-1 text-[12px] text-ink-3">
+                  <p className="mt-1 text-[18px] text-ink-3">
                     공사 원가에 포함돼 예상이익에 반영돼 있습니다
                   </p>
                 </div>
@@ -844,7 +844,7 @@ function ProjectDetailInner() {
                 </Badge>
                 <Link
                   href="/consulting"
-                  className="rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-[#e8ebee]"
+                  className="rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[19.5px] font-semibold text-ink-2 transition-colors hover:bg-[#e8ebee]"
                 >
                   용역비 계산기 열기
                 </Link>

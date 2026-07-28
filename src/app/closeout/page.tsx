@@ -34,10 +34,10 @@ export default function CloseoutPage() {
             href={`/projects/${p.id}?tab=closeout`}
             className="card card-hover border border-success/20 bg-success-bg/40 p-5"
           >
-            <p className="flex items-center gap-2 text-[14px] font-bold text-success">
-              <Banknote size={16} /> 잔금 청구 가능
+            <p className="flex items-center gap-2 text-[21px] font-bold text-success">
+              <Banknote size={24} /> 잔금 청구 가능
             </p>
-            <p className="mt-1 text-[13.5px] text-ink-2">
+            <p className="mt-1 text-[20.2px] text-ink-2">
               <b>{p.name}</b> — 잔금 {formatMoney(p.payment.balance)}을 바로 청구할 수 있습니다.
               준공서류 {closeoutDone(p)}/{p.closeoutDocs.length} 완료.
             </p>
@@ -49,20 +49,20 @@ export default function CloseoutPage() {
             href={`/projects/${p.id}?tab=closeout`}
             className="card card-hover border border-warning/20 bg-warning-bg/40 p-5"
           >
-            <p className="flex items-center gap-2 text-[14px] font-bold text-warning">
-              <AlertTriangle size={16} /> 서류 누락으로 청구 지연 위험
+            <p className="flex items-center gap-2 text-[21px] font-bold text-warning">
+              <AlertTriangle size={24} /> 서류 누락으로 청구 지연 위험
             </p>
-            <p className="mt-1 text-[13.5px] text-ink-2">
+            <p className="mt-1 text-[20.2px] text-ink-2">
               <b>{p.name}</b> — {missingCloseoutDocs(p).join(", ")}이(가) 아직 없습니다.
             </p>
           </Link>
         ))}
         {overdue.map((p) => (
           <div key={p.id} className="card border border-danger/15 bg-danger-bg/30 p-5">
-            <p className="flex items-center gap-2 text-[14px] font-bold text-danger">
-              <AlertTriangle size={16} /> 지급기일 경과 미수금
+            <p className="flex items-center gap-2 text-[21px] font-bold text-danger">
+              <AlertTriangle size={24} /> 지급기일 경과 미수금
             </p>
-            <p className="mt-1 text-[13.5px] text-ink-2">
+            <p className="mt-1 text-[20.2px] text-ink-2">
               <b>{p.name}</b> — 미수금 {formatMoney(receivable(p))} · 기일{" "}
               {p.payment.dueDate && formatDate(p.payment.dueDate)} 이후{" "}
               <b className="text-danger">{p.payment.overdueDays}일</b> 경과
@@ -80,8 +80,8 @@ export default function CloseoutPage() {
           { label: "기일 경과", value: `${overdue.length}건`, danger: overdue.length > 0 },
         ].map((k) => (
           <div key={k.label} className="card p-4.5">
-            <p className="text-[12.5px] font-semibold text-ink-3">{k.label}</p>
-            <p className={`mt-1 text-[19px] font-extrabold ${k.danger ? "text-danger" : ""}`}>
+            <p className="text-[18.8px] font-semibold text-ink-3">{k.label}</p>
+            <p className={`mt-1 text-[28.5px] font-extrabold ${k.danger ? "text-danger" : ""}`}>
               {k.value}
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function CloseoutPage() {
 
       {/* 프로젝트별 준공·수금 현황 */}
       <section className="space-y-3">
-        <h3 className="text-[17px] font-bold">프로젝트별 준공·수금 현황</h3>
+        <h3 className="text-[25.5px] font-bold">프로젝트별 준공·수금 현황</h3>
         {relevant.map((p) => {
           const done = closeoutDone(p);
           const missing = missingCloseoutDocs(p);
@@ -98,20 +98,20 @@ export default function CloseoutPage() {
             <Link
               key={p.id}
               href={`/projects/${p.id}?tab=closeout`}
-              className="card card-hover block p-5"
+              className="card card-hover block min-w-0 p-5"
             >
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-[14.5px] font-bold">{p.name}</p>
+                <p className="text-[21.8px] font-bold">{p.name}</p>
                 <Badge tone={statusTone(p.statusKey)}>{p.statusLabel}</Badge>
                 {p.payment.expectedThisMonth > 0 && (
-                  <span className="text-[12px] font-semibold text-ink-3">
+                  <span className="text-[18px] font-semibold text-ink-3">
                     이번 달 {formatMoney(p.payment.expectedThisMonth)} 회수 예정
                   </span>
                 )}
               </div>
-              <div className="mt-3.5 grid gap-4 sm:grid-cols-3">
-                <div>
-                  <div className="mb-1 flex justify-between text-[12.5px] font-semibold">
+              <div className="mt-3.5 grid min-w-0 gap-4 sm:grid-cols-3">
+                <div className="min-w-0">
+                  <div className="mb-1 flex justify-between text-[18.8px] font-semibold">
                     <span className="text-ink-3">준공서류</span>
                     <span>
                       {done}/{p.closeoutDocs.length}
@@ -122,31 +122,31 @@ export default function CloseoutPage() {
                     tone={done === p.closeoutDocs.length ? "success" : "warning"}
                   />
                   {missing.length > 0 && missing.length < 9 && (
-                    <p className="mt-1.5 truncate text-[12px] font-semibold text-warning">
+                    <p className="mt-1.5 truncate text-[18px] font-semibold text-warning">
                       누락: {missing.join(", ")}
                     </p>
                   )}
                 </div>
                 <div>
-                  <div className="mb-1 flex justify-between text-[12.5px] font-semibold">
+                  <div className="mb-1 flex justify-between text-[18.8px] font-semibold">
                     <span className="text-ink-3">수금률</span>
                     <span>{collectRate(p)}%</span>
                   </div>
                   <ProgressBar value={collectRate(p)} tone="info" />
-                  <p className="mt-1.5 text-[12px] text-ink-3">
+                  <p className="mt-1.5 text-[18px] text-ink-3">
                     입금 {formatMoney(p.payment.received)} /{" "}
                     {formatMoney(p.contractAmount)}
                   </p>
                 </div>
                 <div className="flex items-center justify-between sm:flex-col sm:items-end sm:justify-center">
-                  <span className="text-[12.5px] text-ink-3">미수금</span>
+                  <span className="text-[18.8px] text-ink-3">미수금</span>
                   {receivable(p) > 0 ? (
-                    <span className="text-[17px] font-extrabold text-danger">
+                    <span className="text-[25.5px] font-extrabold text-danger">
                       {formatMoney(receivable(p))}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[14px] font-bold text-success">
-                      <CheckCircle2 size={15} /> 없음
+                    <span className="inline-flex items-center gap-1 text-[21px] font-bold text-success">
+                      <CheckCircle2 size={22} /> 없음
                     </span>
                   )}
                 </div>
