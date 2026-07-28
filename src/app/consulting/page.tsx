@@ -2,12 +2,21 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Calculator, FileText, Handshake } from "lucide-react";
+import {
+  Building2,
+  Calculator,
+  CheckCircle2,
+  FileText,
+  Handshake,
+  TrendingDown,
+} from "lucide-react";
 import { useApp } from "@/lib/store";
-import { CONSULTING_KPI } from "@/lib/data";
+import { consultingKpi } from "@/lib/calc";
 import { formatMoney } from "@/lib/format";
-import { Badge, Field, inputClass } from "@/components/ui";
+import { SAMPLE_REPORTS, type SampleReport } from "@/lib/reports";
+import { Badge, CountUp, Field, Modal, PageIntro, inputClass } from "@/components/ui";
 
+/** 공사 계약금액 구간별 기본 관리비 */
 function baseTier(contract: number): number {
   if (contract < 3000) return 120;
   if (contract < 7000) return 180;
@@ -22,96 +31,139 @@ const DIFFICULTY = [
   { key: "상", add: 100, desc: "복합·대형 공사" },
 ] as const;
 
+/** 하나컨설팅 용역비를 빼기 전의 공사 이익률 가정 */
+const GROSS_MARGIN = 0.175;
+
+const STEPS = ["프로젝트 기본정보", "수행 업무", "업무량"] as const;
+
 export default function ConsultingPage() {
   const { projects } = useApp();
   const managed = projects.filter((p) => p.consulting.scope.length > 0);
+  const kpi = consultingKpi(projects);
 
-  // 계산기 상태 — 기본값은 서천 장항산단 전기증설 기준
+  const [step, setStep] = useState(0);
+  const [preview, setPreview] = useState<SampleReport | null>(null);
+
+  // 기본값은 서천 장항산단 공장 전기증설 공사 기준
   const [contract, setContract] = useState(13500);
   const [months, setMonths] = useState(3);
-  const [visits, setVisits] = useState(8);
-  const [reports, setReports] = useState(8);
+  const [difficulty, setDifficulty] = useState<"하" | "중" | "상">("중");
   const [preReview, setPreReview] = useState(true);
   const [scheduleMgmt, setScheduleMgmt] = useState(true);
   const [costAnalysis, setCostAnalysis] = useState(true);
   const [changeMgmt, setChangeMgmt] = useState(false);
   const [closeoutMgmt, setCloseoutMgmt] = useState(true);
-  const [difficulty, setDifficulty] = useState<"하" | "중" | "상">("중");
+  const [visits, setVisits] = useState(8);
+  const [reports, setReports] = useState(8);
+  const [meetings, setMeetings] = useState(2);
 
   const calc = useMemo(() => {
-    const durationAdd = Math.max(0, months - 2) * 20;
     const diffAdd = DIFFICULTY.find((d) => d.key === difficulty)!.add;
-    const basic = baseTier(contract) + durationAdd + (preReview ? 40 : 0) + diffAdd;
+    const basic =
+      baseTier(contract) + Math.max(0, months - 2) * 20 + (preReview ? 40 : 0) + diffAdd;
     const site = visits * 15 + (scheduleMgmt ? 60 : 0);
-    const report = reports * 10 + (costAnalysis ? 40 : 0);
+    const report = reports * 10 + meetings * 5 + (costAnalysis ? 30 : 0);
     const change = changeMgmt ? 50 : 0;
     const closeout = closeoutMgmt ? 90 : 0;
+    const total = basic + site + report + change + closeout;
+    const grossProfit = Math.round(contract * GROSS_MARGIN);
     return {
       basic,
       site,
       report,
       change,
       closeout,
-      total: basic + site + report + change + closeout,
+      total,
+      grossProfit,
+      netProfit: grossProfit - total,
+      netRate: contract > 0 ? ((grossProfit - total) / contract) * 100 : 0,
     };
-  }, [contract, months, visits, reports, preReview, scheduleMgmt, costAnalysis, changeMgmt, closeoutMgmt, difficulty]);
+  }, [
+    contract,
+    months,
+    difficulty,
+    preReview,
+    scheduleMgmt,
+    costAnalysis,
+    changeMgmt,
+    closeoutMgmt,
+    visits,
+    reports,
+    meetings,
+  ]);
 
   const deliverables = useMemo(() => {
     const list: string[] = [];
     if (preReview) list.push("착수검토서");
     if (scheduleMgmt) list.push("공정계획서");
-    list.push(`주간보고서 ${reports}회`);
+    if (reports > 0) list.push(`주간보고서 ${reports}회`);
     if (changeMgmt) list.push("변경사항 관리대장");
     if (costAnalysis) list.push("프로젝트 손익분석서");
     if (closeoutMgmt) list.push("준공자료 체크리스트");
     return list;
   }, [preReview, scheduleMgmt, reports, changeMgmt, costAnalysis, closeoutMgmt]);
 
-  const checkbox = (
-    label: string,
-    checked: boolean,
-    onChange: (v: boolean) => void
-  ) => (
+  const toggle = (label: string, checked: boolean, onChange: (v: boolean) => void) => (
     <button
       key={label}
       onClick={() => onChange(!checked)}
-      className={`rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors ${
-        checked
-          ? "bg-primary-light text-primary-dark"
-          : "bg-[#f2f4f6] text-ink-3 hover:text-ink-2"
+      className={`flex items-center gap-2 rounded-xl px-3.5 py-2.5 text-[13.5px] font-semibold transition-colors ${
+        checked ? "bg-primary-light text-primary-dark" : "bg-[#f2f4f6] text-ink-3 hover:text-ink-2"
       }`}
     >
-      {checked ? "✓ " : ""}
+      <span
+        className={`flex h-4 w-4 items-center justify-center rounded-md ${
+          checked ? "bg-primary text-white" : "bg-white"
+        }`}
+      >
+        {checked && <CheckCircle2 size={11} />}
+      </span>
       {label}
     </button>
   );
 
   return (
-    <div className="page-in space-y-6">
-      <div className="card flex items-start gap-3.5 p-5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-success-bg text-success">
-          <Handshake size={19} />
-        </span>
-        <div>
-          <p className="text-[15px] font-bold">
-            하나컨설팅 — 프로젝트 기획·운영관리 파트너
-          </p>
-          <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-2">
-            하나정보통신이 계약·시공·자재·안전·준공을 책임지고, 하나컨설팅은
-            사전검토, 공정계획 지원, 자료관리, 원가분석 등 프로젝트 운영을
-            지원합니다.
-          </p>
+    <div className="page-in space-y-5">
+      <PageIntro message="수행 업무와 산출물을 기준으로 용역을 관리하세요." />
+
+      {/* 역할 안내 */}
+      <div className="card grid gap-4 p-5 md:grid-cols-2">
+        <div className="flex gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-info-bg text-info">
+            <Building2 size={19} />
+          </span>
+          <div>
+            <p className="text-[14.5px] font-bold">
+              하나정보통신 <span className="text-[12.5px] font-semibold text-ink-3">계약·시공·준공 책임</span>
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+              고객 계약, 실제 시공, 자재와 인력, 안전관리, 공사대금 청구를 담당합니다.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-success-bg text-success">
+            <Handshake size={19} />
+          </span>
+          <div>
+            <p className="text-[14.5px] font-bold">
+              하나컨설팅 <span className="text-[12.5px] font-semibold text-ink-3">기획·운영·자료관리</span>
+            </p>
+            <p className="mt-1 text-[13px] leading-relaxed text-ink-2">
+              사전 검토, 공정·일정 관리, 원가 분석, 변경사항 정리, 준공자료 취합을 지원합니다.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* KPI */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {[
-          { label: "이번 달 예정 용역매출", value: formatMoney(CONSULTING_KPI.monthServiceRevenue) },
-          { label: "미정산 용역비", value: formatMoney(CONSULTING_KPI.unsettledFee) },
-          { label: "진행 중 관리 프로젝트", value: `${managed.length}건` },
-          { label: "이번 달 작성 보고서", value: `${CONSULTING_KPI.monthReports}건` },
-          { label: "완료 산출물", value: `${CONSULTING_KPI.deliverablesDone}건` },
+          { label: "이번 달 예정 용역매출", value: formatMoney(kpi.monthRevenue) },
+          { label: "미정산 용역비", value: formatMoney(kpi.unsettled) },
+          { label: "진행 중 관리 프로젝트", value: `${kpi.managedCount}건` },
+          { label: "이번 달 작성 보고서", value: `${kpi.monthReports}건` },
+          { label: "산출물", value: `${kpi.deliverables}건` },
         ].map((k) => (
           <div key={k.label} className="card p-4.5">
             <p className="text-[12.5px] font-semibold text-ink-3">{k.label}</p>
@@ -134,20 +186,18 @@ export default function ConsultingPage() {
                 <div className="min-w-0">
                   <p className="text-[14.5px] font-bold">{p.name}</p>
                   <p className="mt-1 text-[12.5px] text-ink-3">
-                    하나정보통신 계약 {formatMoney(p.contractAmount)} · 업무범위:{" "}
+                    하나정보통신 계약 {formatMoney(p.contractAmount)} · 업무범위{" "}
                     {p.consulting.scope.join(" · ")}
                   </p>
-                  <p className="mt-1 flex items-center gap-1 text-[12.5px] text-ink-2">
-                    <FileText size={12} className="shrink-0" />
+                  <p className="mt-1 flex items-start gap-1.5 text-[12.5px] text-ink-2">
+                    <FileText size={12} className="mt-0.5 shrink-0 text-ink-3" />
                     {p.consulting.deliverables.join(", ")}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-[12px] text-ink-3">용역비</p>
-                    <p className="text-[17px] font-extrabold">
-                      {formatMoney(p.consulting.fee)}
-                    </p>
+                  <div className="lg:text-right">
+                    <p className="text-[11.5px] text-ink-3">용역비</p>
+                    <p className="text-[17px] font-extrabold">{formatMoney(p.consulting.fee)}</p>
                   </div>
                   <Badge
                     tone={
@@ -169,130 +219,331 @@ export default function ConsultingPage() {
 
       {/* 계산기 */}
       <section className="card p-6">
-        <h3 className="mb-1 flex items-center gap-2 text-[16px] font-bold">
-          <Calculator size={17} className="text-primary" /> 관리용역비 계산기
-        </h3>
-        <p className="mb-5 text-[13px] text-ink-3">
-          공사금액 비율이 아니라 실제 업무량과 산출물 기준으로 계산합니다. 값을
-          바꾸면 즉시 반영됩니다.
+        <div className="mb-1 flex items-center gap-2">
+          <Calculator size={17} className="text-primary" />
+          <h3 className="text-[16.5px] font-bold">관리용역비 계산기</h3>
+        </div>
+        <p className="mb-5 text-[13.5px] text-ink-2">
+          공사금액을 나누는 방식이 아니라, 실제 업무량과 산출물 기준으로 관리용역비를
+          계산합니다.
         </p>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
           {/* 입력 */}
-          <div className="space-y-4">
-            <Field label={`공사 계약금액 — ${formatMoney(contract)}`}>
-              <input
-                type="range"
-                min={1000}
-                max={30000}
-                step={500}
-                value={contract}
-                onChange={(e) => setContract(Number(e.target.value))}
-                className="w-full accent-[#3182f6]"
-              />
-            </Field>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="기간 (개월)">
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  className={inputClass}
-                  value={months}
-                  onChange={(e) => setMonths(Math.max(1, Number(e.target.value) || 1))}
-                />
-              </Field>
-              <Field label="현장 방문 (회)">
-                <input
-                  type="number"
-                  min={0}
-                  className={inputClass}
-                  value={visits}
-                  onChange={(e) => setVisits(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </Field>
-              <Field label="주간보고서 (회)">
-                <input
-                  type="number"
-                  min={0}
-                  className={inputClass}
-                  value={reports}
-                  onChange={(e) => setReports(Math.max(0, Number(e.target.value) || 0))}
-                />
-              </Field>
-            </div>
-            <Field label="포함 업무">
-              <div className="flex flex-wrap gap-2 pt-1">
-                {checkbox("사전검토", preReview, setPreReview)}
-                {checkbox("공정관리", scheduleMgmt, setScheduleMgmt)}
-                {checkbox("원가분석", costAnalysis, setCostAnalysis)}
-                {checkbox("추가공사 관리", changeMgmt, setChangeMgmt)}
-                {checkbox("준공자료 취합", closeoutMgmt, setCloseoutMgmt)}
-              </div>
-            </Field>
-            <Field label="프로젝트 난이도">
-              <div className="flex gap-2 pt-1">
-                {DIFFICULTY.map((d) => (
-                  <button
-                    key={d.key}
-                    onClick={() => setDifficulty(d.key)}
-                    className={`flex-1 rounded-xl px-3 py-2.5 text-center transition-colors ${
-                      difficulty === d.key
-                        ? "bg-primary text-white"
-                        : "bg-[#f2f4f6] text-ink-2 hover:bg-[#e8ebee]"
-                    }`}
+          <div>
+            {/* 단계 */}
+            <div className="mb-5 flex gap-1.5">
+              {STEPS.map((s, i) => (
+                <button
+                  key={s}
+                  onClick={() => setStep(i)}
+                  className={`flex-1 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                    step === i ? "bg-primary text-white" : "bg-[#f2f4f6] text-ink-2 hover:bg-[#e8ebee]"
+                  }`}
+                >
+                  <span
+                    className={`block text-[11px] font-bold ${step === i ? "text-white/65" : "text-ink-3"}`}
                   >
-                    <span className="block text-[14px] font-bold">{d.key}</span>
-                    <span
-                      className={`block text-[11px] ${difficulty === d.key ? "text-white/80" : "text-ink-3"}`}
-                    >
-                      {d.desc}
-                    </span>
-                  </button>
-                ))}
+                    {i + 1}단계
+                  </span>
+                  <span className="block text-[13px] font-bold">{s}</span>
+                </button>
+              ))}
+            </div>
+
+            {step === 0 && (
+              <div className="rise-in space-y-4">
+                <Field label="공사 계약금액" hint={formatMoney(contract)}>
+                  <input
+                    type="range"
+                    min={1000}
+                    max={30000}
+                    step={500}
+                    value={contract}
+                    onChange={(e) => setContract(Number(e.target.value))}
+                    className="w-full accent-[#3182f6]"
+                  />
+                  <div className="mt-1 flex justify-between text-[11.5px] text-ink-3">
+                    <span>1,000만 원</span>
+                    <span>3억 원</span>
+                  </div>
+                </Field>
+                <Field label="프로젝트 기간" hint={`${months}개월`}>
+                  <input
+                    type="range"
+                    min={1}
+                    max={12}
+                    step={1}
+                    value={months}
+                    onChange={(e) => setMonths(Number(e.target.value))}
+                    className="w-full accent-[#3182f6]"
+                  />
+                </Field>
+                <Field label="프로젝트 난이도" group>
+                  <div className="flex gap-2 pt-1">
+                    {DIFFICULTY.map((d) => (
+                      <button
+                        key={d.key}
+                        onClick={() => setDifficulty(d.key)}
+                        className={`flex-1 rounded-xl px-3 py-2.5 text-center transition-colors ${
+                          difficulty === d.key
+                            ? "bg-primary text-white"
+                            : "bg-[#f2f4f6] text-ink-2 hover:bg-[#e8ebee]"
+                        }`}
+                      >
+                        <span className="block text-[14px] font-bold">{d.key}</span>
+                        <span
+                          className={`block text-[11px] ${difficulty === d.key ? "text-white/75" : "text-ink-3"}`}
+                        >
+                          {d.desc}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </Field>
               </div>
-            </Field>
+            )}
+
+            {step === 1 && (
+              <div className="rise-in">
+                <Field label="하나컨설팅이 수행할 업무" group>
+                  <div className="grid gap-2 pt-1 sm:grid-cols-2">
+                    {toggle("사전검토", preReview, setPreReview)}
+                    {toggle("공정계획·관리", scheduleMgmt, setScheduleMgmt)}
+                    {toggle("원가분석", costAnalysis, setCostAnalysis)}
+                    {toggle("추가공사 관리", changeMgmt, setChangeMgmt)}
+                    {toggle("준공자료 관리", closeoutMgmt, setCloseoutMgmt)}
+                  </div>
+                </Field>
+                <p className="mt-3 text-[12.5px] leading-relaxed text-ink-3">
+                  선택한 업무에 따라 산출물과 용역비가 함께 바뀝니다. 시공·안전관리·준공
+                  책임은 하나정보통신이 담당합니다.
+                </p>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="rise-in grid gap-4 sm:grid-cols-3">
+                <Field label="현장 방문" hint="회">
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputClass}
+                    value={visits}
+                    onChange={(e) => setVisits(Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </Field>
+                <Field label="주간보고서" hint="회">
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputClass}
+                    value={reports}
+                    onChange={(e) => setReports(Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </Field>
+                <Field label="회의·협의" hint="회">
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputClass}
+                    value={meetings}
+                    onChange={(e) => setMeetings(Math.max(0, Number(e.target.value) || 0))}
+                  />
+                </Field>
+              </div>
+            )}
+
+            <div className="mt-5 flex gap-2">
+              <button
+                onClick={() => setStep((s) => Math.max(0, s - 1))}
+                disabled={step === 0}
+                className="rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-[#e8ebee] disabled:opacity-40"
+              >
+                이전
+              </button>
+              <button
+                onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
+                disabled={step === STEPS.length - 1}
+                className="rounded-xl bg-primary px-4 py-2.5 text-[13.5px] font-bold text-white transition-colors hover:bg-primary-dark disabled:opacity-40"
+              >
+                다음 단계
+              </button>
+            </div>
           </div>
 
           {/* 결과 */}
           <div className="rounded-2xl bg-[#f7f8fa] p-5">
             <p className="text-[13px] font-bold text-ink-2">계산 결과</p>
-            <div className="mt-3 space-y-2 text-[14px]">
-              {[
-                ["기본 프로젝트 관리비", calc.basic],
-                ["현장관리 지원비", calc.site],
-                ["보고서·자료 관리비", calc.report],
-                ...(calc.change > 0 ? [["추가공사 관리비", calc.change] as [string, number]] : []),
-                ...(calc.closeout > 0 ? [["준공관리비", calc.closeout] as [string, number]] : []),
-              ].map(([label, v]) => (
-                <div key={label as string} className="flex justify-between">
+            <div className="mt-3 space-y-2 text-[13.5px]">
+              {(
+                [
+                  ["기본 프로젝트 관리비", calc.basic],
+                  ["현장관리 지원비", calc.site],
+                  ["보고서·자료 관리비", calc.report],
+                  ...(calc.change > 0 ? ([["추가공사 관리비", calc.change]] as [string, number][]) : []),
+                  ...(calc.closeout > 0 ? ([["준공관리비", calc.closeout]] as [string, number][]) : []),
+                ] as [string, number][]
+              ).map(([label, v]) => (
+                <div key={label} className="flex justify-between">
                   <span className="text-ink-2">{label}</span>
-                  <span className="font-bold">{formatMoney(v as number)}</span>
+                  <span className="font-semibold">{formatMoney(v)}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex items-baseline justify-between border-t border-line pt-4">
-              <span className="text-[14px] font-bold">하나컨설팅 예상 용역비</span>
-              <span className="text-[28px] font-extrabold tracking-tight text-primary">
-                {formatMoney(calc.total)}
-              </span>
+
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="text-[13px] font-bold">하나컨설팅 예상 용역비</p>
+              <p className="mt-1 text-[30px] leading-none font-extrabold tracking-tight text-primary">
+                <CountUp value={calc.total} format={(v) => formatMoney(Math.round(v))} />
+              </p>
             </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
+              {[
+                ["예상 업무기간", `${months}개월`],
+                ["포함 산출물", `${deliverables.length}건`],
+                ["예상 보고", `${reports + meetings}회`],
+              ].map(([l, v]) => (
+                <div key={l}>
+                  <p className="text-[11px] text-ink-3">{l}</p>
+                  <p className="mt-0.5 text-[14px] font-bold">{v}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 공사이익 변화 */}
+            <div className="mt-4 rounded-2xl bg-white p-4">
+              <p className="mb-2.5 flex items-center gap-1.5 text-[12.5px] font-bold text-ink-2">
+                <TrendingDown size={13} className="text-ink-3" /> 용역비를 지급하면 얼마가
+                남을까요?
+              </p>
+              <div className="space-y-2 text-[13.5px]">
+                <div className="flex justify-between">
+                  <span className="text-ink-2">용역비 반영 전 예상 공사이익</span>
+                  <span className="font-semibold">{formatMoney(calc.grossProfit)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-2">하나컨설팅 관리용역비</span>
+                  <span className="font-semibold text-danger">-{formatMoney(calc.total)}</span>
+                </div>
+                <div className="flex justify-between border-t border-line pt-2">
+                  <span className="font-bold">용역비 반영 후 공사이익</span>
+                  <span
+                    className={`text-[16px] font-extrabold ${calc.netProfit > 0 ? "text-success" : "text-danger"}`}
+                  >
+                    {formatMoney(calc.netProfit)}
+                  </span>
+                </div>
+                <p className="text-right text-[11.5px] text-ink-3">
+                  계약금액 대비 {calc.netRate.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
             <div className="mt-4">
               <p className="mb-2 text-[12.5px] font-bold text-ink-3">예상 산출물</p>
               <div className="flex flex-wrap gap-1.5">
-                {deliverables.map((d) => (
-                  <Badge key={d} tone="success">{d}</Badge>
-                ))}
+                {deliverables.length === 0 ? (
+                  <p className="text-[12.5px] text-ink-3">수행 업무를 선택하면 표시됩니다.</p>
+                ) : (
+                  deliverables.map((d) => (
+                    <Badge key={d} tone="success">
+                      {d}
+                    </Badge>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
 
+        {/* 산출물 미리보기 */}
+        <div className="mt-6 border-t border-line pt-5">
+          <p className="mb-3 text-[14px] font-bold">실제로 이런 문서를 받게 됩니다</p>
+          <div className="grid gap-3 md:grid-cols-3">
+            {SAMPLE_REPORTS.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setPreview(r)}
+                className="card card-hover p-5 text-left"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-success-bg text-success">
+                  <FileText size={17} />
+                </span>
+                <p className="mt-3 text-[14px] font-bold">{r.title}</p>
+                <p className="mt-1 truncate text-[12.5px] text-ink-3">{r.subtitle}</p>
+                <span className="mt-2.5 inline-block text-[12.5px] font-semibold text-primary">
+                  미리 보기
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <p className="mt-5 text-center text-[12px] text-ink-3">
-          본 계산은 프로젝트 업무량과 산출물을 기준으로 한 내부 참고용
-          예시입니다.
+          본 계산은 프로젝트 업무량과 산출물을 기준으로 한 내부 참고용 예시입니다.
         </p>
       </section>
+
+      {/* 문서 미리보기 */}
+      <Modal
+        open={!!preview}
+        onClose={() => setPreview(null)}
+        title={preview?.title ?? ""}
+        desc={preview?.subtitle}
+        size="xl"
+      >
+        {preview && (
+          <div>
+            <div className="grid grid-cols-2 gap-y-2 rounded-2xl bg-[#f7f8fa] p-4 sm:grid-cols-4">
+              {preview.meta.map((m) => (
+                <div key={m.label}>
+                  <p className="text-[11.5px] text-ink-3">{m.label}</p>
+                  <p className="text-[13px] font-semibold">{m.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 space-y-5">
+              {preview.sections.map((s) => (
+                <div key={s.heading}>
+                  <p className="mb-2 text-[14.5px] font-bold">{s.heading}</p>
+                  {s.rows && (
+                    <div className="overflow-hidden rounded-2xl border border-line">
+                      {s.rows.map(([k, v], i) => (
+                        <div
+                          key={k}
+                          className={`flex flex-col gap-0.5 px-4 py-2.5 sm:flex-row sm:gap-4 ${
+                            i % 2 === 1 ? "bg-[#fafbfc]" : ""
+                          }`}
+                        >
+                          <span className="w-52 shrink-0 text-[13px] font-semibold text-ink-3">
+                            {k}
+                          </span>
+                          <span className="text-[13.5px]">{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {s.body && (
+                    <ul className="space-y-1.5">
+                      {s.body.map((b) => (
+                        <li key={b} className="flex gap-2 text-[13.5px] leading-relaxed text-ink-2">
+                          <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-ink-3" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="mt-6 rounded-xl bg-[#f7f8fa] px-4 py-3 text-[12px] text-ink-3">
+              {preview.footer}
+            </p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

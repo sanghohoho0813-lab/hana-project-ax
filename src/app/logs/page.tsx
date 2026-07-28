@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, Camera, ClipboardList, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatDate } from "@/lib/format";
-import { Badge, EmptyState } from "@/components/ui";
+import { Badge, EmptyState, PageIntro } from "@/components/ui";
 import { DailyLogModal } from "@/components/modals";
 
 export default function LogsPage() {
@@ -14,17 +14,14 @@ export default function LogsPage() {
 
   return (
     <div className="page-in space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[14.5px] text-ink-2">
-          현장에서 짧게 남긴 메모가 AI 보고서와 공사 기록으로 정리됩니다.
-        </p>
+      <PageIntro message="현장 메모를 보고 가능한 기록으로 바꿉니다.">
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-1.5 self-start rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-all hover:bg-primary-dark active:scale-[0.98]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-all hover:bg-primary-dark active:scale-[0.98]"
         >
           <ClipboardList size={15} /> 현장일보 작성
         </button>
-      </div>
+      </PageIntro>
 
       {dailyLogs.length === 0 ? (
         <EmptyState

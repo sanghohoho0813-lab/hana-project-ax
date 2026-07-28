@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, Phone } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatDate, formatMoney } from "@/lib/format";
-import { Badge, EmptyState, type Tone } from "@/components/ui";
+import { Badge, EmptyState, PageIntro, type Tone } from "@/components/ui";
 import { PhoneMemoModal } from "@/components/modals";
 import type { ChangeOrderStatus } from "@/lib/types";
 
@@ -37,22 +37,19 @@ export default function ChangeOrdersPage() {
 
   return (
     <div className="page-in space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[14.5px] text-ink-2">
-          현장에서 구두로 오간 추가공사가 청구에서 빠지지 않게 관리하세요.
-        </p>
+      <PageIntro message="말로 요청받은 작업을 실제 매출로 남기세요.">
         <button
           onClick={() => setMemoOpen(true)}
-          className="inline-flex items-center gap-1.5 self-start rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-primary-dark"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
         >
           <Phone size={15} /> 전화메모로 등록
         </button>
-      </div>
+      </PageIntro>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "전체 추가공사", value: `${changeOrders.length}건` },
-          { label: "구두 요청 (서면 미승인)", value: `${verbal.length}건`, danger: verbal.length > 0 },
+          { label: "전화 요청 · 서면 미승인", value: `${verbal.length}건`, danger: verbal.length > 0 },
           { label: "미청구 추가매출", value: formatMoney(totalUnbilled) },
           {
             label: "예상 추가이익 합계",
@@ -75,8 +72,7 @@ export default function ChangeOrdersPage() {
           </p>
           {verbal.map((c) => (
             <p key={c.id} className="mt-1.5 text-[13.5px] text-ink-2">
-              <b>{c.content}</b> 요청이 구두로만 접수됐습니다. 작업 전 서면승인이
-              필요합니다.
+              <b>{c.content}</b> 요청이 아직 전화로만 접수돼 있습니다. 작업 전에 서면승인을 받으세요.
             </p>
           ))}
         </div>
@@ -98,7 +94,7 @@ export default function ChangeOrdersPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[14.5px] font-bold">{c.content}</p>
                   <Badge tone={coTone(c.status)}>{c.status}</Badge>
-                  {c.verbalOnly && <Badge tone="danger">구두 요청</Badge>}
+                  {c.verbalOnly && <Badge tone="danger">전화 요청</Badge>}
                 </div>
                 <p className="mt-1 text-[12.5px] text-ink-3">
                   {project ? (

@@ -25,7 +25,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap ${TONE_CLASS[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold whitespace-nowrap ${TONE_CLASS[tone]} ${className}`}
     >
       {children}
     </span>
@@ -43,8 +43,6 @@ export function statusTone(statusKey: string): Tone {
       return "danger";
     case "closeout":
       return "success";
-    case "done":
-      return "neutral";
     default:
       return "neutral";
   }
@@ -54,10 +52,12 @@ export function statusTone(statusKey: string): Tone {
 export function ProgressBar({
   value,
   tone = "info",
+  thick = false,
   className = "",
 }: {
   value: number;
   tone?: Tone;
+  thick?: boolean;
   className?: string;
 }) {
   const color =
@@ -69,7 +69,9 @@ export function ProgressBar({
           ? "bg-success"
           : "bg-primary";
   return (
-    <div className={`h-1.5 w-full overflow-hidden rounded-full bg-[#eceff2] ${className}`}>
+    <div
+      className={`${thick ? "h-2.5" : "h-1.5"} w-full overflow-hidden rounded-full bg-[#eceff2] ${className}`}
+    >
       <div
         className={`bar-fill h-full rounded-full ${color}`}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
@@ -79,34 +81,38 @@ export function ProgressBar({
 }
 
 // ───────────── CountUp ─────────────
+/** 첫 진입에만 카운트업하고, 이후 값 변경은 부드럽게 이어서 올라간다 */
 export function CountUp({
   value,
   format,
-  duration = 750,
+  duration = 700,
 }: {
   value: number;
   format: (v: number) => string;
   duration?: number;
 }) {
-  const [display, setDisplay] = useState(0);
-  const started = useRef(false);
+  const [display, setDisplay] = useState(value);
+  const from = useRef(0);
+  const mounted = useRef(false);
+
   useEffect(() => {
-    if (started.current) {
-      setDisplay(value);
-      return;
-    }
-    started.current = true;
     const start = performance.now();
+    const origin = mounted.current ? from.current : 0;
+    mounted.current = true;
     let raf = 0;
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / duration);
       const eased = 1 - Math.pow(1 - p, 3);
-      setDisplay(value * eased);
+      const next = origin + (value - origin) * eased;
+      from.current = next;
+      setDisplay(next);
       if (p < 1) raf = requestAnimationFrame(tick);
+      else from.current = value;
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [value, duration]);
+
   return <>{format(display)}</>;
 }
 
@@ -115,14 +121,16 @@ export function Modal({
   open,
   onClose,
   title,
+  desc,
   children,
-  wide = false,
+  size = "md",
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
+  desc?: string;
   children: React.ReactNode;
-  wide?: boolean;
+  size?: "md" | "lg" | "xl";
 }) {
   useEffect(() => {
     if (!open) return;
@@ -136,21 +144,26 @@ export function Modal({
   }, [open, onClose]);
 
   if (!open) return null;
+  const width =
+    size === "xl" ? "sm:max-w-3xl" : size === "lg" ? "sm:max-w-2xl" : "sm:max-w-lg";
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6"
+      className="overlay-in fixed inset-0 z-50 flex items-end justify-center bg-ink/45 backdrop-blur-[2px] sm:items-center sm:p-6"
       onClick={onClose}
     >
       <div
-        className={`rise-in max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-[var(--shadow-modal)] sm:rounded-3xl ${wide ? "sm:max-w-2xl" : "sm:max-w-lg"}`}
+        className={`modal-in max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-[var(--shadow-modal)] sm:rounded-3xl ${width}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">{title}</h2>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[19px] font-bold">{title}</h2>
+            {desc && <p className="mt-1 text-[13.5px] text-ink-2">{desc}</p>}
+          </div>
           <button
             onClick={onClose}
             aria-label="닫기"
-            className="rounded-full p-2 text-ink-3 transition-colors hover:bg-[#f2f4f6] hover:text-ink"
+            className="-mt-1 shrink-0 rounded-full p-2 text-ink-3 transition-colors hover:bg-[#f2f4f6] hover:text-ink"
           >
             <X size={18} />
           </button>
@@ -164,21 +177,28 @@ export function Modal({
 // ───────────── 폼 요소 ─────────────
 export function Field({
   label,
+  hint,
   children,
   required = false,
+  group = false,
 }: {
   label: string;
+  hint?: string;
   children: React.ReactNode;
   required?: boolean;
+  /** 버튼 여러 개를 담는 그룹이면 true — label로 감싸지 않아 버튼 이름이 섞이지 않는다 */
+  group?: boolean;
 }) {
+  const Wrapper = group ? "div" : "label";
   return (
-    <label className="block">
+    <Wrapper className="block" {...(group ? { role: "group", "aria-label": label } : {})}>
       <span className="mb-1.5 block text-[13px] font-semibold text-ink-2">
         {label}
         {required && <span className="ml-0.5 text-danger">*</span>}
+        {hint && <span className="ml-1.5 font-medium text-ink-3">{hint}</span>}
       </span>
       {children}
-    </label>
+    </Wrapper>
   );
 }
 
@@ -193,7 +213,7 @@ export function PrimaryButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-all hover:bg-primary-dark active:scale-[0.98] disabled:opacity-50 ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition-all hover:bg-primary-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
     >
       {children}
     </button>
@@ -208,7 +228,23 @@ export function GhostButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[14px] font-semibold text-ink-2 transition-all hover:bg-[#e8ebee] active:scale-[0.98] disabled:opacity-50 ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[14px] font-semibold text-ink-2 transition-all hover:bg-[#e8ebee] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** 흰 배경 위에 얹는 보조 버튼 */
+export function SoftButton({
+  children,
+  className = "",
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      {...props}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-[14px] font-semibold text-ink-2 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] active:translate-y-0 active:scale-[0.98] ${className}`}
     >
       {children}
     </button>
@@ -219,14 +255,17 @@ export function GhostButton({
 export function EmptyState({
   title,
   desc,
+  action,
 }: {
   title: string;
   desc?: string;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="card flex flex-col items-center justify-center gap-1.5 px-6 py-14 text-center">
-      <p className="text-[15px] font-semibold text-ink-2">{title}</p>
-      {desc && <p className="text-[13px] text-ink-3">{desc}</p>}
+    <div className="card flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+      <p className="text-[15.5px] font-bold text-ink-2">{title}</p>
+      {desc && <p className="max-w-md text-[13.5px] leading-relaxed text-ink-3">{desc}</p>}
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }
@@ -249,17 +288,61 @@ export function Segment<T extends string>({
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-lg font-semibold transition-all ${
+          className={`rounded-lg font-semibold whitespace-nowrap transition-all ${
             size === "sm" ? "px-2.5 py-1 text-[12px]" : "px-3.5 py-1.5 text-[13px]"
-          } ${
-            value === o.value
-              ? "bg-white text-ink shadow-sm"
-              : "text-ink-3 hover:text-ink-2"
-          }`}
+          } ${value === o.value ? "bg-white text-ink shadow-sm" : "text-ink-3 hover:text-ink-2"}`}
         >
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ───────────── 페이지 헤더 (한 줄 메시지) ─────────────
+export function PageIntro({
+  message,
+  children,
+}: {
+  message: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[15px] font-semibold text-ink-2">{message}</p>
+      {children && <div className="flex flex-wrap gap-2">{children}</div>}
+    </div>
+  );
+}
+
+// ───────────── 통계 타일 ─────────────
+export function StatTile({
+  label,
+  value,
+  sub,
+  tone,
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  tone?: "danger" | "success";
+  icon?: React.ReactNode;
+}) {
+  return (
+    <div className="card card-hover flex items-start justify-between gap-3 p-5">
+      <div className="min-w-0">
+        <p className="text-[12.5px] font-semibold text-ink-3">{label}</p>
+        <p
+          className={`mt-1.5 text-[21px] leading-tight font-extrabold tracking-tight ${
+            tone === "danger" ? "text-danger" : tone === "success" ? "text-success" : ""
+          }`}
+        >
+          {value}
+        </p>
+        {sub && <p className="mt-1 text-[12px] text-ink-3">{sub}</p>}
+      </div>
+      {icon && <span className="shrink-0 text-ink-3/60">{icon}</span>}
     </div>
   );
 }

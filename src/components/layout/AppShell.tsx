@@ -7,15 +7,18 @@ import {
   Banknote,
   Bell,
   Briefcase,
-  CalendarCheck,
+  CheckCircle2,
   ClipboardList,
   FolderOpen,
   Handshake,
+  HelpCircle,
   LayoutDashboard,
   Menu,
   PhoneCall,
   PieChart,
+  PlayCircle,
   PlusSquare,
+  RotateCcw,
   Search,
   Users,
   X,
@@ -23,7 +26,9 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import type { BusinessView } from "@/lib/types";
-import { Segment } from "@/components/ui";
+import { GhostButton, Modal, PrimaryButton, Segment } from "@/components/ui";
+import { GuideOverlay, useGuide } from "@/components/GuideOverlay";
+import { DemoPanel } from "@/components/DemoPanel";
 
 const NAV_GROUPS: {
   label: string;
@@ -56,66 +61,97 @@ const NAV_GROUPS: {
   },
 ];
 
-const PAGE_TITLES: Record<string, string> = {
-  "/": "오늘",
-  "/inquiries": "문의·견적",
-  "/customers": "고객·재수주",
-  "/projects": "프로젝트",
-  "/logs": "현장일보",
-  "/change-orders": "추가공사",
-  "/profit": "원가·수익",
-  "/closeout": "준공·수금",
-  "/consulting": "하나컨설팅",
-  "/documents": "문서함",
-  "/approvals": "대표 승인함",
+const PAGE_META: Record<string, { title: string; crumb: string }> = {
+  "/": { title: "오늘의 공사 운영 브리핑", crumb: "종합 브리핑" },
+  "/inquiries": { title: "문의·견적", crumb: "영업" },
+  "/customers": { title: "고객·재수주", crumb: "영업" },
+  "/projects": { title: "프로젝트", crumb: "공사관리" },
+  "/logs": { title: "현장일보", crumb: "공사관리" },
+  "/change-orders": { title: "추가공사", crumb: "공사관리" },
+  "/profit": { title: "원가·수익", crumb: "공사관리" },
+  "/closeout": { title: "준공·수금", crumb: "정산·자료" },
+  "/consulting": { title: "하나컨설팅", crumb: "정산·자료" },
+  "/documents": { title: "문서함", crumb: "정산·자료" },
+  "/approvals": { title: "대표 승인함", crumb: "정산·자료" },
 };
+
+/* ───────────────── 사이드바 ───────────────── */
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { approvals, changeOrders, opportunities } = useApp();
+
+  const counts: Record<string, number> = {
+    "/": approvals.filter((a) => a.status === "대기").length,
+    "/inquiries": opportunities.filter((o) => o.stage !== "won" && o.stage !== "hold").length,
+    "/change-orders": changeOrders.filter((c) => !c.billed).length,
+  };
+
+  // 그룹을 가로지르는 연속 번호를 미리 계산해 둔다
+  const numberOf = new Map<string, string>();
+  NAV_GROUPS.flatMap((g) => g.items).forEach((item, i) =>
+    numberOf.set(item.href, String(i + 1).padStart(2, "0"))
+  );
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-[#101a2e] text-white">
       <Link
         href="/"
         onClick={onNavigate}
-        className="flex items-center gap-2.5 px-5 py-6"
+        className="flex items-center gap-2.5 px-5 py-5.5"
       >
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
           <Zap size={18} strokeWidth={2.4} />
         </span>
         <span>
-          <span className="block text-[16px] leading-tight font-extrabold">
+          <span className="block text-[15.5px] leading-tight font-extrabold">
             하나 프로젝트 AX
           </span>
-          <span className="block text-[11px] text-ink-3">
-            하나정보통신 × 하나컨설팅
+          <span className="block text-[11px] text-white/45">
+            전기·통신공사 운영 시스템
           </span>
         </span>
       </Link>
-      <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-6">
+
+      <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-5">
         {NAV_GROUPS.map((g) => (
           <div key={g.label}>
-            <p className="mb-1.5 px-2.5 text-[11px] font-bold tracking-wide text-ink-3">
+            <p className="mb-1.5 px-3 text-[11px] font-bold tracking-wide text-white/35">
               {g.label}
             </p>
             <ul className="space-y-0.5">
               {g.items.map((item) => {
+                const num = numberOf.get(item.href);
                 const active =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
+                  item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                const count = counts[item.href];
                 return (
                   <li key={item.href}>
                     <Link
                       href={item.href}
                       onClick={onNavigate}
-                      className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[14px] font-semibold transition-colors ${
+                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13.5px] font-semibold transition-colors ${
                         active
-                          ? "bg-primary-light text-primary-dark"
-                          : "text-ink-2 hover:bg-[#f2f4f6]"
+                          ? "bg-primary text-white"
+                          : "text-white/65 hover:bg-white/8 hover:text-white"
                       }`}
                     >
-                      <item.icon size={17} strokeWidth={active ? 2.4 : 2} />
-                      {item.label}
+                      <span
+                        className={`text-[11px] tabular-nums ${active ? "text-white/70" : "text-white/30"}`}
+                      >
+                        {num}
+                      </span>
+                      <item.icon size={16} strokeWidth={active ? 2.4 : 2} />
+                      <span className="flex-1 truncate">{item.label}</span>
+                      {count ? (
+                        <span
+                          className={`rounded-md px-1.5 py-0.5 text-[10.5px] font-bold tabular-nums ${
+                            active ? "bg-white/20 text-white" : "bg-white/10 text-white/55"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      ) : null}
                     </Link>
                   </li>
                 );
@@ -124,16 +160,31 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
       </nav>
-      <div className="border-t border-line px-5 py-4">
-        <p className="text-[12px] leading-relaxed text-ink-3">
-          충남 보령 · 전기공사 / 정보통신공사
-          <br />
-          데모 기준일 2026년 7월 28일
+
+      {/* 사용자 카드 */}
+      <div className="border-t border-white/8 px-4 py-4">
+        <p className="mb-2.5 flex items-center gap-1.5 px-1 text-[11.5px] font-semibold text-white/45">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+          보령 본사 운영 중
         </p>
+        <div className="flex items-center gap-2.5 rounded-2xl bg-white/6 p-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-[14px] font-bold text-white">
+            구
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[13.5px] font-bold">구본석 이사</p>
+            <p className="truncate text-[11.5px] text-white/50">
+              공사운영 총괄 · 보령 본사
+            </p>
+          </div>
+        </div>
+        <p className="mt-2 px-1 text-[11px] text-white/35">샘플 데이터 모드</p>
       </div>
     </div>
   );
 }
+
+/* ───────────────── 헤더 검색 ───────────────── */
 
 function HeaderSearch() {
   const { projects } = useApp();
@@ -145,14 +196,13 @@ function HeaderSearch() {
     if (q.trim().length < 1) return [];
     return projects
       .filter(
-        (p) =>
-          p.name.includes(q) || p.region.includes(q) || p.workType.includes(q)
+        (p) => p.name.includes(q) || p.region.includes(q) || p.workType.includes(q)
       )
       .slice(0, 5);
   }, [q, projects]);
 
   return (
-    <div className="relative hidden w-full max-w-xs md:block">
+    <div className="relative hidden w-full max-w-xs xl:block">
       <Search
         size={16}
         className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
@@ -169,7 +219,7 @@ function HeaderSearch() {
           }
         }}
         placeholder="프로젝트·문서 검색"
-        className="w-full rounded-xl border border-transparent bg-[#eceff2] py-2 pr-3 pl-9 text-[14px] outline-none transition-all placeholder:text-ink-3 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
+        className="w-full rounded-xl border border-transparent bg-[#eceff2] py-2 pr-3 pl-9 text-[13.5px] outline-none transition-all placeholder:text-ink-3 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
       />
       {focus && results.length > 0 && (
         <div className="absolute top-full right-0 left-0 z-40 mt-1.5 overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-card-hover)]">
@@ -201,20 +251,29 @@ function HeaderSearch() {
   );
 }
 
+/* ───────────────── 셸 ───────────────── */
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { business, setBusiness, approvals, toast } = useApp();
+  const router = useRouter();
+  const { business, setBusiness, approvals, toast, demoMode, setDemoMode, setDemoStep, resetDemo } =
+    useApp();
   const [drawer, setDrawer] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const { open: guideOpen, setOpen: setGuideOpen } = useGuide();
 
-  const title =
-    PAGE_TITLES[pathname] ??
-    (pathname.startsWith("/projects/") ? "프로젝트 상세" : "하나 프로젝트 AX");
+  const meta =
+    PAGE_META[pathname] ??
+    (pathname.startsWith("/projects/")
+      ? { title: "프로젝트 상세", crumb: "공사관리" }
+      : { title: "하나 프로젝트 AX", crumb: "" });
   const pendingApprovals = approvals.filter((a) => a.status === "대기").length;
 
   return (
     <div className="flex min-h-screen">
       {/* 데스크톱 사이드바 */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 border-r border-line bg-white lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 lg:block">
         <SidebarContent />
       </aside>
 
@@ -222,14 +281,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="overlay-in absolute inset-0 bg-ink/45"
             onClick={() => setDrawer(false)}
           />
-          <div className="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl">
+          <div className="absolute inset-y-0 left-0 w-72 shadow-2xl">
             <button
               onClick={() => setDrawer(false)}
               aria-label="메뉴 닫기"
-              className="absolute top-5 right-4 rounded-full p-2 text-ink-3 hover:bg-[#f2f4f6]"
+              className="absolute top-5 right-4 z-10 rounded-full p-2 text-white/60 hover:bg-white/10"
             >
               <X size={18} />
             </button>
@@ -240,8 +299,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
         {/* 헤더 */}
-        <header className="sticky top-0 z-20 border-b border-line bg-white/85 backdrop-blur">
-          <div className="flex items-center gap-3 px-4 py-3 lg:px-7">
+        <header className="sticky top-0 z-20 border-b border-line bg-white/90 backdrop-blur">
+          <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
             <button
               onClick={() => setDrawer(true)}
               aria-label="메뉴 열기"
@@ -249,12 +308,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Menu size={20} />
             </button>
-            <h1 className="min-w-0 flex-1 truncate text-[17px] font-bold lg:flex-none">
-              {title}
-            </h1>
-            <div className="flex flex-1 items-center justify-end gap-2.5 lg:gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="hidden text-[11.5px] font-semibold text-ink-3 lg:block">
+                하나정보통신{meta.crumb && ` / ${meta.crumb}`}
+              </p>
+              <h1 className="truncate text-[16px] font-bold lg:text-[17px]">{meta.title}</h1>
+            </div>
+
+            <div className="flex min-w-0 items-center gap-2 lg:gap-2.5">
               <HeaderSearch />
-              <div className="hidden sm:block">
+              <div className="hidden shrink-0 md:block">
                 <Segment<BusinessView>
                   size="sm"
                   value={business}
@@ -266,28 +329,90 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   ]}
                 />
               </div>
+              <button
+                onClick={() => setGuideOpen(true)}
+                className="hidden shrink-0 items-center gap-1.5 rounded-xl bg-[#f2f4f6] px-3 py-2 text-[12.5px] font-semibold whitespace-nowrap text-ink-2 transition-colors hover:bg-[#e8ebee] lg:inline-flex"
+              >
+                <HelpCircle size={14} /> 사용 방법
+              </button>
               <Link
                 href="/approvals"
                 aria-label="대표 승인함"
-                className="relative rounded-xl p-2 text-ink-2 transition-colors hover:bg-[#f2f4f6]"
+                className="relative shrink-0 rounded-xl p-2 text-ink-2 transition-colors hover:bg-[#f2f4f6]"
               >
                 <Bell size={19} />
                 {pendingApprovals > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
+                  <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
                     {pendingApprovals}
                   </span>
                 )}
               </Link>
-              <div className="hidden items-center gap-2 rounded-xl bg-[#f2f4f6] py-1.5 pr-3 pl-1.5 md:flex">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-[12px] font-bold text-white">
-                  구
-                </span>
-                <span className="text-[13px] font-semibold">구본석 이사</span>
+
+              {/* 사용자 메뉴 */}
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => setMenu((v) => !v)}
+                  className="flex shrink-0 items-center gap-2 rounded-xl bg-[#f2f4f6] py-1.5 pr-2.5 pl-1.5 transition-colors hover:bg-[#e8ebee]"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-[12px] font-bold text-white">
+                    구
+                  </span>
+                  <span className="hidden text-[13px] font-semibold whitespace-nowrap md:inline">
+                    구본석 이사
+                  </span>
+                </button>
+                {menu && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
+                    <div className="float-in absolute top-full right-0 z-40 mt-2 w-60 overflow-hidden rounded-2xl bg-white p-1.5 shadow-[var(--shadow-card-hover)]">
+                      <div className="px-3 py-2.5">
+                        <p className="text-[13.5px] font-bold">구본석 이사</p>
+                        <p className="text-[11.5px] text-ink-3">
+                          하나정보통신 · 공사운영 총괄
+                        </p>
+                      </div>
+                      <div className="my-1 h-px bg-line" />
+                      <button
+                        onClick={() => {
+                          setMenu(false);
+                          setDemoStep(0);
+                          setDemoMode(!demoMode);
+                          if (!demoMode) router.push("/");
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-[#f7f8fa]"
+                      >
+                        <PlayCircle size={16} className="text-primary" />
+                        {demoMode ? "시연 모드 끄기" : "시연 모드 시작"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMenu(false);
+                          setGuideOpen(true);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-[#f7f8fa]"
+                      >
+                        <HelpCircle size={16} className="text-ink-3" />
+                        사용 방법 다시 보기
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMenu(false);
+                          setResetOpen(true);
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13.5px] font-semibold text-ink-2 transition-colors hover:bg-danger-bg hover:text-danger"
+                      >
+                        <RotateCcw size={16} />
+                        데모 데이터 초기화
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
+
           {/* 모바일 사업자 전환 */}
-          <div className="flex justify-center border-t border-line px-4 py-2 sm:hidden">
+          <div className="flex justify-center border-t border-line px-4 py-2 md:hidden">
             <Segment<BusinessView>
               size="sm"
               value={business}
@@ -301,21 +426,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 lg:px-7 lg:py-8">
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 lg:px-8 lg:py-7">
           {children}
         </main>
 
         <footer className="px-4 pb-6 text-center text-[11.5px] text-ink-3">
-          하나 프로젝트 AX 데모 · 하나정보통신(시공)과 하나컨설팅(프로젝트
-          기획·운영관리)의 업무를 구분해 관리합니다
+          하나 프로젝트 AX 데모 · 하나정보통신(계약·시공·준공)과 하나컨설팅(기획·운영·자료관리)의
+          업무를 구분해 관리합니다
         </footer>
       </div>
+
+      {/* 오버레이 안내 · 시연 모드 */}
+      {!demoMode && <GuideOverlay open={guideOpen} onClose={() => setGuideOpen(false)} />}
+      <DemoPanel />
+
+      {/* 데모 초기화 확인 */}
+      <Modal
+        open={resetOpen}
+        onClose={() => setResetOpen(false)}
+        title="데모 데이터를 초기화할까요?"
+        desc="시연 중 바꾼 승인 상태, 추가공사, 새 문의, 준공 체크리스트가 모두 처음 상태로 돌아갑니다."
+      >
+        <div className="flex justify-end gap-2">
+          <GhostButton onClick={() => setResetOpen(false)}>취소</GhostButton>
+          <PrimaryButton
+            onClick={() => {
+              resetDemo();
+              setResetOpen(false);
+              router.push("/");
+            }}
+          >
+            초기화하기
+          </PrimaryButton>
+        </div>
+      </Modal>
 
       {/* 토스트 */}
       {toast && (
         <div className="toast-in fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-2xl bg-ink px-5 py-3 text-[14px] font-semibold text-white shadow-xl">
           <span className="flex items-center gap-2">
-            <CalendarCheck size={16} className="text-[#7db8ff]" />
+            <CheckCircle2 size={16} className="text-[#7db8ff]" />
             {toast}
           </span>
         </div>

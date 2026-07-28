@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CheckCircle2, Stamp, XCircle } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatMoney } from "@/lib/format";
-import { Badge, EmptyState, type Tone } from "@/components/ui";
+import { Badge, EmptyState, PageIntro, type Tone } from "@/components/ui";
 
 const KIND_TONE: Record<string, Tone> = {
   견적: "info",
@@ -21,6 +21,8 @@ export default function ApprovalsPage() {
 
   return (
     <div className="page-in space-y-6">
+      <PageIntro message="승인 한 번으로 청구와 공사가 바로 진행됩니다." />
+
       <div className="card flex items-start gap-3.5 p-5">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-light text-primary">
           <Stamp size={19} />

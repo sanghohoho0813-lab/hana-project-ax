@@ -9,9 +9,18 @@ import type {
   TodoItem,
 } from "./types";
 
-// ─────────────────────────────────────────────
-// 진행 중 프로젝트 6건 + 완료 4건
-// ─────────────────────────────────────────────
+/*
+ * ─────────────────────────────────────────────────────────────
+ * 금액 단위는 모두 "만원" 정수다.
+ *
+ * 데이터 정합성 원칙
+ *  1) 원가 항목(costs) budget 합계 + 예상이익 = 계약금액
+ *  2) consulting.fee = 원가 항목의 '하나컨설팅 관리용역비' budget
+ *  3) 현재 예상이익 = 최초 예상이익 - profitRisks 합계
+ *  4) 미수금 = 청구금액 - 입금금액 (프로젝트별로 추적 가능)
+ *  5) 대시보드 KPI는 전부 calc.ts에서 이 데이터로부터 파생한다
+ * ─────────────────────────────────────────────────────────────
+ */
 
 const CLOSEOUT_DOC_NAMES = [
   "준공계",
@@ -25,10 +34,10 @@ const CLOSEOUT_DOC_NAMES = [
   "입금 확인",
 ];
 
-function docs(doneCount: number, missingIdx: number[] = []): { name: string; done: boolean }[] {
+function docs(doneCount: number, missingIdx?: number[]) {
   return CLOSEOUT_DOC_NAMES.map((name, i) => ({
     name,
-    done: missingIdx.length > 0 ? !missingIdx.includes(i) : i < doneCount,
+    done: missingIdx ? !missingIdx.includes(i) : i < doneCount,
   }));
 }
 
@@ -36,15 +45,15 @@ export const PROJECTS: Project[] = [
   {
     id: "p1",
     name: "보령 대천동 상가 통신배선 공사",
+    shortName: "보령 대천동 상가",
     client: "대천동 그랜드상가 관리단",
     region: "충남 보령",
     workType: "통신배선",
     period: "2026.06.08 ~ 2026.08.14",
+    orderDate: "2026-06-01",
     manager: "김성태 과장",
     contractAmount: 4800,
     progress: 72,
-    initialCostEstimate: 4080,
-    expectedProfit: 720,
     statusKey: "normal",
     statusLabel: "정상",
     phases: [
@@ -59,16 +68,26 @@ export const PROJECTS: Project[] = [
       { name: "잔금 수금", plannedDate: "2026-08-21", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
-      { name: "자재비", budget: 1750, actual: 1290 },
-      { name: "직접인건비", budget: 1280, actual: 940 },
+      { name: "자재비", budget: 1750, actual: 1240 },
+      { name: "직접인건비", budget: 1280, actual: 900 },
       { name: "외주비", budget: 480, actual: 330 },
       { name: "장비비", budget: 190, actual: 130 },
-      { name: "차량·운반비", budget: 130, actual: 95 },
+      { name: "차량·운반비", budget: 130, actual: 92 },
       { name: "기타경비", budget: 100, actual: 62 },
       { name: "하나컨설팅 관리용역비", budget: 150, actual: 100 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(2),
-    payment: { advance: 1440, interim: 1920, balance: 1440, billed: 3360, received: 3360 },
+    payment: {
+      advance: 1440,
+      interim: 1920,
+      balance: 1440,
+      billed: 3360,
+      received: 1920,
+      expectedThisMonth: 1440,
+      expectedNote: "중도금 잔여분 7월 31일 입금 예정",
+      dueDate: "2026-07-31",
+    },
     consulting: {
       scope: ["공정현황 정리", "주간보고", "준공자료 취합"],
       deliverables: ["주간보고서 6회", "공정현황표", "준공자료 체크리스트"],
@@ -80,18 +99,18 @@ export const PROJECTS: Project[] = [
   {
     id: "p2",
     name: "서천 장항산단 공장 전기증설 공사",
+    shortName: "서천 장항산단",
     client: "장항산단 A공장 (주)서해정밀",
     region: "충남 서천",
     workType: "전기증설",
     period: "2026.06.22 ~ 2026.09.11",
+    orderDate: "2026-06-15",
     manager: "구본석 이사",
     contractAmount: 13500,
     progress: 46,
-    initialCostEstimate: 11880,
-    expectedProfit: 1620,
     statusKey: "delayed",
     statusLabel: "자재 지연",
-    risk: "케이블 발주 2일 지연 — 배선 공정 순연 가능성",
+    risk: "케이블 발주 2일 지연 · 자재비와 외주비가 계획보다 앞서 투입되고 있습니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-06-22", doneDate: "2026-06-22", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "요구사항·자료 검토", plannedDate: "2026-06-26", doneDate: "2026-06-25", manager: "하나컨설팅", progress: 100, status: "완료" },
@@ -106,37 +125,49 @@ export const PROJECTS: Project[] = [
     costs: [
       { name: "자재비", budget: 5100, actual: 3450 },
       { name: "직접인건비", budget: 3200, actual: 1820 },
-      { name: "외주비", budget: 1900, actual: 1290 },
+      { name: "외주비", budget: 1660, actual: 1290 },
       { name: "장비비", budget: 640, actual: 210 },
       { name: "차량·운반비", budget: 300, actual: 118 },
       { name: "기타경비", budget: 240, actual: 96 },
-      { name: "하나컨설팅 관리용역비", budget: 500, actual: 0 },
+      { name: "하나컨설팅 관리용역비", budget: 740, actual: 0 },
+    ],
+    profitRisks: [
+      { reason: "케이블 단가 상승", amount: 480 },
+      { reason: "외주작업 3일 추가 투입", amount: 240 },
     ],
     closeoutDocs: docs(1),
-    payment: { advance: 4050, interim: 5400, balance: 4050, billed: 4050, received: 4050 },
+    payment: {
+      advance: 4050,
+      interim: 5400,
+      balance: 4050,
+      billed: 4050,
+      received: 4050,
+      expectedThisMonth: 3700,
+      expectedNote: "중도금 1차 3,700만 원 7월 30일 청구 예정",
+    },
     consulting: {
       scope: ["사전검토", "공정계획", "원가검토", "주간보고"],
       deliverables: ["착수검토서", "공정계획서", "주간보고서 4회", "원가검토서"],
       fee: 740,
-      feeStatus: "미정산",
+      feeStatus: "정산 예정",
       reportsThisMonth: 4,
     },
   },
   {
     id: "p3",
     name: "홍성 내포신도시 사무실 네트워크 공사",
+    shortName: "홍성 내포신도시",
     client: "내포신도시 H금융타워",
     region: "충남 홍성",
     workType: "네트워크 구축",
     period: "2026.06.15 ~ 2026.08.05",
+    orderDate: "2026-06-08",
     manager: "김성태 과장",
     contractAmount: 6200,
     progress: 88,
-    initialCostEstimate: 5270,
-    expectedProfit: 930,
     statusKey: "closeout",
     statusLabel: "준공 준비",
-    risk: "준공사진 4장 누락 — 준공서류 제출 지연 위험",
+    risk: "준공사진 4장이 아직 등록되지 않아 준공서류 제출이 늦어지고 있습니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-06-15", doneDate: "2026-06-15", manager: "김성태 과장", progress: 100, status: "완료" },
       { name: "요구사항·자료 검토", plannedDate: "2026-06-18", doneDate: "2026-06-18", manager: "하나컨설팅", progress: 100, status: "완료" },
@@ -157,8 +188,18 @@ export const PROJECTS: Project[] = [
       { name: "기타경비", budget: 100, actual: 88 },
       { name: "하나컨설팅 관리용역비", budget: 150, actual: 75 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(0, [1, 5, 7, 8]),
-    payment: { advance: 1860, interim: 2480, balance: 1860, billed: 4340, received: 4340 },
+    payment: {
+      advance: 1860,
+      interim: 2480,
+      balance: 1860,
+      billed: 4340,
+      received: 2480,
+      expectedThisMonth: 1860,
+      expectedNote: "중도금 잔여분 7월 30일 입금 예정",
+      dueDate: "2026-07-30",
+    },
     consulting: {
       scope: ["공정현황 정리", "준공자료 취합"],
       deliverables: ["주간보고서 5회", "준공자료 체크리스트"],
@@ -170,18 +211,18 @@ export const PROJECTS: Project[] = [
   {
     id: "p4",
     name: "군산 산업단지 CCTV·통신 공사",
+    shortName: "군산 산업단지",
     client: "군산 국가산단 (주)금강테크",
     region: "전북 군산",
     workType: "CCTV·통신",
     period: "2026.07.06 ~ 2026.09.25",
+    orderDate: "2026-06-29",
     manager: "구본석 이사",
     contractAmount: 9700,
     progress: 31,
-    initialCostEstimate: 8520,
-    expectedProfit: 1180,
     statusKey: "caution",
     statusLabel: "추가공사 확인 필요",
-    risk: "CCTV 위치 2개 변경·4대 추가 요청이 구두로만 접수 — 서면승인 필요",
+    risk: "CCTV 위치 변경과 4대 추가 요청이 전화로만 접수돼 있습니다. 작업 전에 서면승인을 받아야 합니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-07-06", doneDate: "2026-07-06", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "요구사항·자료 검토", plannedDate: "2026-07-09", doneDate: "2026-07-09", manager: "하나컨설팅", progress: 100, status: "완료" },
@@ -194,16 +235,25 @@ export const PROJECTS: Project[] = [
       { name: "잔금 수금", plannedDate: "2026-10-05", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
-      { name: "자재비", budget: 3900, actual: 1280 },
+      { name: "자재비", budget: 3900, actual: 1230 },
       { name: "직접인건비", budget: 2100, actual: 640 },
-      { name: "외주비", budget: 1300, actual: 410 },
+      { name: "외주비", budget: 1300, actual: 400 },
       { name: "장비비", budget: 480, actual: 120 },
-      { name: "차량·운반비", budget: 280, actual: 90 },
+      { name: "차량·운반비", budget: 280, actual: 88 },
       { name: "기타경비", budget: 160, actual: 45 },
       { name: "하나컨설팅 관리용역비", budget: 300, actual: 0 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(0),
-    payment: { advance: 2910, interim: 3880, balance: 2910, billed: 2910, received: 2910 },
+    payment: {
+      advance: 2910,
+      interim: 3880,
+      balance: 2910,
+      billed: 2910,
+      received: 2910,
+      expectedThisMonth: 0,
+      expectedNote: "중도금은 8월 배선 완료 후 청구 예정",
+    },
     consulting: {
       scope: ["사전검토", "변경사항 관리", "주간보고"],
       deliverables: ["착수검토서", "변경사항 관리대장", "주간보고서 3회"],
@@ -215,15 +265,15 @@ export const PROJECTS: Project[] = [
   {
     id: "p5",
     name: "익산 물류창고 전기·통신 통합공사",
+    shortName: "익산 물류창고",
     client: "익산 제2산단 (주)호남로지스",
     region: "전북 익산",
     workType: "전기·통신 통합",
     period: "2026.07.20 ~ 2026.10.30",
+    orderDate: "2026-07-13",
     manager: "구본석 이사",
     contractAmount: 18000,
     progress: 15,
-    initialCostEstimate: 15300,
-    expectedProfit: 2700,
     statusKey: "preparing",
     statusLabel: "착공 준비",
     phases: [
@@ -246,8 +296,17 @@ export const PROJECTS: Project[] = [
       { name: "기타경비", budget: 250, actual: 30 },
       { name: "하나컨설팅 관리용역비", budget: 350, actual: 0 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(0),
-    payment: { advance: 5400, interim: 7200, balance: 5400, billed: 5400, received: 5400 },
+    payment: {
+      advance: 5400,
+      interim: 7200,
+      balance: 5400,
+      billed: 5400,
+      received: 5400,
+      expectedThisMonth: 0,
+      expectedNote: "착공 후 9월 중도금 청구 예정",
+    },
     consulting: {
       scope: ["사전검토", "공정계획", "자재·인력 운영계획 지원"],
       deliverables: ["착수검토서", "공정계획서(초안)"],
@@ -259,18 +318,18 @@ export const PROJECTS: Project[] = [
   {
     id: "p6",
     name: "보령시 공공시설 통신설비 교체",
+    shortName: "보령시 공공시설",
     client: "보령시청 정보통신과",
     region: "충남 보령",
     workType: "공공시설 통신설비",
     period: "2026.05.11 ~ 2026.07.31",
+    orderDate: "2026-05-04",
     manager: "김성태 과장",
     contractAmount: 7600,
     progress: 95,
-    initialCostEstimate: 6460,
-    expectedProfit: 1140,
     statusKey: "closeout",
-    statusLabel: "잔금 청구 예정",
-    risk: "준공서류 1건 미완 — 완료 즉시 잔금 3,800만 원 청구 가능",
+    statusLabel: "잔금 청구 가능",
+    risk: "준공사진 1건만 등록하면 잔금 3,800만 원을 바로 청구할 수 있습니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-05-11", doneDate: "2026-05-11", manager: "김성태 과장", progress: 100, status: "완료" },
       { name: "요구사항·자료 검토", plannedDate: "2026-05-14", doneDate: "2026-05-14", manager: "하나컨설팅", progress: 100, status: "완료" },
@@ -279,7 +338,7 @@ export const PROJECTS: Project[] = [
       { name: "배관·배선", plannedDate: "2026-06-19", doneDate: "2026-06-18", manager: "박정호 반장", progress: 100, status: "완료" },
       { name: "장비 설치", plannedDate: "2026-07-08", doneDate: "2026-07-08", manager: "박정호 반장", progress: 100, status: "완료" },
       { name: "시험·검수", plannedDate: "2026-07-17", doneDate: "2026-07-17", manager: "김성태 과장", progress: 100, status: "완료" },
-      { name: "준공자료", plannedDate: "2026-07-29", manager: "하나컨설팅", progress: 90, status: "진행", memo: "입금 확인 항목만 남음" },
+      { name: "준공자료", plannedDate: "2026-07-29", manager: "하나컨설팅", progress: 90, status: "진행", memo: "준공사진 1건만 남았습니다" },
       { name: "잔금 수금", plannedDate: "2026-08-07", manager: "사무실", progress: 0, status: "대기", memo: "잔금 3,800만 원 청구 가능" },
     ],
     costs: [
@@ -291,8 +350,18 @@ export const PROJECTS: Project[] = [
       { name: "기타경비", budget: 170, actual: 155 },
       { name: "하나컨설팅 관리용역비", budget: 200, actual: 200 },
     ],
-    closeoutDocs: docs(8),
-    payment: { advance: 2280, interim: 1520, balance: 3800, billed: 3800, received: 3800, dueDate: "2026-08-14" },
+    profitRisks: [],
+    closeoutDocs: docs(0, [1]),
+    payment: {
+      advance: 2280,
+      interim: 1520,
+      balance: 3800,
+      billed: 3800,
+      received: 3800,
+      expectedThisMonth: 0,
+      expectedNote: "준공서류 완료 즉시 잔금 3,800만 원 청구 가능",
+      balanceClaimable: true,
+    },
     consulting: {
       scope: ["주간보고", "준공자료 취합", "손익분석"],
       deliverables: ["주간보고서 9회", "준공자료 체크리스트", "손익분석서(작성 중)"],
@@ -305,15 +374,15 @@ export const PROJECTS: Project[] = [
   {
     id: "p7",
     name: "태안 리조트 CCTV 설치 공사",
+    shortName: "태안 리조트",
     client: "태안 안면도 S리조트",
     region: "충남 태안",
     workType: "CCTV",
     period: "2026.03.02 ~ 2026.04.24",
+    orderDate: "2026-02-23",
     manager: "김성태 과장",
     contractAmount: 5400,
     progress: 100,
-    initialCostEstimate: 4640,
-    expectedProfit: 760,
     statusKey: "done",
     statusLabel: "완료",
     phases: [],
@@ -325,22 +394,32 @@ export const PROJECTS: Project[] = [
       { name: "차량·운반비", budget: 170, actual: 175 },
       { name: "기타경비", budget: 150, actual: 140 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(9),
-    payment: { advance: 1620, interim: 2160, balance: 1620, billed: 5400, received: 5400 },
+    payment: {
+      advance: 1620,
+      interim: 2160,
+      balance: 1620,
+      billed: 5400,
+      received: 3900,
+      expectedThisMonth: 0,
+      expectedNote: "잔금 1,500만 원 8월 5일 입금 예정",
+      dueDate: "2026-08-05",
+    },
     consulting: { scope: [], deliverables: [], fee: 0, feeStatus: "정산 완료", reportsThisMonth: 0 },
   },
   {
     id: "p8",
     name: "홍성 축산단지 공장 전기증설",
+    shortName: "홍성 축산단지",
     client: "홍성 축산가공 (주)충남미트",
     region: "충남 홍성",
     workType: "전기증설",
     period: "2026.02.09 ~ 2026.04.10",
+    orderDate: "2026-01-30",
     manager: "구본석 이사",
     contractAmount: 8800,
     progress: 100,
-    initialCostEstimate: 7570,
-    expectedProfit: 1230,
     statusKey: "done",
     statusLabel: "완료",
     phases: [],
@@ -352,22 +431,32 @@ export const PROJECTS: Project[] = [
       { name: "차량·운반비", budget: 230, actual: 240 },
       { name: "기타경비", budget: 160, actual: 150 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(9),
-    payment: { advance: 2640, interim: 3520, balance: 2640, billed: 8800, received: 8800 },
+    payment: {
+      advance: 2640,
+      interim: 3520,
+      balance: 2640,
+      billed: 8800,
+      received: 3800,
+      expectedThisMonth: 0,
+      expectedNote: "잔금 5,000만 원 8월 10일 입금 예정",
+      dueDate: "2026-08-10",
+    },
     consulting: { scope: [], deliverables: [], fee: 0, feeStatus: "정산 완료", reportsThisMonth: 0 },
   },
   {
     id: "p9",
     name: "서산 상가 전기·통신 개보수",
+    shortName: "서산 상가",
     client: "서산 중앙상가 번영회",
     region: "충남 서산",
     workType: "전기·통신 개보수",
     period: "2026.04.06 ~ 2026.05.15",
+    orderDate: "2026-03-30",
     manager: "김성태 과장",
     contractAmount: 3200,
     progress: 100,
-    initialCostEstimate: 2760,
-    expectedProfit: 440,
     statusKey: "done",
     statusLabel: "완료",
     phases: [],
@@ -379,22 +468,33 @@ export const PROJECTS: Project[] = [
       { name: "차량·운반비", budget: 110, actual: 108 },
       { name: "기타경비", budget: 90, actual: 85 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(9),
-    payment: { advance: 960, interim: 1280, balance: 960, billed: 3200, received: 3200 },
+    payment: {
+      advance: 960,
+      interim: 1280,
+      balance: 960,
+      billed: 3200,
+      received: 2000,
+      expectedThisMonth: 1200,
+      expectedNote: "지급기일이 지난 미수금 — 회수 연락 필요",
+      dueDate: "2026-07-20",
+      overdueDays: 8,
+    },
     consulting: { scope: [], deliverables: [], fee: 0, feeStatus: "정산 완료", reportsThisMonth: 0 },
   },
   {
     id: "p10",
     name: "논산 농협창고 통신설비 보수",
+    shortName: "논산 농협창고",
     client: "논산 연무농협",
     region: "충남 논산",
     workType: "통신설비 보수",
     period: "2026.05.18 ~ 2026.06.12",
+    orderDate: "2026-05-11",
     manager: "김성태 과장",
     contractAmount: 2100,
     progress: 100,
-    initialCostEstimate: 1790,
-    expectedProfit: 310,
     statusKey: "done",
     statusLabel: "완료",
     phases: [],
@@ -406,15 +506,25 @@ export const PROJECTS: Project[] = [
       { name: "차량·운반비", budget: 80, actual: 82 },
       { name: "기타경비", budget: 60, actual: 55 },
     ],
+    profitRisks: [],
     closeoutDocs: docs(9),
-    payment: { advance: 630, interim: 840, balance: 630, billed: 2100, received: 1400, dueDate: "2026-07-10", overdueDays: 18 },
+    payment: {
+      advance: 630,
+      interim: 840,
+      balance: 630,
+      billed: 2100,
+      received: 1400,
+      expectedThisMonth: 700,
+      expectedNote: "지급기일이 지난 미수금 — 회수 연락 필요",
+      dueDate: "2026-07-10",
+      overdueDays: 18,
+    },
     consulting: { scope: [], deliverables: [], fee: 0, feeStatus: "정산 완료", reportsThisMonth: 0 },
   },
 ];
 
-// ─────────────────────────────────────────────
-// 문의·견적 파이프라인
-// ─────────────────────────────────────────────
+/** 하반기(8~12월)에 통상적으로 들어오는 신규수주 가정치 — 예상 연매출 산정에 사용 */
+export const SECOND_HALF_ASSUMPTION = 65000; // 6억 5,000만 원
 
 export const OPPORTUNITIES: Opportunity[] = [
   {
@@ -431,6 +541,7 @@ export const OPPORTUNITIES: Opportunity[] = [
     nextDate: "2026-07-29",
     expectedCloseMonth: 8,
     needsVisit: true,
+    visitConfirmed: false,
     memo: "증설 용량 150kW 예상, 8월 초 착공 희망",
   },
   {
@@ -443,11 +554,11 @@ export const OPPORTUNITIES: Opportunity[] = [
     manager: "김성태 과장",
     probability: 40,
     stage: "sent",
-    nextAction: "3일 후 재연락",
-    nextDate: "2026-07-31",
+    nextAction: "담당자 재연락",
+    nextDate: "2026-07-29",
     sentDaysAgo: 7,
     expectedCloseMonth: 9,
-    memo: "견적 발송 완료. 타업체 견적 비교 중",
+    memo: "견적 발송 완료. 다른 업체 견적과 비교 중",
   },
   {
     id: "o3",
@@ -462,7 +573,7 @@ export const OPPORTUNITIES: Opportunity[] = [
     nextAction: "수정견적 발송",
     nextDate: "2026-07-30",
     expectedCloseMonth: 9,
-    memo: "AP 수량 조정 요청. 금액 협의 중",
+    memo: "무선 AP 수량 조정 요청. 금액 협의 중",
   },
   {
     id: "o4",
@@ -489,8 +600,10 @@ export const OPPORTUNITIES: Opportunity[] = [
     manager: "김성태 과장",
     probability: 50,
     stage: "inquiry",
-    nextAction: "전화 상담 후 방문 일정 협의",
+    nextAction: "방문 일정 확정",
     nextDate: "2026-07-29",
+    needsVisit: true,
+    visitConfirmed: false,
     memo: "어제 전화 문의. 주차장 CCTV 6대 희망",
   },
   {
@@ -503,8 +616,9 @@ export const OPPORTUNITIES: Opportunity[] = [
     manager: "김성태 과장",
     probability: 55,
     stage: "drafting",
-    nextAction: "견적서 작성 완료 후 발송",
+    nextAction: "견적서 작성 마무리",
     nextDate: "2026-07-30",
+    expectedCloseMonth: 9,
     memo: "사무동 2개층 배선. 도면 수령 완료",
   },
   {
@@ -524,10 +638,6 @@ export const OPPORTUNITIES: Opportunity[] = [
   },
 ];
 
-// ─────────────────────────────────────────────
-// 고객·재수주
-// ─────────────────────────────────────────────
-
 export const CUSTOMERS: Customer[] = [
   {
     id: "c1",
@@ -540,6 +650,9 @@ export const CUSTOMERS: Customer[] = [
     receivable: 0,
     nextProposal: "2026-08-10",
     recommend: "통신설비 점검 및 증설",
+    signals: ["마지막 공사 후 10개월 경과", "공장 증축 계획 확인", "유지보수 계약 미가입"],
+    proposalAmount: 3500,
+    manager: "구본석 이사",
     status: "제안 준비",
   },
   {
@@ -553,6 +666,9 @@ export const CUSTOMERS: Customer[] = [
     receivable: 0,
     nextProposal: "2026-08-20",
     recommend: "CCTV 저장장치 교체",
+    signals: ["저장장치 보증기간 만료 예정", "마지막 공사 후 7개월 경과"],
+    proposalAmount: 1200,
+    manager: "김성태 과장",
     status: "대기",
   },
   {
@@ -565,7 +681,10 @@ export const CUSTOMERS: Customer[] = [
     workTypes: ["CCTV·통신", "네트워크"],
     receivable: 0,
     nextProposal: "2026-10-01",
-    recommend: "네트워크 증설",
+    recommend: "사무동 네트워크 증설",
+    signals: ["현재 공사 진행 중", "과거 추가공사 이력 있음"],
+    proposalAmount: 2800,
+    manager: "구본석 이사",
     status: "대기",
   },
   {
@@ -578,7 +697,10 @@ export const CUSTOMERS: Customer[] = [
     workTypes: ["네트워크 구축"],
     receivable: 0,
     nextProposal: "2026-09-01",
-    recommend: "유지보수 계약",
+    recommend: "연간 유지보수 계약",
+    signals: ["준공 직후 유지보수 제안 적기", "유지보수 계약 미가입"],
+    proposalAmount: 600,
+    manager: "김성태 과장",
     status: "제안 준비",
   },
   {
@@ -591,7 +713,10 @@ export const CUSTOMERS: Customer[] = [
     workTypes: ["통신설비 보수"],
     receivable: 700,
     nextProposal: "2026-08-01",
-    recommend: "미수금 700만 원 회수 후 정기점검 제안",
+    recommend: "미수금 회수 후 정기점검 제안",
+    signals: ["미수금 700만 원 기일 18일 경과", "정기점검 미계약"],
+    proposalAmount: 400,
+    manager: "김성태 과장",
     status: "연락 예정",
   },
   {
@@ -602,16 +727,15 @@ export const CUSTOMERS: Customer[] = [
     monthsSince: 3,
     totalAmount: 5400,
     workTypes: ["CCTV"],
-    receivable: 0,
+    receivable: 1500,
     nextProposal: "2026-09-15",
-    recommend: "성수기 이후 CCTV 추가 및 유지보수",
+    recommend: "성수기 이후 CCTV 추가 설치",
+    signals: ["성수기 종료 후 증설 문의 예상", "잔금 1,500만 원 입금 예정"],
+    proposalAmount: 1800,
+    manager: "김성태 과장",
     status: "대기",
   },
 ];
-
-// ─────────────────────────────────────────────
-// 추가공사
-// ─────────────────────────────────────────────
 
 export const CHANGE_ORDERS: ChangeOrder[] = [
   {
@@ -626,6 +750,7 @@ export const CHANGE_ORDERS: ChangeOrder[] = [
     verbalOnly: true,
     quoteSent: false,
     billed: false,
+    dueDate: "2026-07-31",
   },
   {
     id: "co2",
@@ -645,7 +770,7 @@ export const CHANGE_ORDERS: ChangeOrder[] = [
     projectId: "p3",
     requestDate: "2026-07-08",
     requester: "H금융타워 시설팀",
-    content: "회의실 2곳 AP 추가 설치",
+    content: "회의실 2곳 무선 AP 추가 설치",
     addRevenue: 260,
     addCost: 170,
     status: "공사 완료",
@@ -668,16 +793,12 @@ export const CHANGE_ORDERS: ChangeOrder[] = [
   },
 ];
 
-// ─────────────────────────────────────────────
-// 대표 승인함
-// ─────────────────────────────────────────────
-
 export const APPROVALS: Approval[] = [
   {
     id: "a1",
     kind: "추가공사",
     title: "군산 CCTV 4대 추가 설치 승인",
-    desc: "추가매출 620만 원 · 추가원가 390만 원 · 추가이익 230만 원",
+    desc: "추가매출 620만 원 · 추가원가 390만 원 · 남는 돈 230만 원",
     amount: 620,
     status: "대기",
     projectId: "p4",
@@ -695,7 +816,7 @@ export const APPROVALS: Approval[] = [
     id: "a3",
     kind: "자재 발주",
     title: "서천 장항산단 케이블 대체 발주",
-    desc: "TFR-CV 케이블 납기 지연 — 대체 거래처 발주 승인",
+    desc: "케이블 납기가 늦어져 다른 거래처 발주가 필요합니다",
     amount: 1240,
     status: "대기",
     projectId: "p2",
@@ -703,75 +824,76 @@ export const APPROVALS: Approval[] = [
   {
     id: "a4",
     kind: "용역비",
-    title: "하나컨설팅 7월 관리용역비 정산",
-    desc: "서천 전기증설 등 3개 프로젝트 · 계 740만 원",
+    title: "서천 장항산단 하나컨설팅 관리용역비",
+    desc: "사전검토·공정계획·원가검토·주간보고 4회 기준",
     amount: 740,
     status: "대기",
+    projectId: "p2",
   },
   {
     id: "a5",
     kind: "견적",
-    title: "군산 소룡동 통신배선 견적 발송 승인",
+    title: "군산 소룡동 통신배선 견적 발송",
     desc: "견적금액 3,200만 원 · 담당 김성태 과장",
     amount: 3200,
     status: "대기",
   },
 ];
 
-// ─────────────────────────────────────────────
-// 오늘 확인할 일
-// ─────────────────────────────────────────────
-
+/** 오늘 처리할 일 — 경제적 효과가 큰 순서로 정렬돼 있다 */
 export const TODOS: TodoItem[] = [
   {
     id: "t1",
-    title: "군산 산업단지 CCTV 공사 — 추가공사 620만 원 승인 필요",
-    desc: "구두 요청 상태. 작업 전 서면승인이 필요합니다.",
-    severity: "danger",
-    projectId: "p4",
-    href: "/projects/p4?tab=changes",
-    done: false,
-  },
-  {
-    id: "t2",
-    title: "서천 장항산단 전기증설 — 자재 발주 2일 지연",
-    desc: "케이블 납기 확인 및 대체 발주 검토가 필요합니다.",
-    severity: "warning",
-    projectId: "p2",
-    href: "/projects/p2?tab=schedule",
-    done: false,
-  },
-  {
-    id: "t3",
-    title: "보령시 공공시설 공사 — 잔금 3,800만 원 청구 가능",
-    desc: "준공서류 8/9 완료. 오늘 바로 청구할 수 있습니다.",
+    title: "보령시 공공시설 잔금을 지금 청구할 수 있어요",
+    action: "준공사진 1건만 추가하면 청구서 제출이 가능합니다.",
+    risk: "이번 주를 넘기면 입금이 다음 달로 밀립니다.",
+    amount: 3800,
+    amountLabel: "청구 가능 잔금",
     severity: "success",
+    ctaLabel: "누락 서류 확인",
     projectId: "p6",
     href: "/projects/p6?tab=closeout",
     done: false,
   },
   {
-    id: "t4",
-    title: "홍성 내포신도시 현장 — 준공사진 4장 누락",
-    desc: "현장 책임자에게 금일 촬영을 요청하세요.",
-    severity: "warning",
-    projectId: "p3",
-    href: "/projects/p3?tab=closeout",
+    id: "t2",
+    title: "군산 CCTV 추가공사가 아직 전화 요청 상태예요",
+    action: "추가견적을 보내고 서면승인을 받으세요.",
+    risk: "승인 없이 시공하면 620만 원을 청구하지 못할 수 있습니다.",
+    amount: 620,
+    amountLabel: "미승인 추가공사",
+    severity: "danger",
+    ctaLabel: "추가공사 확인",
+    projectId: "p4",
+    href: "/projects/p4?tab=changes",
     done: false,
   },
   {
-    id: "t5",
-    title: "하나컨설팅 7월 프로젝트 관리용역 정산 예정",
-    desc: "3개 프로젝트 용역비 740만 원 승인 대기 중입니다.",
+    id: "t3",
+    title: "서천 전기증설 원가가 공정보다 앞서고 있어요",
+    action: "자재비와 외주비 투입 내역을 확인하세요.",
+    risk: "지금 추세면 예상이익이 720만 원 줄어듭니다.",
+    amount: 720,
+    amountLabel: "예상이익 감소",
+    severity: "warning",
+    ctaLabel: "원가 확인",
+    projectId: "p2",
+    href: "/projects/p2?tab=cost",
+    done: false,
+  },
+  {
+    id: "t4",
+    title: "서산 CCTV 견적을 보낸 지 7일이 지났어요",
+    action: "김성태 과장이 오늘 중 진행 여부를 확인하기로 했습니다.",
+    risk: "연락이 늦어지면 다른 업체로 넘어갈 수 있습니다.",
+    amount: 1800,
+    amountLabel: "견적금액",
     severity: "info",
-    href: "/consulting",
+    ctaLabel: "견적 진행 보기",
+    href: "/inquiries",
     done: false,
   },
 ];
-
-// ─────────────────────────────────────────────
-// 현장일보
-// ─────────────────────────────────────────────
 
 export const DAILY_LOGS: DailyLog[] = [
   {
@@ -796,7 +918,7 @@ export const DAILY_LOGS: DailyLog[] = [
     headcount: 6,
     hours: 9,
     materials: "케이블 트레이 24m, 후렉시블 전선관 60m",
-    issues: "TFR-CV 케이블 미입고로 배선 착수 대기",
+    issues: "TFR-CV 케이블이 아직 들어오지 않아 배선 착수 대기 중",
     tomorrow: "A동 트레이 설치, 케이블 입고 확인",
     photoCount: 8,
   },
@@ -808,15 +930,11 @@ export const DAILY_LOGS: DailyLog[] = [
     headcount: 5,
     hours: 8,
     materials: "HI-PVC 전선관 120m, 접지선 60m",
-    issues: "발주처에서 CCTV 위치 변경·추가 구두 요청",
+    issues: "발주처에서 CCTV 위치 변경과 추가 설치를 전화로 요청",
     tomorrow: "매설 구간 되메우기, 폴 기초 타설",
     photoCount: 10,
   },
 ];
-
-// ─────────────────────────────────────────────
-// 문서함
-// ─────────────────────────────────────────────
 
 export const DOC_CATEGORIES = [
   "계약서",
@@ -834,41 +952,22 @@ export const DOC_CATEGORIES = [
 ] as const;
 
 export const DOCUMENTS: DocItem[] = [
-  { id: "f1", projectId: "p4", category: "견적서", name: "군산 CCTV·통신 공사 견적서 v2.pdf", date: "2026-07-13", owner: "구본석 이사" },
+  { id: "f1", projectId: "p4", category: "견적서", name: "군산 CCTV·통신 공사 견적서 v2.pdf", date: "2026-07-13", owner: "구본석 이사", recentlyOpened: true },
   { id: "f2", projectId: "p4", category: "계약서", name: "군산 금강테크 공사도급계약서.pdf", date: "2026-07-04", owner: "사무실" },
   { id: "f3", projectId: "p4", category: "현장사진", name: "군산 외곽 배관 매설 사진 (10장)", date: "2026-07-27", owner: "박정호 반장" },
   { id: "f4", projectId: "p1", category: "현장사진", name: "대천동 3층 배선 사진 (6장)", date: "2026-07-27", owner: "박정호 반장" },
   { id: "f5", projectId: "p1", category: "견적서", name: "대천동 상가 통신배선 견적서.pdf", date: "2026-06-16", owner: "구본석 이사" },
-  { id: "f6", projectId: "p2", category: "하나컨설팅 보고서", name: "서천 전기증설 주간보고서 4주차.pdf", date: "2026-07-25", owner: "하나컨설팅" },
+  { id: "f6", projectId: "p2", category: "하나컨설팅 보고서", name: "서천 전기증설 주간보고서 4주차.pdf", date: "2026-07-25", owner: "하나컨설팅", recentlyOpened: true },
   { id: "f7", projectId: "p2", category: "발주서", name: "TFR-CV 케이블 발주서.pdf", date: "2026-07-18", owner: "김성태 과장" },
   { id: "f8", projectId: "p3", category: "준공서류", name: "내포신도시 준공서류 묶음 (5/9)", date: "2026-07-26", owner: "하나컨설팅" },
-  { id: "f9", projectId: "p6", category: "준공서류", name: "보령시 공공시설 준공서류 (8/9)", date: "2026-07-27", owner: "하나컨설팅" },
+  { id: "f9", projectId: "p6", category: "준공서류", name: "보령시 공공시설 준공서류 (8/9)", date: "2026-07-27", owner: "하나컨설팅", recentlyOpened: true },
   { id: "f10", projectId: "p6", category: "세금계산서", name: "보령시 중도금 세금계산서.pdf", date: "2026-07-02", owner: "사무실" },
   { id: "f11", projectId: "p5", category: "도면·기술자료", name: "익산 물류창고 전기·통신 도면.dwg", date: "2026-07-21", owner: "구본석 이사" },
   { id: "f12", projectId: "p2", category: "작업일보", name: "서천 B동 작업일보 (7/27)", date: "2026-07-27", owner: "박정호 반장" },
   { id: "f13", projectId: "p10", category: "입금자료", name: "논산 연무농협 중도금 입금내역", date: "2026-06-30", owner: "사무실" },
-  { id: "f14", projectId: "p4", category: "추가공사 확인서", name: "CCTV 추가 요청 전화메모 정리본", date: "2026-07-24", owner: "구본석 이사" },
+  { id: "f14", projectId: "p4", category: "추가공사 확인서", name: "CCTV 추가 요청 전화메모 정리본", date: "2026-07-24", owner: "구본석 이사", recentlyOpened: true },
   { id: "f15", category: "견적서", name: "서산 한우정식당 통신·CCTV 견적서.pdf", date: "2026-07-21", owner: "김성태 과장" },
   { id: "f16", projectId: "p3", category: "하나컨설팅 보고서", name: "내포신도시 준공자료 체크리스트.xlsx", date: "2026-07-24", owner: "하나컨설팅" },
+  { id: "f17", projectId: "p9", category: "거래명세서", name: "서산 중앙상가 거래명세서.pdf", date: "2026-05-18", owner: "사무실" },
+  { id: "f18", projectId: "p5", category: "하나컨설팅 보고서", name: "익산 물류창고 착수검토서.pdf", date: "2026-07-27", owner: "하나컨설팅" },
 ];
-
-// ─────────────────────────────────────────────
-// 핵심 KPI (오늘 대시보드)
-// ─────────────────────────────────────────────
-
-export const KPI = {
-  yearOrders: 118400, // 올해 누적 수주
-  yearForecast: 172000, // 예상 연매출
-  activeProjects: 6,
-  monthExpectedIn: 8900, // 이번 달 입금 예정
-  receivables: 11700, // 미수금
-  riskProjects: 2,
-};
-
-export const CONSULTING_KPI = {
-  monthServiceRevenue: 740, // 이번 달 예정 용역매출
-  unsettledFee: 1540, // 미정산 용역비
-  activeManaged: 6,
-  monthReports: 15,
-  deliverablesDone: 23,
-};

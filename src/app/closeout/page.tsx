@@ -4,8 +4,8 @@ import Link from "next/link";
 import { AlertTriangle, Banknote, CheckCircle2 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatDate, formatMoney } from "@/lib/format";
-import { collectRate, receivable } from "@/lib/calc";
-import { Badge, ProgressBar, statusTone } from "@/components/ui";
+import { closeoutDone, collectRate, missingCloseoutDocs, receivable } from "@/lib/calc";
+import { Badge, PageIntro, ProgressBar, statusTone } from "@/components/ui";
 
 export default function CloseoutPage() {
   const { projects } = useApp();
@@ -15,21 +15,16 @@ export default function CloseoutPage() {
   );
   const totalReceivable = projects.reduce((s, p) => s + receivable(p), 0);
   const overdue = projects.filter((p) => (p.payment.overdueDays ?? 0) > 0);
-  const balanceReady = projects.filter(
-    (p) => p.statusKey === "closeout" && p.closeoutDocs.filter((d) => d.done).length >= 8
-  );
+  const balanceReady = projects.filter((p) => p.payment.balanceClaimable);
   const missingDocs = projects.filter(
-    (p) =>
-      p.statusKey === "closeout" &&
-      p.closeoutDocs.filter((d) => !d.done).length > 1
+    (p) => p.statusKey === "closeout" && missingCloseoutDocs(p).length > 1
   );
+  const expectedThisMonth = projects.reduce((s, p) => s + p.payment.expectedThisMonth, 0);
+  const claimable = balanceReady.reduce((s, p) => s + p.payment.balance, 0);
 
   return (
     <div className="page-in space-y-5">
-      <p className="text-[14.5px] text-ink-2">
-        준공서류가 늦어지면 잔금도 늦어집니다. 서류와 수금을 한 화면에서
-        관리하세요.
-      </p>
+      <PageIntro message="공사가 끝난 뒤 돈이 들어올 때까지 관리하세요." />
 
       {/* 핵심 알림 */}
       <div className="grid gap-3 md:grid-cols-2">
@@ -43,8 +38,8 @@ export default function CloseoutPage() {
               <Banknote size={16} /> 잔금 청구 가능
             </p>
             <p className="mt-1 text-[13.5px] text-ink-2">
-              <b>{p.name}</b> — 잔금 {formatMoney(p.payment.balance)}을 바로
-              청구할 수 있습니다.
+              <b>{p.name}</b> — 잔금 {formatMoney(p.payment.balance)}을 바로 청구할 수 있습니다.
+              준공서류 {closeoutDone(p)}/{p.closeoutDocs.length} 완료.
             </p>
           </Link>
         ))}
@@ -58,8 +53,7 @@ export default function CloseoutPage() {
               <AlertTriangle size={16} /> 서류 누락으로 청구 지연 위험
             </p>
             <p className="mt-1 text-[13.5px] text-ink-2">
-              <b>{p.name}</b> — 준공서류{" "}
-              {p.closeoutDocs.filter((d) => !d.done).length}건이 누락됐습니다.
+              <b>{p.name}</b> — {missingCloseoutDocs(p).join(", ")}이(가) 아직 없습니다.
             </p>
           </Link>
         ))}
@@ -81,8 +75,8 @@ export default function CloseoutPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "전체 미수금", value: formatMoney(totalReceivable), danger: totalReceivable > 0 },
-          { label: "이번 달 입금 예정", value: formatMoney(8900) },
-          { label: "잔금 청구 가능", value: `${balanceReady.length}건` },
+          { label: "이번 달 입금 예정", value: formatMoney(expectedThisMonth) },
+          { label: "잔금 청구 가능", value: formatMoney(claimable) },
           { label: "기일 경과", value: `${overdue.length}건`, danger: overdue.length > 0 },
         ].map((k) => (
           <div key={k.label} className="card p-4.5">
@@ -98,8 +92,8 @@ export default function CloseoutPage() {
       <section className="space-y-3">
         <h3 className="text-[17px] font-bold">프로젝트별 준공·수금 현황</h3>
         {relevant.map((p) => {
-          const done = p.closeoutDocs.filter((d) => d.done).length;
-          const missing = p.closeoutDocs.filter((d) => !d.done);
+          const done = closeoutDone(p);
+          const missing = missingCloseoutDocs(p);
           return (
             <Link
               key={p.id}
@@ -109,6 +103,11 @@ export default function CloseoutPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[14.5px] font-bold">{p.name}</p>
                 <Badge tone={statusTone(p.statusKey)}>{p.statusLabel}</Badge>
+                {p.payment.expectedThisMonth > 0 && (
+                  <span className="text-[12px] font-semibold text-ink-3">
+                    이번 달 {formatMoney(p.payment.expectedThisMonth)} 회수 예정
+                  </span>
+                )}
               </div>
               <div className="mt-3.5 grid gap-4 sm:grid-cols-3">
                 <div>
@@ -123,8 +122,8 @@ export default function CloseoutPage() {
                     tone={done === p.closeoutDocs.length ? "success" : "warning"}
                   />
                   {missing.length > 0 && missing.length < 9 && (
-                    <p className="mt-1.5 truncate text-[12px] text-warning">
-                      누락: {missing.map((m) => m.name).join(", ")}
+                    <p className="mt-1.5 truncate text-[12px] font-semibold text-warning">
+                      누락: {missing.join(", ")}
                     </p>
                   )}
                 </div>

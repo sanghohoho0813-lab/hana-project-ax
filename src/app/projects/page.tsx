@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ChevronRight, Filter } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatMoney, formatPercent } from "@/lib/format";
-import { collectRate, costInputRate, currentExpectedProfit } from "@/lib/calc";
-import { Badge, EmptyState, ProgressBar, statusTone } from "@/components/ui";
+import { collectRate, costInputRate, costRiskGap, currentProfit } from "@/lib/calc";
+import { Badge, EmptyState, PageIntro, ProgressBar, statusTone } from "@/components/ui";
 import type { ProjectStatusKey } from "@/lib/types";
 
 const STATUS_FILTERS: { key: "all" | ProjectStatusKey; label: string }[] = [
@@ -50,7 +50,8 @@ export default function ProjectsPage() {
 
   return (
     <div className="page-in space-y-5">
-      {/* 필터 */}
+      <PageIntro message="진행률, 원가, 수금 상태를 현장별로 확인하세요." />
+
       <div className="card space-y-3 p-4">
         <div className="flex flex-wrap gap-1.5">
           {STATUS_FILTERS.map((f) => (
@@ -71,84 +72,85 @@ export default function ProjectsPage() {
           <Filter size={14} className="text-ink-3" />
           <select className={selectClass} value={region} onChange={(e) => setRegion(e.target.value)}>
             {regions.map((r) => (
-              <option key={r}>{r === "전체" ? "지역 전체" : r}</option>
+              <option key={r} value={r}>
+                {r === "전체" ? "지역 전체" : r}
+              </option>
             ))}
           </select>
-          <select className={selectClass} value={workType} onChange={(e) => setWorkType(e.target.value)}>
+          <select
+            className={selectClass}
+            value={workType}
+            onChange={(e) => setWorkType(e.target.value)}
+          >
             {types.map((t) => (
-              <option key={t}>{t === "전체" ? "공사유형 전체" : t}</option>
+              <option key={t} value={t}>
+                {t === "전체" ? "공사유형 전체" : t}
+              </option>
             ))}
           </select>
-          <select className={selectClass} value={manager} onChange={(e) => setManager(e.target.value)}>
+          <select
+            className={selectClass}
+            value={manager}
+            onChange={(e) => setManager(e.target.value)}
+          >
             {managers.map((m) => (
-              <option key={m}>{m === "전체" ? "담당자 전체" : m}</option>
+              <option key={m} value={m}>
+                {m === "전체" ? "담당자 전체" : m}
+              </option>
             ))}
           </select>
           {business === "consulting" && (
-            <Badge tone="info">하나컨설팅 관리 프로젝트만 표시 중</Badge>
+            <Badge tone="info">하나컨설팅 관리 프로젝트만 보는 중</Badge>
           )}
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          title="조건에 맞는 프로젝트가 없어요"
-          desc="필터를 변경해 보세요."
-        />
+        <EmptyState title="조건에 맞는 프로젝트가 없어요" desc="필터를 바꿔서 다시 찾아보세요." />
       ) : (
         <div className="space-y-3">
           {filtered.map((p) => (
-            <Link
-              key={p.id}
-              href={`/projects/${p.id}`}
-              className="card card-hover block p-5"
-            >
+            <Link key={p.id} href={`/projects/${p.id}`} className="card card-hover block p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                <div className="min-w-0 lg:w-[34%]">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-[15px] font-bold">{p.name}</p>
+                <div className="min-w-0 lg:w-[32%]">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[15px] font-bold">{p.name}</p>
                     <Badge tone={statusTone(p.statusKey)}>{p.statusLabel}</Badge>
                   </div>
                   <p className="mt-1 text-[12.5px] text-ink-3">
-                    {p.client} · {p.region} · {p.workType} · {p.manager}
+                    {p.client} · {p.region} · {p.manager}
                   </p>
                 </div>
-                <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
                   <div>
-                    <p className="text-[12px] text-ink-3">계약금액</p>
-                    <p className="text-[14.5px] font-extrabold">
-                      {formatMoney(p.contractAmount)}
-                    </p>
+                    <p className="text-[11.5px] text-ink-3">계약금액</p>
+                    <p className="text-[14.5px] font-extrabold">{formatMoney(p.contractAmount)}</p>
                   </div>
                   <div>
-                    <p className="text-[12px] text-ink-3">
-                      {business === "consulting" ? "관리용역비" : "예상이익"}
+                    <p className="text-[11.5px] text-ink-3">
+                      {business === "consulting" ? "관리용역비" : "현재 예상이익"}
                     </p>
                     <p className="text-[14.5px] font-extrabold text-success">
                       {business === "consulting"
                         ? p.consulting.fee > 0
                           ? formatMoney(p.consulting.fee)
-                          : "—"
-                        : formatMoney(currentExpectedProfit(p))}
+                          : "해당 없음"
+                        : formatMoney(currentProfit(p))}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[12px] text-ink-3">원가 투입률</p>
+                    <p className="text-[11.5px] text-ink-3">원가 투입률</p>
                     <p
                       className={`text-[14.5px] font-extrabold ${
-                        costInputRate(p) - p.progress >= 8 && p.statusKey !== "done"
-                          ? "text-danger"
-                          : "text-ink"
+                        costRiskGap(p) >= 8 && p.statusKey !== "done" ? "text-danger" : ""
                       }`}
                     >
                       {formatPercent(costInputRate(p))}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[12px] text-ink-3">수금률</p>
-                    <p className="text-[14.5px] font-extrabold">
-                      {formatPercent(collectRate(p))}
-                    </p>
+                    <p className="text-[11.5px] text-ink-3">수금률</p>
+                    <p className="text-[14.5px] font-extrabold">{formatPercent(collectRate(p))}</p>
                   </div>
                 </div>
                 <div className="w-full lg:w-44">
