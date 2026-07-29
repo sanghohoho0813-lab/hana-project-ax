@@ -100,7 +100,7 @@ export default function ProjectsPage() {
             ))}
           </select>
           {business === "consulting" && (
-            <Badge tone="info">하나컨설팅 관리 프로젝트만 보는 중</Badge>
+            <Badge tone="info">하나인사이트 관리 프로젝트만 보는 중</Badge>
           )}
         </div>
       </div>

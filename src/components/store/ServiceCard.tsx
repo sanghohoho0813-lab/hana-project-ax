@@ -25,9 +25,9 @@ export function ServiceCard({ item }: { item: ServiceItem }) {
           <span className="rounded-lg bg-[#f2f4f6] px-2.5 py-1 text-[16.5px] font-bold text-ink-2">
             {cat.name}
           </span>
-          {item.provider === "하나컨설팅" && (
+          {item.provider === "하나인사이트" && (
             <span className="rounded-lg bg-success-bg px-2.5 py-1 text-[16.5px] font-bold text-success">
-              하나컨설팅
+              하나인사이트
             </span>
           )}
           {item.popular && (

@@ -283,12 +283,12 @@ export function Segment<T extends string>({
   size?: "sm" | "md";
 }) {
   return (
-    <div className="inline-flex rounded-xl bg-[#e8ebee] p-1">
+    <div className="inline-flex max-w-full overflow-x-auto rounded-xl bg-[#e8ebee] p-1">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-lg font-semibold whitespace-nowrap transition-all ${
+          className={`shrink-0 rounded-lg font-semibold whitespace-nowrap transition-all ${
             size === "sm" ? "px-2.5 py-1 text-[18px]" : "px-3.5 py-1.5 text-[19.5px]"
           } ${value === o.value ? "bg-white text-ink shadow-sm" : "text-ink-3 hover:text-ink-2"}`}
         >

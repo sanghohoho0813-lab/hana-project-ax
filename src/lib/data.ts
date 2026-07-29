@@ -15,7 +15,7 @@ import type {
  *
  * 데이터 정합성 원칙
  *  1) 원가 항목(costs) budget 합계 + 예상이익 = 계약금액
- *  2) consulting.fee = 원가 항목의 '하나컨설팅 관리용역비' budget
+ *  2) consulting.fee = 원가 항목의 '하나인사이트 관리용역비' budget
  *  3) 현재 예상이익 = 최초 예상이익 - profitRisks 합계
  *  4) 미수금 = 청구금액 - 입금금액 (프로젝트별로 추적 가능)
  *  5) 대시보드 KPI는 전부 calc.ts에서 이 데이터로부터 파생한다
@@ -58,13 +58,13 @@ export const PROJECTS: Project[] = [
     statusLabel: "정상",
     phases: [
       { name: "현장조사", plannedDate: "2026-06-08", doneDate: "2026-06-08", manager: "김성태 과장", progress: 100, status: "완료" },
-      { name: "요구사항·자료 검토", plannedDate: "2026-06-12", doneDate: "2026-06-11", manager: "하나컨설팅", progress: 100, status: "완료" },
+      { name: "요구사항·자료 검토", plannedDate: "2026-06-12", doneDate: "2026-06-11", manager: "하나인사이트", progress: 100, status: "완료" },
       { name: "견적 확정", plannedDate: "2026-06-16", doneDate: "2026-06-16", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "자재 발주", plannedDate: "2026-06-22", doneDate: "2026-06-20", manager: "김성태 과장", progress: 100, status: "완료" },
       { name: "배관·배선", plannedDate: "2026-07-24", manager: "박정호 반장", progress: 85, status: "진행", memo: "3층 배선 진행 중" },
       { name: "장비 설치", plannedDate: "2026-08-03", manager: "박정호 반장", progress: 30, status: "진행" },
       { name: "시험·검수", plannedDate: "2026-08-08", manager: "김성태 과장", progress: 0, status: "대기" },
-      { name: "준공자료", plannedDate: "2026-08-12", manager: "하나컨설팅", progress: 0, status: "대기" },
+      { name: "준공자료", plannedDate: "2026-08-12", manager: "하나인사이트", progress: 0, status: "대기" },
       { name: "잔금 수금", plannedDate: "2026-08-21", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
@@ -74,7 +74,7 @@ export const PROJECTS: Project[] = [
       { name: "장비비", budget: 190, actual: 130 },
       { name: "차량·운반비", budget: 130, actual: 92 },
       { name: "기타경비", budget: 100, actual: 62 },
-      { name: "하나컨설팅 관리용역비", budget: 150, actual: 100 },
+      { name: "하나인사이트 관리용역비", budget: 150, actual: 100 },
     ],
     profitRisks: [],
     closeoutDocs: docs(2),
@@ -113,13 +113,13 @@ export const PROJECTS: Project[] = [
     risk: "케이블 발주 2일 지연 · 자재비와 외주비가 계획보다 앞서 투입되고 있습니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-06-22", doneDate: "2026-06-22", manager: "구본석 이사", progress: 100, status: "완료" },
-      { name: "요구사항·자료 검토", plannedDate: "2026-06-26", doneDate: "2026-06-25", manager: "하나컨설팅", progress: 100, status: "완료" },
+      { name: "요구사항·자료 검토", plannedDate: "2026-06-26", doneDate: "2026-06-25", manager: "하나인사이트", progress: 100, status: "완료" },
       { name: "견적 확정", plannedDate: "2026-07-01", doneDate: "2026-07-01", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "자재 발주", plannedDate: "2026-07-24", manager: "김성태 과장", progress: 80, status: "지연", delayDays: 2, memo: "TFR-CV 케이블 납기 지연" },
       { name: "배관·배선", plannedDate: "2026-08-14", manager: "박정호 반장", progress: 40, status: "진행" },
       { name: "장비 설치", plannedDate: "2026-08-28", manager: "박정호 반장", progress: 0, status: "대기" },
       { name: "시험·검수", plannedDate: "2026-09-04", manager: "구본석 이사", progress: 0, status: "대기" },
-      { name: "준공자료", plannedDate: "2026-09-09", manager: "하나컨설팅", progress: 0, status: "대기" },
+      { name: "준공자료", plannedDate: "2026-09-09", manager: "하나인사이트", progress: 0, status: "대기" },
       { name: "잔금 수금", plannedDate: "2026-09-18", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
@@ -129,7 +129,7 @@ export const PROJECTS: Project[] = [
       { name: "장비비", budget: 640, actual: 210 },
       { name: "차량·운반비", budget: 300, actual: 118 },
       { name: "기타경비", budget: 240, actual: 96 },
-      { name: "하나컨설팅 관리용역비", budget: 740, actual: 0 },
+      { name: "하나인사이트 관리용역비", budget: 740, actual: 0 },
     ],
     profitRisks: [
       { reason: "케이블 단가 상승", amount: 480 },
@@ -170,13 +170,13 @@ export const PROJECTS: Project[] = [
     risk: "준공사진 4장이 아직 등록되지 않아 준공서류 제출이 늦어지고 있습니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-06-15", doneDate: "2026-06-15", manager: "김성태 과장", progress: 100, status: "완료" },
-      { name: "요구사항·자료 검토", plannedDate: "2026-06-18", doneDate: "2026-06-18", manager: "하나컨설팅", progress: 100, status: "완료" },
+      { name: "요구사항·자료 검토", plannedDate: "2026-06-18", doneDate: "2026-06-18", manager: "하나인사이트", progress: 100, status: "완료" },
       { name: "견적 확정", plannedDate: "2026-06-22", doneDate: "2026-06-22", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "자재 발주", plannedDate: "2026-06-26", doneDate: "2026-06-25", manager: "김성태 과장", progress: 100, status: "완료" },
       { name: "배관·배선", plannedDate: "2026-07-10", doneDate: "2026-07-09", manager: "박정호 반장", progress: 100, status: "완료" },
       { name: "장비 설치", plannedDate: "2026-07-22", doneDate: "2026-07-22", manager: "박정호 반장", progress: 100, status: "완료" },
       { name: "시험·검수", plannedDate: "2026-07-29", manager: "김성태 과장", progress: 70, status: "진행", memo: "네트워크 속도 측정 진행 중" },
-      { name: "준공자료", plannedDate: "2026-08-03", manager: "하나컨설팅", progress: 50, status: "진행", memo: "준공사진 4장 누락" },
+      { name: "준공자료", plannedDate: "2026-08-03", manager: "하나인사이트", progress: 50, status: "진행", memo: "준공사진 4장 누락" },
       { name: "잔금 수금", plannedDate: "2026-08-12", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
@@ -186,7 +186,7 @@ export const PROJECTS: Project[] = [
       { name: "장비비", budget: 260, actual: 240 },
       { name: "차량·운반비", budget: 160, actual: 150 },
       { name: "기타경비", budget: 100, actual: 88 },
-      { name: "하나컨설팅 관리용역비", budget: 150, actual: 75 },
+      { name: "하나인사이트 관리용역비", budget: 150, actual: 75 },
     ],
     profitRisks: [],
     closeoutDocs: docs(0, [1, 5, 7, 8]),
@@ -225,13 +225,13 @@ export const PROJECTS: Project[] = [
     risk: "CCTV 위치 변경과 4대 추가 요청이 전화로만 접수돼 있습니다. 작업 전에 서면승인을 받아야 합니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-07-06", doneDate: "2026-07-06", manager: "구본석 이사", progress: 100, status: "완료" },
-      { name: "요구사항·자료 검토", plannedDate: "2026-07-09", doneDate: "2026-07-09", manager: "하나컨설팅", progress: 100, status: "완료" },
+      { name: "요구사항·자료 검토", plannedDate: "2026-07-09", doneDate: "2026-07-09", manager: "하나인사이트", progress: 100, status: "완료" },
       { name: "견적 확정", plannedDate: "2026-07-13", doneDate: "2026-07-13", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "자재 발주", plannedDate: "2026-07-20", doneDate: "2026-07-20", manager: "김성태 과장", progress: 100, status: "완료" },
       { name: "배관·배선", plannedDate: "2026-08-21", manager: "박정호 반장", progress: 35, status: "진행" },
       { name: "장비 설치", plannedDate: "2026-09-08", manager: "박정호 반장", progress: 0, status: "대기", memo: "추가공사 승인 결과에 따라 물량 변동" },
       { name: "시험·검수", plannedDate: "2026-09-16", manager: "구본석 이사", progress: 0, status: "대기" },
-      { name: "준공자료", plannedDate: "2026-09-22", manager: "하나컨설팅", progress: 0, status: "대기" },
+      { name: "준공자료", plannedDate: "2026-09-22", manager: "하나인사이트", progress: 0, status: "대기" },
       { name: "잔금 수금", plannedDate: "2026-10-05", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
@@ -241,7 +241,7 @@ export const PROJECTS: Project[] = [
       { name: "장비비", budget: 480, actual: 120 },
       { name: "차량·운반비", budget: 280, actual: 88 },
       { name: "기타경비", budget: 160, actual: 45 },
-      { name: "하나컨설팅 관리용역비", budget: 300, actual: 0 },
+      { name: "하나인사이트 관리용역비", budget: 300, actual: 0 },
     ],
     profitRisks: [],
     closeoutDocs: docs(0),
@@ -278,13 +278,13 @@ export const PROJECTS: Project[] = [
     statusLabel: "착공 준비",
     phases: [
       { name: "현장조사", plannedDate: "2026-07-20", doneDate: "2026-07-20", manager: "구본석 이사", progress: 100, status: "완료" },
-      { name: "요구사항·자료 검토", plannedDate: "2026-07-27", doneDate: "2026-07-27", manager: "하나컨설팅", progress: 100, status: "완료" },
+      { name: "요구사항·자료 검토", plannedDate: "2026-07-27", doneDate: "2026-07-27", manager: "하나인사이트", progress: 100, status: "완료" },
       { name: "견적 확정", plannedDate: "2026-07-31", manager: "구본석 이사", progress: 60, status: "진행", memo: "발주처 최종 사양 확인 중" },
       { name: "자재 발주", plannedDate: "2026-08-07", manager: "김성태 과장", progress: 0, status: "대기" },
       { name: "배관·배선", plannedDate: "2026-09-18", manager: "박정호 반장", progress: 0, status: "대기" },
       { name: "장비 설치", plannedDate: "2026-10-09", manager: "박정호 반장", progress: 0, status: "대기" },
       { name: "시험·검수", plannedDate: "2026-10-20", manager: "구본석 이사", progress: 0, status: "대기" },
-      { name: "준공자료", plannedDate: "2026-10-27", manager: "하나컨설팅", progress: 0, status: "대기" },
+      { name: "준공자료", plannedDate: "2026-10-27", manager: "하나인사이트", progress: 0, status: "대기" },
       { name: "잔금 수금", plannedDate: "2026-11-10", manager: "사무실", progress: 0, status: "대기" },
     ],
     costs: [
@@ -294,7 +294,7 @@ export const PROJECTS: Project[] = [
       { name: "장비비", budget: 800, actual: 0 },
       { name: "차량·운반비", budget: 400, actual: 45 },
       { name: "기타경비", budget: 250, actual: 30 },
-      { name: "하나컨설팅 관리용역비", budget: 350, actual: 0 },
+      { name: "하나인사이트 관리용역비", budget: 350, actual: 0 },
     ],
     profitRisks: [],
     closeoutDocs: docs(0),
@@ -332,13 +332,13 @@ export const PROJECTS: Project[] = [
     risk: "준공사진 1건만 등록하면 잔금 3,800만 원을 바로 청구할 수 있습니다",
     phases: [
       { name: "현장조사", plannedDate: "2026-05-11", doneDate: "2026-05-11", manager: "김성태 과장", progress: 100, status: "완료" },
-      { name: "요구사항·자료 검토", plannedDate: "2026-05-14", doneDate: "2026-05-14", manager: "하나컨설팅", progress: 100, status: "완료" },
+      { name: "요구사항·자료 검토", plannedDate: "2026-05-14", doneDate: "2026-05-14", manager: "하나인사이트", progress: 100, status: "완료" },
       { name: "견적 확정", plannedDate: "2026-05-18", doneDate: "2026-05-18", manager: "구본석 이사", progress: 100, status: "완료" },
       { name: "자재 발주", plannedDate: "2026-05-25", doneDate: "2026-05-23", manager: "김성태 과장", progress: 100, status: "완료" },
       { name: "배관·배선", plannedDate: "2026-06-19", doneDate: "2026-06-18", manager: "박정호 반장", progress: 100, status: "완료" },
       { name: "장비 설치", plannedDate: "2026-07-08", doneDate: "2026-07-08", manager: "박정호 반장", progress: 100, status: "완료" },
       { name: "시험·검수", plannedDate: "2026-07-17", doneDate: "2026-07-17", manager: "김성태 과장", progress: 100, status: "완료" },
-      { name: "준공자료", plannedDate: "2026-07-29", manager: "하나컨설팅", progress: 90, status: "진행", memo: "준공사진 1건만 남았습니다" },
+      { name: "준공자료", plannedDate: "2026-07-29", manager: "하나인사이트", progress: 90, status: "진행", memo: "준공사진 1건만 남았습니다" },
       { name: "잔금 수금", plannedDate: "2026-08-07", manager: "사무실", progress: 0, status: "대기", memo: "잔금 3,800만 원 청구 가능" },
     ],
     costs: [
@@ -348,7 +348,7 @@ export const PROJECTS: Project[] = [
       { name: "장비비", budget: 330, actual: 315 },
       { name: "차량·운반비", budget: 210, actual: 205 },
       { name: "기타경비", budget: 170, actual: 155 },
-      { name: "하나컨설팅 관리용역비", budget: 200, actual: 200 },
+      { name: "하나인사이트 관리용역비", budget: 200, actual: 200 },
     ],
     profitRisks: [],
     closeoutDocs: docs(0, [1]),
@@ -831,7 +831,7 @@ export const APPROVALS: Approval[] = [
   {
     id: "a4",
     kind: "용역비",
-    title: "서천 장항산단 하나컨설팅 관리용역비",
+    title: "서천 장항산단 하나인사이트 관리용역비",
     desc: "사전검토·공정계획·원가검토·주간보고 4회 기준",
     amount: 740,
     status: "대기",
@@ -955,7 +955,7 @@ export const DOC_CATEGORIES = [
   "준공서류",
   "세금계산서",
   "입금자료",
-  "하나컨설팅 보고서",
+  "하나인사이트 보고서",
 ] as const;
 
 export const DOCUMENTS: DocItem[] = [
@@ -964,17 +964,17 @@ export const DOCUMENTS: DocItem[] = [
   { id: "f3", projectId: "p4", category: "현장사진", name: "군산 외곽 배관 매설 사진 (10장)", date: "2026-07-27", owner: "박정호 반장" },
   { id: "f4", projectId: "p1", category: "현장사진", name: "대천동 3층 배선 사진 (6장)", date: "2026-07-27", owner: "박정호 반장" },
   { id: "f5", projectId: "p1", category: "견적서", name: "대천동 상가 통신배선 견적서.pdf", date: "2026-06-16", owner: "구본석 이사" },
-  { id: "f6", projectId: "p2", category: "하나컨설팅 보고서", name: "서천 전기증설 주간보고서 4주차.pdf", date: "2026-07-25", owner: "하나컨설팅", recentlyOpened: true },
+  { id: "f6", projectId: "p2", category: "하나인사이트 보고서", name: "서천 전기증설 주간보고서 4주차.pdf", date: "2026-07-25", owner: "하나인사이트", recentlyOpened: true },
   { id: "f7", projectId: "p2", category: "발주서", name: "TFR-CV 케이블 발주서.pdf", date: "2026-07-18", owner: "김성태 과장" },
-  { id: "f8", projectId: "p3", category: "준공서류", name: "내포신도시 준공서류 묶음 (5/9)", date: "2026-07-26", owner: "하나컨설팅" },
-  { id: "f9", projectId: "p6", category: "준공서류", name: "보령시 공공시설 준공서류 (8/9)", date: "2026-07-27", owner: "하나컨설팅", recentlyOpened: true },
+  { id: "f8", projectId: "p3", category: "준공서류", name: "내포신도시 준공서류 묶음 (5/9)", date: "2026-07-26", owner: "하나인사이트" },
+  { id: "f9", projectId: "p6", category: "준공서류", name: "보령시 공공시설 준공서류 (8/9)", date: "2026-07-27", owner: "하나인사이트", recentlyOpened: true },
   { id: "f10", projectId: "p6", category: "세금계산서", name: "보령시 중도금 세금계산서.pdf", date: "2026-07-02", owner: "사무실" },
   { id: "f11", projectId: "p5", category: "도면·기술자료", name: "익산 물류창고 전기·통신 도면.dwg", date: "2026-07-21", owner: "구본석 이사" },
   { id: "f12", projectId: "p2", category: "작업일보", name: "서천 B동 작업일보 (7/27)", date: "2026-07-27", owner: "박정호 반장" },
   { id: "f13", projectId: "p10", category: "입금자료", name: "논산 연무농협 중도금 입금내역", date: "2026-06-30", owner: "사무실" },
   { id: "f14", projectId: "p4", category: "추가공사 확인서", name: "CCTV 추가 요청 전화메모 정리본", date: "2026-07-24", owner: "구본석 이사", recentlyOpened: true },
   { id: "f15", category: "견적서", name: "서산 한우정식당 통신·CCTV 견적서.pdf", date: "2026-07-21", owner: "김성태 과장" },
-  { id: "f16", projectId: "p3", category: "하나컨설팅 보고서", name: "내포신도시 준공자료 체크리스트.xlsx", date: "2026-07-24", owner: "하나컨설팅" },
+  { id: "f16", projectId: "p3", category: "하나인사이트 보고서", name: "내포신도시 준공자료 체크리스트.xlsx", date: "2026-07-24", owner: "하나인사이트" },
   { id: "f17", projectId: "p9", category: "거래명세서", name: "서산 중앙상가 거래명세서.pdf", date: "2026-05-18", owner: "사무실" },
-  { id: "f18", projectId: "p5", category: "하나컨설팅 보고서", name: "익산 물류창고 착수검토서.pdf", date: "2026-07-27", owner: "하나컨설팅" },
+  { id: "f18", projectId: "p5", category: "하나인사이트 보고서", name: "익산 물류창고 착수검토서.pdf", date: "2026-07-27", owner: "하나인사이트" },
 ];

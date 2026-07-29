@@ -11,22 +11,22 @@ const ITEMS = [
     icon: PhoneCall,
     tone: "text-primary",
     bg: "bg-primary-light",
-    title: "문의·견적을 놓치지 마세요",
-    desc: "전화로 들어온 문의와 보낸 견적의 다음 행동을 확인하고 바로 처리할 수 있어요.",
+    title: "누가 확인했는지 바로 보여요",
+    desc: "업무를 전달한 뒤 담당자가 열어봤는지, 확인 버튼을 눌렀는지까지 추적합니다.",
   },
   {
     icon: AlertTriangle,
     tone: "text-danger",
     bg: "bg-danger-bg",
-    title: "위험한 항목부터 확인하세요",
-    desc: "미승인 추가공사, 자재 지연, 서류 누락처럼 돈이 걸린 일을 먼저 보여줍니다.",
+    title: "지연과 누락을 먼저 알려줘요",
+    desc: "미확인 업무, 기한 초과, 일정 충돌, 빠진 결과보고를 위험한 순서로 보여줍니다.",
   },
   {
     icon: Wallet,
     tone: "text-success",
     bg: "bg-success-bg",
-    title: "받을 돈을 챙기세요",
-    desc: "청구 가능한 잔금과 미수금을 모아 보여줘 회수 시점을 앞당길 수 있어요.",
+    title: "전화로 받은 지시도 남겨요",
+    desc: "통화 메모를 붙여넣으면 업무와 일정으로 정리돼 담당자에게 바로 전달됩니다.",
   },
 ];
 
@@ -75,7 +75,7 @@ export function GuideOverlay({
           <div>
             <p className="text-[24.8px] font-bold">처음 보셔도 괜찮습니다</p>
             <p className="mt-1 text-[19.5px] leading-relaxed text-ink-2">
-              이 화면은 오늘 처리해야 할 공사 운영 순서를 정리해 보여줍니다.
+              이 화면은 오늘 확인해야 할 업무와 일정을 순서대로 정리해 보여줍니다.
             </p>
           </div>
           <button

@@ -131,7 +131,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
           <div>
             <p className="text-[19px] font-bold">함께하는 곳</p>
             <p className="mt-3 text-[18px] leading-relaxed text-ink-2">
-              <b>하나컨설팅</b>이 프로젝트 기획·운영관리, 자료 정리, 원가 분석을 지원합니다.
+              <b>하나인사이트</b>이 프로젝트 기획·운영관리, 자료 정리, 원가 분석을 지원합니다.
               시공과 준공 책임은 하나정보통신이 담당합니다.
             </p>
             <Link

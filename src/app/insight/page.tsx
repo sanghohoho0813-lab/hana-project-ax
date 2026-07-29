@@ -31,7 +31,7 @@ const DIFFICULTY = [
   { key: "상", add: 100, desc: "복합·대형 공사" },
 ] as const;
 
-/** 하나컨설팅 용역비를 빼기 전의 공사 이익률 가정 */
+/** 하나인사이트 용역비를 빼기 전의 공사 이익률 가정 */
 const GROSS_MARGIN = 0.175;
 
 const STEPS = ["프로젝트 기본정보", "수행 업무", "업무량"] as const;
@@ -147,7 +147,7 @@ export default function ConsultingPage() {
           </span>
           <div>
             <p className="text-[21.8px] font-bold">
-              하나컨설팅 <span className="text-[18.8px] font-semibold text-ink-3">기획·운영·자료관리</span>
+              하나인사이트 <span className="text-[18.8px] font-semibold text-ink-3">기획·운영·자료관리</span>
             </p>
             <p className="mt-1 text-[19.5px] leading-relaxed text-ink-2">
               사전 검토, 공정·일정 관리, 원가 분석, 변경사항 정리, 준공자료 취합을 지원합니다.
@@ -179,7 +179,7 @@ export default function ConsultingPage() {
           {managed.map((p) => (
             <Link
               key={p.id}
-              href={`/projects/${p.id}?tab=consulting`}
+              href={`/projects/${p.id}?tab=insight`}
               className="card card-hover block p-5"
             >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -306,7 +306,7 @@ export default function ConsultingPage() {
 
             {step === 1 && (
               <div className="rise-in">
-                <Field label="하나컨설팅이 수행할 업무" group>
+                <Field label="하나인사이트가 수행할 업무" group>
                   <div className="grid gap-2 pt-1 sm:grid-cols-2">
                     {toggle("사전검토", preReview, setPreReview)}
                     {toggle("공정계획·관리", scheduleMgmt, setScheduleMgmt)}
@@ -393,7 +393,7 @@ export default function ConsultingPage() {
             </div>
 
             <div className="mt-4 border-t border-line pt-4">
-              <p className="text-[19.5px] font-bold">하나컨설팅 예상 용역비</p>
+              <p className="text-[19.5px] font-bold">하나인사이트 예상 용역비</p>
               <p className="mt-1 text-[45px] leading-none font-extrabold tracking-tight text-primary">
                 <CountUp value={calc.total} format={(v) => formatMoney(Math.round(v))} />
               </p>
@@ -424,7 +424,7 @@ export default function ConsultingPage() {
                   <span className="font-semibold">{formatMoney(calc.grossProfit)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-ink-2">하나컨설팅 관리용역비</span>
+                  <span className="text-ink-2">하나인사이트 관리용역비</span>
                   <span className="font-semibold text-danger">-{formatMoney(calc.total)}</span>
                 </div>
                 <div className="flex justify-between border-t border-line pt-2">

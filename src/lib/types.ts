@@ -55,7 +55,7 @@ export interface ProfitRisk {
 export interface ConsultingInfo {
   scope: string[];
   deliverables: string[];
-  fee: number; // 만원 — 원가 항목의 '하나컨설팅 관리용역비'와 반드시 일치
+  fee: number; // 만원 — 원가 항목의 '하나인사이트 관리용역비'와 반드시 일치
   feeStatus: "정산 완료" | "정산 예정" | "미정산";
   reportsThisMonth: number;
 }

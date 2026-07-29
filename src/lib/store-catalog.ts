@@ -51,7 +51,7 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
   },
   {
     key: "consulting",
-    name: "하나컨설팅 연계",
+    name: "하나인사이트 연계",
     short: "컨설팅",
     desc: "공사 전 사전 검토, 공정·자료·원가 관리 지원",
   },
@@ -79,8 +79,8 @@ export interface ServiceItem {
   priceFrom?: number;
   priceNote: string;
   duration: string;
-  /** 시공 주체 — 컨설팅 상품은 하나컨설팅이 운영관리만 담당한다 */
-  provider: "하나정보통신" | "하나컨설팅";
+  /** 시공 주체 — 컨설팅 상품은 하나인사이트가 운영관리만 담당한다 */
+  provider: "하나정보통신" | "하나인사이트";
   popular?: boolean;
   /** 문의 많은 순 정렬용 샘플 지표 */
   inquiryCount: number;
@@ -380,7 +380,7 @@ export const SERVICES: ServiceItem[] = [
       "관급자재가 있는 경우 조달 일정을 함께 확인합니다.",
     ],
     faqs: [
-      { q: "준공서류도 대신 준비해 주시나요?", a: "네, 하나컨설팅과 함께 준공자료를 정리해 제출까지 지원합니다." },
+      { q: "준공서류도 대신 준비해 주시나요?", a: "네, 하나인사이트와 함께 준공자료를 정리해 제출까지 지원합니다." },
       { q: "보령 외 지역도 가능한가요?", a: "충남과 전북 인접 지역까지 대응하고 있습니다." },
     ],
     related: ["project-pre-review", "regular-inspection"],
@@ -421,7 +421,7 @@ export const SERVICES: ServiceItem[] = [
   },
   {
     slug: "project-pre-review",
-    name: "공사 전 사전 검토 (하나컨설팅)",
+    name: "공사 전 사전 검토 (하나인사이트)",
     category: "consulting",
     tagline: "착공 전에 일정과 원가를 먼저 점검합니다.",
     visual: "report",
@@ -429,10 +429,10 @@ export const SERVICES: ServiceItem[] = [
     priceFrom: 120,
     priceNote: "120만 원부터 (공사 규모·기간에 따라 조정)",
     duration: "보통 1주 ~ 2주",
-    provider: "하나컨설팅",
+    provider: "하나인사이트",
     inquiryCount: 15,
     overview:
-      "공사를 시작하기 전에 요구사항과 도면을 검토하고, 공정계획과 예상원가를 정리해 착수검토서로 드립니다. 하나컨설팅은 기획과 운영관리를 담당하며 시공은 하나정보통신이 수행합니다.",
+      "공사를 시작하기 전에 요구사항과 도면을 검토하고, 공정계획과 예상원가를 정리해 착수검토서로 드립니다. 하나인사이트는 기획과 운영관리를 담당하며 시공은 하나정보통신이 수행합니다.",
     fitFor: [
       "여러 업체 견적을 비교하고 싶은 발주처",
       "일정이 빠듯해 공정계획이 필요한 공사",
@@ -448,7 +448,7 @@ export const SERVICES: ServiceItem[] = [
     steps: ["자료 수령", "현장 확인 동행", "검토 및 분석", "착수검토서 작성", "결과 설명"],
     effects: ["착공 후 변경으로 인한 손실 감소", "일정 지연 요인 사전 파악", "원가 기준선 확보"],
     notes: [
-      "하나컨설팅은 프로젝트 기획·운영관리와 자료 정리를 담당합니다. 설계·감리 업무는 수행하지 않습니다.",
+      "하나인사이트는 프로젝트 기획·운영관리와 자료 정리를 담당합니다. 설계·감리 업무는 수행하지 않습니다.",
       "시공과 준공 책임은 하나정보통신이 담당합니다.",
     ],
     faqs: [
@@ -459,7 +459,7 @@ export const SERVICES: ServiceItem[] = [
   },
   {
     slug: "process-doc-support",
-    name: "공정·자료관리 지원 (하나컨설팅)",
+    name: "공정·자료관리 지원 (하나인사이트)",
     category: "consulting",
     tagline: "현장 자료가 흩어지지 않게 주간 단위로 정리합니다.",
     visual: "report",
@@ -467,7 +467,7 @@ export const SERVICES: ServiceItem[] = [
     priceFrom: 150,
     priceNote: "150만 원부터 (기간·보고 횟수에 따라 조정)",
     duration: "공사 기간 동안 (보통 1개월 ~ 3개월)",
-    provider: "하나컨설팅",
+    provider: "하나인사이트",
     inquiryCount: 9,
     overview:
       "공사가 진행되는 동안 공정 현황을 주간으로 정리하고, 현장사진·작업일보·변경사항·준공자료를 프로젝트별로 모읍니다. 준공 시점에 서류가 없어 정산이 늦어지는 일을 막습니다.",
@@ -486,7 +486,7 @@ export const SERVICES: ServiceItem[] = [
     steps: ["관리 범위 협의", "자료 수집 체계 구성", "주간 보고", "변경사항 정리", "준공자료 취합"],
     effects: ["준공서류 누락으로 인한 잔금 지연 방지", "추가공사 미청구 예방", "현장 상황 공유가 쉬워짐"],
     notes: [
-      "하나컨설팅은 자료 정리와 운영관리를 담당하며 직접 시공하지 않습니다.",
+      "하나인사이트는 자료 정리와 운영관리를 담당하며 직접 시공하지 않습니다.",
       "보고 횟수와 방문 횟수에 따라 금액이 달라집니다.",
     ],
     faqs: [
@@ -497,14 +497,14 @@ export const SERVICES: ServiceItem[] = [
   },
   {
     slug: "total-consulting",
-    name: "프로젝트 종합 운영 컨설팅 (하나컨설팅)",
+    name: "프로젝트 종합 운영 컨설팅 (하나인사이트)",
     category: "consulting",
     tagline: "사전 검토부터 손익분석까지 한 번에 맡기세요.",
     visual: "report",
     priceKind: "consult",
     priceNote: "별도 상담",
     duration: "프로젝트 전체 기간",
-    provider: "하나컨설팅",
+    provider: "하나인사이트",
     inquiryCount: 7,
     overview:
       "사전 검토, 공정계획, 원가 분석, 변경사항 관리, 준공자료 취합, 종료 후 손익분석까지 프로젝트 운영 전반을 지원합니다. 업무량과 산출물을 기준으로 용역비를 산정합니다.",
@@ -625,7 +625,7 @@ export const STORE_FAQS: ServiceFaq[] = [
     a: "아닙니다. 전기·통신공사는 현장 상황에 따라 물량이 달라져 시작 금액만 안내드리고, 정확한 금액은 현장 확인 후 견적서로 드립니다.",
   },
   {
-    q: "하나컨설팅은 어떤 일을 하나요?",
+    q: "하나인사이트는 어떤 일을 하나요?",
     a: "프로젝트 기획과 운영관리, 자료 정리, 원가 분석을 지원합니다. 시공과 준공 책임은 하나정보통신이 담당합니다.",
   },
 ];

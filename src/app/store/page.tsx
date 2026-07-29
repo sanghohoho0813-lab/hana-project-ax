@@ -31,7 +31,7 @@ const REGIONS = [
 
 export default function StoreHome() {
   const popular = SERVICES.filter((s) => s.popular).slice(0, 3);
-  const consulting = SERVICES.filter((s) => s.provider === "하나컨설팅");
+  const consulting = SERVICES.filter((s) => s.provider === "하나인사이트");
 
   return (
     <div className="page-in">
@@ -195,19 +195,19 @@ export default function StoreHome() {
         </div>
       </section>
 
-      {/* 하나컨설팅 연계 */}
+      {/* 하나인사이트 연계 */}
       <section className="mx-auto w-full max-w-[1500px] px-4 pb-16 lg:px-8">
         <div className="rounded-3xl border border-line bg-gradient-to-br from-[#f2fbf7] to-white p-8 lg:p-10">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-3xl">
               <span className="inline-block rounded-full bg-success-bg px-4 py-2 text-[18px] font-bold text-success">
-                하나컨설팅 연계 서비스
+                하나인사이트 연계 서비스
               </span>
               <h2 className="mt-4 text-[30px] font-extrabold">
                 공사만이 아니라 프로젝트 관리까지 맡기실 수 있습니다
               </h2>
               <p className="mt-3 text-[20px] leading-relaxed text-ink-2">
-                하나컨설팅이 사전 검토, 공정·자료 관리, 원가 분석을 지원합니다. 시공과
+                하나인사이트가 사전 검토, 공정·자료 관리, 원가 분석을 지원합니다. 시공과
                 준공 책임은 하나정보통신이 담당합니다.
               </p>
             </div>
@@ -219,7 +219,7 @@ export default function StoreHome() {
                 href={`/store/services/${s.slug}`}
                 className="rounded-2xl border border-line bg-white p-6 transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-card-hover)]"
               >
-                <p className="text-[21px] font-extrabold">{s.name.replace(" (하나컨설팅)", "")}</p>
+                <p className="text-[21px] font-extrabold">{s.name.replace(" (하나인사이트)", "")}</p>
                 <p className="mt-2 text-[18.5px] leading-relaxed text-ink-2">{s.tagline}</p>
                 <p className="mt-3 text-[19px] font-bold text-success">
                   {s.priceKind === "from" && s.priceFrom

@@ -204,7 +204,7 @@ export function companyKpi(
   };
 }
 
-/** 하나컨설팅 KPI */
+/** 하나인사이트 KPI */
 export function consultingKpi(projects: Project[]) {
   const managed = projects.filter((p) => p.consulting.scope.length > 0);
   return {

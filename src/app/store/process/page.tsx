@@ -47,7 +47,7 @@ export default function ProcessPage() {
       <section className="mt-14">
         <h2 className="text-[28px] font-extrabold">누가 어떤 일을 하나요?</h2>
         <p className="mt-2 text-[20px] text-ink-2">
-          시공은 하나정보통신이, 프로젝트 기획과 운영관리는 하나컨설팅이 맡습니다.
+          시공은 하나정보통신이, 프로젝트 기획과 운영관리는 하나인사이트가 맡습니다.
         </p>
         <div className="mt-6 grid gap-5 lg:grid-cols-2">
           <div className="rounded-3xl border border-line bg-white p-8">
@@ -76,7 +76,7 @@ export default function ProcessPage() {
                 <Handshake size={28} />
               </span>
               <div>
-                <p className="text-[24px] font-extrabold">하나컨설팅</p>
+                <p className="text-[24px] font-extrabold">하나인사이트</p>
                 <p className="text-[18px] text-ink-3">기획 · 운영관리 · 자료관리</p>
               </div>
             </div>
@@ -89,7 +89,7 @@ export default function ProcessPage() {
               ))}
             </ul>
             <p className="mt-6 rounded-2xl bg-[#f7f8fa] px-5 py-4 text-[17.5px] leading-relaxed text-ink-3">
-              하나컨설팅은 프로젝트 운영을 지원하는 역할이며, 직접 시공하거나 설계·감리
+              하나인사이트는 프로젝트 운영을 지원하는 역할이며, 직접 시공하거나 설계·감리
               업무를 수행하지 않습니다.
             </p>
           </div>

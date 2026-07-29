@@ -123,7 +123,7 @@ export default function ServiceDetailPage() {
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-[19px] font-semibold text-ink-2">수행</span>
                 <span className="inline-flex items-center gap-1.5 text-[20px] font-bold">
-                  {item.provider === "하나컨설팅" ? (
+                  {item.provider === "하나인사이트" ? (
                     <Handshake size={20} className="text-success" />
                   ) : (
                     <Building2 size={20} className="text-primary" />

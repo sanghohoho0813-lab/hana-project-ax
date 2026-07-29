@@ -48,17 +48,25 @@ import {
 } from "@/lib/calc";
 import { Badge, EmptyState, ProgressBar, statusTone, type Tone } from "@/components/ui";
 import { DailyLogModal } from "@/components/modals";
+import { TaskCard, TaskDetailModal } from "@/components/ops";
+import { Timeline } from "@/app/comms/page";
+import { NOW_DATE } from "@/lib/company";
+import { fullName } from "@/lib/team";
+import { isOverdue, isUnacked, needsResultReport, whenLabel } from "@/lib/ops-calc";
+import type { Task } from "@/lib/ops-types";
 import type { ChangeOrderStatus } from "@/lib/types";
 
 const TABS = [
   { key: "summary", label: "요약" },
-  { key: "schedule", label: "공정·일정" },
+  { key: "ops", label: "업무·일정" },
+  { key: "comms", label: "현장소통" },
+  { key: "schedule", label: "공정" },
   { key: "cost", label: "원가·수익" },
   { key: "logs", label: "현장일보·사진" },
   { key: "changes", label: "변경·추가공사" },
   { key: "closeout", label: "준공·정산" },
   { key: "docs", label: "문서" },
-  { key: "consulting", label: "하나컨설팅" },
+  { key: "insight", label: "하나인사이트" },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -104,12 +112,15 @@ function ProjectDetailInner() {
     updateChangeOrder,
     toggleCloseoutDoc,
     showToast,
+    tasks,
+    schedules,
   } = useApp();
   const initialTab = (searchParams.get("tab") as TabKey) || "summary";
   const [tab, setTab] = useState<TabKey>(
     TABS.some((t) => t.key === initialTab) ? initialTab : "summary"
   );
   const [logOpen, setLogOpen] = useState(false);
+  const [openTask, setOpenTask] = useState<Task | null>(null);
 
   const project = projects.find((p) => p.id === params.id);
   const projectChangeOrders = useMemo(
@@ -121,6 +132,11 @@ function ProjectDetailInner() {
     [dailyLogs, params.id]
   );
   const projectDocs = DOCUMENTS.filter((d) => d.projectId === params.id);
+  const projectTasks = tasks.filter((t) => t.projectId === params.id && t.status !== "취소");
+  const projectSchedules = schedules
+    .filter((s) => s.projectId === params.id && s.status !== "취소")
+    .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
+  const nextSchedule = projectSchedules.find((s) => `${s.date}T${s.start}` >= NOW_DATE);
 
   if (!project) {
     return <EmptyState title="프로젝트를 찾을 수 없어요" desc="목록에서 다시 선택해 주세요." />;
@@ -132,7 +148,7 @@ function ProjectDetailInner() {
   const overruns = overrunItems(p).slice(0, 3);
 
   const costChartData = p.costs.map((c) => ({
-    name: c.name.replace("하나컨설팅 관리용역비", "컨설팅 용역비"),
+    name: c.name.replace("하나인사이트 관리용역비", "컨설팅 용역비"),
     "예상원가": c.budget,
     "투입원가": c.actual,
   }));
@@ -239,7 +255,7 @@ function ProjectDetailInner() {
               <Handshake size={26} />
             </span>
             <div>
-              <p className="text-[21.8px] font-bold">하나컨설팅</p>
+              <p className="text-[21.8px] font-bold">하나인사이트</p>
               <p className="text-[18px] text-ink-3">기획·운영·자료관리</p>
             </div>
           </div>
@@ -276,6 +292,31 @@ function ProjectDetailInner() {
       {/* ── 요약 ── */}
       {tab === "summary" && (
         <div className="rise-in space-y-4">
+          {/* 오늘 현장 상황 */}
+          <div className="card p-5">
+            <p className="mb-3 text-[21.8px] font-bold">오늘 이 현장은 이렇습니다</p>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              {[
+                { label: "오늘 현장 일정", value: `${projectSchedules.filter((s) => s.date === NOW_DATE).length}건` },
+                { label: "미확인 업무", value: `${projectTasks.filter(isUnacked).length}건`, tone: projectTasks.filter(isUnacked).length ? "text-danger" : "" },
+                { label: "기한 초과", value: `${projectTasks.filter(isOverdue).length}건`, tone: projectTasks.filter(isOverdue).length ? "text-danger" : "" },
+                { label: "보고 대기", value: `${projectTasks.filter(needsResultReport).length}건`, tone: projectTasks.filter(needsResultReport).length ? "text-warning" : "" },
+                { label: "최근 현장사진", value: `${projectLogs.reduce((s, d) => s + d.photoCount, 0)}장` },
+              ].map((k) => (
+                <div key={k.label} className="rounded-2xl bg-[#f7f8fa] p-4">
+                  <p className="text-[17.5px] text-ink-3">{k.label}</p>
+                  <p className={`mt-1 text-[24px] font-extrabold ${k.tone ?? ""}`}>{k.value}</p>
+                </div>
+              ))}
+            </div>
+            {nextSchedule && (
+              <p className="mt-3 rounded-xl bg-primary-light/60 px-4 py-3 text-[19px] font-semibold text-primary-dark">
+                다음 주요 일정 · {whenLabel(`${nextSchedule.date}T${nextSchedule.start}`)}{" "}
+                {nextSchedule.title} ({fullName(nextSchedule.assigneeId)})
+              </p>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
               {
@@ -339,7 +380,7 @@ function ProjectDetailInner() {
                 ["최초 예상이익", formatMoney(initialProfit(p))],
                 ["현재 예상이익", formatMoney(currentProfit(p))],
                 ["예상이익률", `${profitRate(p)}%`],
-                ["하나컨설팅 관리용역비", p.consulting.fee > 0 ? formatMoney(p.consulting.fee) : "해당 없음"],
+                ["하나인사이트 관리용역비", p.consulting.fee > 0 ? formatMoney(p.consulting.fee) : "해당 없음"],
               ].map(([l, v]) => (
                 <div key={l} className="flex justify-between border-b border-line/70 pb-2">
                   <span className="text-ink-2">{l}</span>
@@ -351,7 +392,69 @@ function ProjectDetailInner() {
         </div>
       )}
 
-      {/* ── 공정·일정 ── */}
+      {/* ── 업무·일정 ── */}
+      {tab === "ops" && (
+        <div className="rise-in space-y-6">
+          <section>
+            <h3 className="mb-3 text-[25.5px] font-bold">
+              이 현장의 업무 <span className="text-ink-3">{projectTasks.length}건</span>
+            </h3>
+            {projectTasks.length === 0 ? (
+              <EmptyState title="등록된 업무가 없어요" desc="업무지시 화면에서 이 프로젝트로 업무를 만들 수 있어요." />
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {projectTasks.map((t) => (
+                  <TaskCard key={t.id} task={t} onOpen={setOpenTask} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-[25.5px] font-bold">
+              현장 일정 <span className="text-ink-3">{projectSchedules.length}건</span>
+            </h3>
+            {projectSchedules.length === 0 ? (
+              <EmptyState title="등록된 일정이 없어요" />
+            ) : (
+              <div className="space-y-2.5">
+                {projectSchedules.map((s) => (
+                  <div key={s.id} className="card flex flex-wrap items-center gap-4 p-5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[21px] font-bold">{s.title}</p>
+                        <Badge tone={s.status === "진행 중" ? "warning" : s.status === "완료" ? "success" : "info"}>
+                          {s.status}
+                        </Badge>
+                        {!s.acknowledgedAt && <Badge tone="danger">미확인</Badge>}
+                      </div>
+                      <p className="mt-1 text-[18.5px] text-ink-3">
+                        {whenLabel(`${s.date}T${s.start}`)} ~ {s.end} · {s.region} ·{" "}
+                        {fullName(s.assigneeId)}
+                      </p>
+                    </div>
+                    <Link
+                      href="/schedule"
+                      className="shrink-0 rounded-xl bg-[#f2f4f6] px-4 py-3 text-[18.5px] font-bold text-ink-2 transition-colors hover:bg-[#e8ebee]"
+                    >
+                      일정 화면
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* ── 현장소통 ── */}
+      {tab === "comms" && (
+        <div className="rise-in">
+          <Timeline projectId={p.id} />
+        </div>
+      )}
+
+      {/* ── 공정 ── */}
       {tab === "schedule" && (
         <div className="rise-in space-y-2.5">
           {p.phases.length === 0 ? (
@@ -785,12 +888,12 @@ function ProjectDetailInner() {
         </div>
       )}
 
-      {/* ── 하나컨설팅 ── */}
-      {tab === "consulting" && (
+      {/* ── 하나인사이트 ── */}
+      {tab === "insight" && (
         <div className="rise-in space-y-4">
           {p.consulting.scope.length === 0 ? (
             <EmptyState
-              title="하나컨설팅 관리 대상이 아닌 프로젝트예요"
+              title="하나인사이트 관리 대상이 아닌 프로젝트예요"
               desc="이 공사는 하나정보통신이 자체 관리했습니다."
             />
           ) : (
@@ -806,7 +909,7 @@ function ProjectDetailInner() {
                     ))}
                   </div>
                   <p className="mt-4 text-[18.8px] leading-relaxed text-ink-3">
-                    하나컨설팅은 프로젝트 기획·운영관리와 자료·원가 관리를 지원합니다. 시공,
+                    하나인사이트는 프로젝트 기획·운영관리와 자료·원가 관리를 지원합니다. 시공,
                     안전관리, 준공 책임은 하나정보통신이 담당합니다.
                   </p>
                 </div>
@@ -843,7 +946,7 @@ function ProjectDetailInner() {
                   {p.consulting.feeStatus}
                 </Badge>
                 <Link
-                  href="/consulting"
+                  href="/insight"
                   className="rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[19.5px] font-semibold text-ink-2 transition-colors hover:bg-[#e8ebee]"
                 >
                   용역비 계산기 열기
@@ -855,6 +958,7 @@ function ProjectDetailInner() {
       )}
 
       <DailyLogModal open={logOpen} onClose={() => setLogOpen(false)} defaultProjectId={p.id} />
+      <TaskDetailModal task={openTask} onClose={() => setOpenTask(null)} />
     </div>
   );
 }

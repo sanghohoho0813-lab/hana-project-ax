@@ -7,7 +7,7 @@ import { FONT_SCALE_BOOTSTRAP } from "@/components/FontScale";
 export const metadata: Metadata = {
   title: "하나 프로젝트 AX",
   description:
-    "전기·통신공사 문의부터 견적, 현장, 준공, 수금까지 한 번에 — 하나정보통신 × 하나컨설팅",
+    "전기·통신공사 문의부터 견적, 현장, 준공, 수금까지 한 번에 — 하나정보통신 × 하나인사이트",
 };
 
 export const viewport: Viewport = {

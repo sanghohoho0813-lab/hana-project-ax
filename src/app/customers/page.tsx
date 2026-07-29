@@ -204,7 +204,7 @@ export default function CustomersPage() {
                 <ul className="space-y-1 text-ink-2">
                   <li>· {draft.recommend} 및 현장 점검</li>
                   <li>· 노후 자재 교체 여부 확인 후 견적 제공</li>
-                  <li>· 시공은 하나정보통신, 일정·자료 정리는 하나컨설팅이 지원</li>
+                  <li>· 시공은 하나정보통신, 일정·자료 정리는 하나인사이트가 지원</li>
                 </ul>
               </div>
               <div>
