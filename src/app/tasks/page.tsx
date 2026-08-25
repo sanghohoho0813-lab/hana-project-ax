@@ -2,7 +2,7 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Phone, Plus } from "lucide-react";
+import { ListChecks, Phone, Plus } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { MEMBERS } from "@/lib/team";
 import { awaitingReview, isOverdue, isUnacked, needsResultReport } from "@/lib/ops-calc";
@@ -145,7 +145,11 @@ function TasksInner() {
       </div>
 
       {list.length === 0 ? (
-        <EmptyState title="해당하는 업무가 없어요" desc="다른 조건으로 다시 찾아보세요." />
+        <EmptyState
+          icon={<ListChecks size={30} />}
+          title="해당하는 업무가 없어요"
+          desc="다른 조건으로 다시 찾아보세요."
+        />
       ) : (
         <div className="stagger grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {list.map((t) => (

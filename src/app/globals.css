@@ -19,12 +19,14 @@
   --color-info: #1b64da;
   --color-info-bg: #e8f1fe;
 
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system,
-    BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI",
-    Roboto, sans-serif;
+  --font-sans:
+    "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", "Segoe UI", Roboto, sans-serif;
 
-  --shadow-card: 0 1px 3px rgba(25, 31, 40, 0.06), 0 1px 2px rgba(25, 31, 40, 0.04);
-  --shadow-card-hover: 0 10px 24px rgba(25, 31, 40, 0.1), 0 3px 8px rgba(25, 31, 40, 0.06);
+  --shadow-card:
+    0 1px 3px rgba(25, 31, 40, 0.06), 0 1px 2px rgba(25, 31, 40, 0.04);
+  --shadow-card-hover:
+    0 10px 24px rgba(25, 31, 40, 0.1), 0 3px 8px rgba(25, 31, 40, 0.06);
   --shadow-modal: 0 24px 64px rgba(25, 31, 40, 0.22);
 }
 
@@ -57,13 +59,17 @@ body {
   font-size: 22.5px;
   -webkit-font-smoothing: antialiased;
   font-family: var(--font-sans);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .card {
   background: var(--color-surface);
   border-radius: 20px;
   box-shadow: var(--shadow-card);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
 .card-hover:hover {
   transform: translateY(-3px);
@@ -74,39 +80,69 @@ body {
 }
 
 @keyframes soft-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.16), var(--shadow-card); }
-  50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.05), var(--shadow-card); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(220, 38, 38, 0.16),
+      var(--shadow-card);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(220, 38, 38, 0.05),
+      var(--shadow-card);
+  }
 }
 .pulse-danger {
   animation: soft-pulse 2.4s ease-in-out infinite;
 }
 
 @keyframes page-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .page-in {
-  animation: page-in 0.28s ease both;
+  /* fill-mode를 두지 않는다 — transform이 남으면 내부 fixed 모달의 기준이 어긋난다 */
+  animation: page-in 0.28s ease;
 }
 
 @keyframes bar-fill {
-  from { width: 0; }
+  from {
+    width: 0;
+  }
 }
 .bar-fill {
   animation: bar-fill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .rise-in {
-  animation: rise-in 0.4s ease both;
+  animation: rise-in 0.4s ease;
 }
 
 @keyframes toast-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .toast-in {
   animation: toast-in 0.24s ease both;
@@ -127,49 +163,107 @@ body {
 /* ── 브리핑 히어로 (네이비) ───────────────────── */
 .hero-navy {
   background:
-    radial-gradient(1100px 380px at 88% -30%, rgba(49, 130, 246, 0.5), transparent 62%),
+    radial-gradient(
+      1100px 380px at 88% -30%,
+      rgba(49, 130, 246, 0.5),
+      transparent 62%
+    ),
     linear-gradient(135deg, #16233c 0%, #1d3054 52%, #24406e 100%);
 }
 
 /* ── 모션 규칙 ────────────────────────────────── */
 @keyframes stagger-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .stagger > * {
-  animation: stagger-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: stagger-in 0.34s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
-.stagger > *:nth-child(1) { animation-delay: 0.02s; }
-.stagger > *:nth-child(2) { animation-delay: 0.07s; }
-.stagger > *:nth-child(3) { animation-delay: 0.12s; }
-.stagger > *:nth-child(4) { animation-delay: 0.17s; }
-.stagger > *:nth-child(5) { animation-delay: 0.22s; }
-.stagger > *:nth-child(6) { animation-delay: 0.27s; }
-.stagger > *:nth-child(7) { animation-delay: 0.32s; }
-.stagger > *:nth-child(8) { animation-delay: 0.37s; }
+.stagger > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.07s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.17s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.22s;
+}
+.stagger > *:nth-child(6) {
+  animation-delay: 0.27s;
+}
+.stagger > *:nth-child(7) {
+  animation-delay: 0.32s;
+}
+.stagger > *:nth-child(8) {
+  animation-delay: 0.37s;
+}
 
 @keyframes overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
-.overlay-in { animation: overlay-in 0.18s ease both; }
+.overlay-in {
+  animation: overlay-in 0.18s ease both;
+}
 
 @keyframes modal-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.975); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-.modal-in { animation: modal-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.modal-in {
+  animation: modal-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 @keyframes float-in {
-  from { opacity: 0; transform: translateY(16px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-.float-in { animation: float-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.float-in {
+  animation: float-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 /* 완료 처리 시 부드럽게 사라짐 */
 @keyframes collapse-out {
-  from { opacity: 1; transform: scale(1); max-height: 260px; margin-bottom: 10px; }
-  to { opacity: 0; transform: scale(0.97); max-height: 0; margin-bottom: 0; }
+  from {
+    opacity: 1;
+    transform: scale(1);
+    max-height: 260px;
+    margin-bottom: 10px;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+    max-height: 0;
+    margin-bottom: 0;
+  }
 }
 .collapse-out {
   animation: collapse-out 0.32s ease forwards;
@@ -177,8 +271,45 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 키보드 포커스 ─────────────────────────────── */
+:focus-visible {
+  outline: 3px solid rgba(49, 130, 246, 0.55);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ── 인쇄: AX 리포트만 A4로 ───────────────────── */
+@media print {
+  html {
+    zoom: 1 !important;
+  }
+  body * {
+    visibility: hidden !important;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+  .print-area {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 14mm !important;
+    font-size: 12pt;
+  }
+  .print-hide {
+    display: none !important;
   }
 }

@@ -46,13 +46,24 @@ import {
   totalActual,
   totalBudget,
 } from "@/lib/calc";
-import { Badge, EmptyState, ProgressBar, statusTone, type Tone } from "@/components/ui";
+import {
+  Badge,
+  EmptyState,
+  ProgressBar,
+  statusTone,
+  type Tone,
+} from "@/components/ui";
 import { DailyLogModal } from "@/components/modals";
 import { TaskCard, TaskDetailModal } from "@/components/ops";
 import { Timeline } from "@/app/comms/page";
 import { NOW_DATE } from "@/lib/company";
 import { fullName } from "@/lib/team";
-import { isOverdue, isUnacked, needsResultReport, whenLabel } from "@/lib/ops-calc";
+import {
+  isOverdue,
+  isUnacked,
+  needsResultReport,
+  whenLabel,
+} from "@/lib/ops-calc";
 import type { Task } from "@/lib/ops-types";
 import type { ChangeOrderStatus } from "@/lib/types";
 
@@ -117,7 +128,7 @@ function ProjectDetailInner() {
   } = useApp();
   const initialTab = (searchParams.get("tab") as TabKey) || "summary";
   const [tab, setTab] = useState<TabKey>(
-    TABS.some((t) => t.key === initialTab) ? initialTab : "summary"
+    TABS.some((t) => t.key === initialTab) ? initialTab : "summary",
   );
   const [logOpen, setLogOpen] = useState(false);
   const [openTask, setOpenTask] = useState<Task | null>(null);
@@ -125,21 +136,30 @@ function ProjectDetailInner() {
   const project = projects.find((p) => p.id === params.id);
   const projectChangeOrders = useMemo(
     () => changeOrders.filter((c) => c.projectId === params.id),
-    [changeOrders, params.id]
+    [changeOrders, params.id],
   );
   const projectLogs = useMemo(
     () => dailyLogs.filter((d) => d.projectId === params.id),
-    [dailyLogs, params.id]
+    [dailyLogs, params.id],
   );
   const projectDocs = DOCUMENTS.filter((d) => d.projectId === params.id);
-  const projectTasks = tasks.filter((t) => t.projectId === params.id && t.status !== "취소");
+  const projectTasks = tasks.filter(
+    (t) => t.projectId === params.id && t.status !== "취소",
+  );
   const projectSchedules = schedules
     .filter((s) => s.projectId === params.id && s.status !== "취소")
     .sort((a, b) => `${a.date}${a.start}`.localeCompare(`${b.date}${b.start}`));
-  const nextSchedule = projectSchedules.find((s) => `${s.date}T${s.start}` >= NOW_DATE);
+  const nextSchedule = projectSchedules.find(
+    (s) => `${s.date}T${s.start}` >= NOW_DATE,
+  );
 
   if (!project) {
-    return <EmptyState title="프로젝트를 찾을 수 없어요" desc="목록에서 다시 선택해 주세요." />;
+    return (
+      <EmptyState
+        title="프로젝트를 찾을 수 없어요"
+        desc="목록에서 다시 선택해 주세요."
+      />
+    );
   }
 
   const p = project;
@@ -149,8 +169,8 @@ function ProjectDetailInner() {
 
   const costChartData = p.costs.map((c) => ({
     name: c.name.replace("하나인사이트 관리용역비", "컨설팅 용역비"),
-    "예상원가": c.budget,
-    "투입원가": c.actual,
+    예상원가: c.budget,
+    투입원가: c.actual,
   }));
 
   return (
@@ -172,7 +192,8 @@ function ProjectDetailInner() {
             </div>
             <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-[19.5px] text-ink-2">
               <span className="inline-flex items-center gap-1">
-                <MapPin size={20} className="text-ink-3" /> {p.region} · {p.workType}
+                <MapPin size={20} className="text-ink-3" /> {p.region} ·{" "}
+                {p.workType}
               </span>
               <span className="inline-flex items-center gap-1">
                 <CalendarDays size={20} className="text-ink-3" /> {p.period}
@@ -207,7 +228,9 @@ function ProjectDetailInner() {
             </div>
             <div>
               <p className="text-[17.2px] text-ink-3">진행률</p>
-              <p className="text-[28.5px] font-extrabold tracking-tight">{p.progress}%</p>
+              <p className="text-[28.5px] font-extrabold tracking-tight">
+                {p.progress}%
+              </p>
             </div>
             <div>
               <p className="text-[17.2px] text-ink-3">현재 예상이익</p>
@@ -220,7 +243,13 @@ function ProjectDetailInner() {
         <div className="mt-5">
           <ProgressBar
             value={p.progress}
-            tone={p.statusKey === "delayed" ? "danger" : p.statusKey === "done" ? "success" : "info"}
+            tone={
+              p.statusKey === "delayed"
+                ? "danger"
+                : p.statusKey === "done"
+                  ? "success"
+                  : "info"
+            }
             thick
           />
         </div>
@@ -273,14 +302,16 @@ function ProjectDetailInner() {
       </div>
 
       {/* 탭 */}
-      <div className="-mx-4 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+      <div className="sticky top-[5.2rem] z-10 -mx-4 overflow-x-auto bg-bg/95 px-4 py-1 backdrop-blur lg:mx-0 lg:px-0">
         <div className="flex min-w-max gap-1.5 rounded-2xl bg-[#e8ebee] p-1.5">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`rounded-xl px-3.5 py-2 text-[20.2px] font-semibold whitespace-nowrap transition-all ${
-                tab === t.key ? "bg-white text-ink shadow-sm" : "text-ink-3 hover:text-ink-2"
+                tab === t.key
+                  ? "bg-white text-ink shadow-sm"
+                  : "text-ink-3 hover:text-ink-2"
               }`}
             >
               {t.label}
@@ -294,24 +325,55 @@ function ProjectDetailInner() {
         <div className="rise-in space-y-4">
           {/* 오늘 현장 상황 */}
           <div className="card p-5">
-            <p className="mb-3 text-[21.8px] font-bold">오늘 이 현장은 이렇습니다</p>
+            <p className="mb-3 text-[21.8px] font-bold">
+              오늘 이 현장은 이렇습니다
+            </p>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
               {[
-                { label: "오늘 현장 일정", value: `${projectSchedules.filter((s) => s.date === NOW_DATE).length}건` },
-                { label: "미확인 업무", value: `${projectTasks.filter(isUnacked).length}건`, tone: projectTasks.filter(isUnacked).length ? "text-danger" : "" },
-                { label: "기한 초과", value: `${projectTasks.filter(isOverdue).length}건`, tone: projectTasks.filter(isOverdue).length ? "text-danger" : "" },
-                { label: "보고 대기", value: `${projectTasks.filter(needsResultReport).length}건`, tone: projectTasks.filter(needsResultReport).length ? "text-warning" : "" },
-                { label: "최근 현장사진", value: `${projectLogs.reduce((s, d) => s + d.photoCount, 0)}장` },
+                {
+                  label: "오늘 현장 일정",
+                  value: `${projectSchedules.filter((s) => s.date === NOW_DATE).length}건`,
+                },
+                {
+                  label: "미확인 업무",
+                  value: `${projectTasks.filter(isUnacked).length}건`,
+                  tone: projectTasks.filter(isUnacked).length
+                    ? "text-danger"
+                    : "",
+                },
+                {
+                  label: "기한 초과",
+                  value: `${projectTasks.filter(isOverdue).length}건`,
+                  tone: projectTasks.filter(isOverdue).length
+                    ? "text-danger"
+                    : "",
+                },
+                {
+                  label: "보고 대기",
+                  value: `${projectTasks.filter(needsResultReport).length}건`,
+                  tone: projectTasks.filter(needsResultReport).length
+                    ? "text-warning"
+                    : "",
+                },
+                {
+                  label: "최근 현장사진",
+                  value: `${projectLogs.reduce((s, d) => s + d.photoCount, 0)}장`,
+                },
               ].map((k) => (
                 <div key={k.label} className="rounded-2xl bg-[#f7f8fa] p-4">
                   <p className="text-[17.5px] text-ink-3">{k.label}</p>
-                  <p className={`mt-1 text-[24px] font-extrabold ${k.tone ?? ""}`}>{k.value}</p>
+                  <p
+                    className={`mt-1 text-[24px] font-extrabold ${k.tone ?? ""}`}
+                  >
+                    {k.value}
+                  </p>
                 </div>
               ))}
             </div>
             {nextSchedule && (
               <p className="mt-3 rounded-xl bg-primary-light/60 px-4 py-3 text-[19px] font-semibold text-primary-dark">
-                다음 주요 일정 · {whenLabel(`${nextSchedule.date}T${nextSchedule.start}`)}{" "}
+                다음 주요 일정 ·{" "}
+                {whenLabel(`${nextSchedule.date}T${nextSchedule.start}`)}{" "}
                 {nextSchedule.title} ({fullName(nextSchedule.assigneeId)})
               </p>
             )}
@@ -325,21 +387,32 @@ function ProjectDetailInner() {
                 sub: `공정률 ${p.progress}%`,
                 warn: isCostRisk(p),
               },
-              { label: "수금률", value: `${collectRate(p)}%`, sub: `입금 ${formatMoney(p.payment.received)}` },
+              {
+                label: "수금률",
+                value: `${collectRate(p)}%`,
+                sub: `입금 ${formatMoney(p.payment.received)}`,
+              },
               {
                 label: "미수금",
                 value: receivable(p) > 0 ? formatMoney(receivable(p)) : "없음",
-                sub: p.payment.overdueDays ? `기일 ${p.payment.overdueDays}일 경과` : "정상",
+                sub: p.payment.overdueDays
+                  ? `기일 ${p.payment.overdueDays}일 경과`
+                  : "정상",
                 warn: receivable(p) > 0,
               },
               {
                 label: "준공서류",
                 value: `${doneDocs}/${p.closeoutDocs.length}`,
-                sub: doneDocs === p.closeoutDocs.length ? "제출 준비 완료" : "누락 확인 필요",
+                sub:
+                  doneDocs === p.closeoutDocs.length
+                    ? "제출 준비 완료"
+                    : "누락 확인 필요",
               },
             ].map((k) => (
               <div key={k.label} className="card p-4.5">
-                <p className="text-[18.8px] font-semibold text-ink-3">{k.label}</p>
+                <p className="text-[18.8px] font-semibold text-ink-3">
+                  {k.label}
+                </p>
                 <p
                   className={`mt-1 text-[28.5px] font-extrabold tracking-tight ${k.warn ? "text-danger" : ""}`}
                 >
@@ -353,8 +426,8 @@ function ProjectDetailInner() {
           {isCostRisk(p) && (
             <div className="card border border-danger/15 p-5">
               <p className="flex items-center gap-2 text-[21.8px] font-bold text-danger">
-                <AlertTriangle size={24} /> 공사는 {p.progress}% 진행됐지만 원가는 {inputRate}%
-                투입됐습니다.
+                <AlertTriangle size={24} /> 공사는 {p.progress}% 진행됐지만
+                원가는 {inputRate}% 투입됐습니다.
               </p>
               <p className="mt-1.5 text-[20.2px] text-ink-2">
                 자재비와 외주비를 확인하세요. 지금 추세면 예상이익이{" "}
@@ -370,7 +443,9 @@ function ProjectDetailInner() {
           )}
 
           <div className="card p-5">
-            <p className="mb-3 text-[21.8px] font-bold">이 프로젝트 한눈에 보기</p>
+            <p className="mb-3 text-[21.8px] font-bold">
+              이 프로젝트 한눈에 보기
+            </p>
             <div className="grid gap-x-8 gap-y-2.5 text-[20.2px] sm:grid-cols-2">
               {[
                 ["계약금액", formatMoney(p.contractAmount)],
@@ -380,9 +455,17 @@ function ProjectDetailInner() {
                 ["최초 예상이익", formatMoney(initialProfit(p))],
                 ["현재 예상이익", formatMoney(currentProfit(p))],
                 ["예상이익률", `${profitRate(p)}%`],
-                ["하나인사이트 관리용역비", p.consulting.fee > 0 ? formatMoney(p.consulting.fee) : "해당 없음"],
+                [
+                  "하나인사이트 관리용역비",
+                  p.consulting.fee > 0
+                    ? formatMoney(p.consulting.fee)
+                    : "해당 없음",
+                ],
               ].map(([l, v]) => (
-                <div key={l} className="flex justify-between border-b border-line/70 pb-2">
+                <div
+                  key={l}
+                  className="flex justify-between border-b border-line/70 pb-2"
+                >
                   <span className="text-ink-2">{l}</span>
                   <span className="font-bold">{v}</span>
                 </div>
@@ -397,10 +480,14 @@ function ProjectDetailInner() {
         <div className="rise-in space-y-6">
           <section>
             <h3 className="mb-3 text-[25.5px] font-bold">
-              이 현장의 업무 <span className="text-ink-3">{projectTasks.length}건</span>
+              이 현장의 업무{" "}
+              <span className="text-ink-3">{projectTasks.length}건</span>
             </h3>
             {projectTasks.length === 0 ? (
-              <EmptyState title="등록된 업무가 없어요" desc="업무지시 화면에서 이 프로젝트로 업무를 만들 수 있어요." />
+              <EmptyState
+                title="등록된 업무가 없어요"
+                desc="업무지시 화면에서 이 프로젝트로 업무를 만들 수 있어요."
+              />
             ) : (
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {projectTasks.map((t) => (
@@ -412,25 +499,39 @@ function ProjectDetailInner() {
 
           <section>
             <h3 className="mb-3 text-[25.5px] font-bold">
-              현장 일정 <span className="text-ink-3">{projectSchedules.length}건</span>
+              현장 일정{" "}
+              <span className="text-ink-3">{projectSchedules.length}건</span>
             </h3>
             {projectSchedules.length === 0 ? (
               <EmptyState title="등록된 일정이 없어요" />
             ) : (
               <div className="space-y-2.5">
                 {projectSchedules.map((s) => (
-                  <div key={s.id} className="card flex flex-wrap items-center gap-4 p-5">
+                  <div
+                    key={s.id}
+                    className="card flex flex-wrap items-center gap-4 p-5"
+                  >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-[21px] font-bold">{s.title}</p>
-                        <Badge tone={s.status === "진행 중" ? "warning" : s.status === "완료" ? "success" : "info"}>
+                        <Badge
+                          tone={
+                            s.status === "진행 중"
+                              ? "warning"
+                              : s.status === "완료"
+                                ? "success"
+                                : "info"
+                          }
+                        >
                           {s.status}
                         </Badge>
-                        {!s.acknowledgedAt && <Badge tone="danger">미확인</Badge>}
+                        {!s.acknowledgedAt && (
+                          <Badge tone="danger">미확인</Badge>
+                        )}
                       </div>
                       <p className="mt-1 text-[18.5px] text-ink-3">
-                        {whenLabel(`${s.date}T${s.start}`)} ~ {s.end} · {s.region} ·{" "}
-                        {fullName(s.assigneeId)}
+                        {whenLabel(`${s.date}T${s.start}`)} ~ {s.end} ·{" "}
+                        {s.region} · {fullName(s.assigneeId)}
                       </p>
                     </div>
                     <Link
@@ -458,7 +559,10 @@ function ProjectDetailInner() {
       {tab === "schedule" && (
         <div className="rise-in space-y-2.5">
           {p.phases.length === 0 ? (
-            <EmptyState title="완료된 프로젝트입니다" desc="공정 기록은 문서함에 보관돼 있어요." />
+            <EmptyState
+              title="완료된 프로젝트입니다"
+              desc="공정 기록은 문서함에 보관돼 있어요."
+            />
           ) : (
             p.phases.map((ph, i) => (
               <div key={ph.name} className="card flex items-center gap-4 p-4.5">
@@ -485,7 +589,8 @@ function ProjectDetailInner() {
                   </div>
                   <p className="mt-0.5 text-[18.8px] text-ink-3">
                     예정 {formatDate(ph.plannedDate)}
-                    {ph.doneDate && ` · 완료 ${formatDate(ph.doneDate)}`} · {ph.manager}
+                    {ph.doneDate && ` · 완료 ${formatDate(ph.doneDate)}`} ·{" "}
+                    {ph.manager}
                     {ph.memo && ` · ${ph.memo}`}
                   </p>
                 </div>
@@ -496,7 +601,11 @@ function ProjectDetailInner() {
                   <ProgressBar
                     value={ph.progress}
                     tone={
-                      ph.status === "지연" ? "danger" : ph.status === "완료" ? "success" : "info"
+                      ph.status === "지연"
+                        ? "danger"
+                        : ph.status === "완료"
+                          ? "success"
+                          : "info"
                     }
                   />
                 </div>
@@ -516,13 +625,21 @@ function ProjectDetailInner() {
                 {
                   label: "원가 투입률",
                   value: inputRate,
-                  tone: (isCostRisk(p) ? "danger" : "warning") as "danger" | "warning",
+                  tone: (isCostRisk(p) ? "danger" : "warning") as
+                    | "danger"
+                    | "warning",
                 },
-                { label: "수금률", value: collectRate(p), tone: "success" as const },
+                {
+                  label: "수금률",
+                  value: collectRate(p),
+                  tone: "success" as const,
+                },
               ].map((m) => (
                 <div key={m.label} className="rounded-2xl bg-[#f7f8fa] p-4">
                   <div className="mb-2 flex items-baseline justify-between">
-                    <span className="text-[19.5px] font-semibold text-ink-2">{m.label}</span>
+                    <span className="text-[19.5px] font-semibold text-ink-2">
+                      {m.label}
+                    </span>
                     <span
                       className={`text-[39px] leading-none font-extrabold tracking-tight ${
                         m.tone === "danger" ? "text-danger" : ""
@@ -539,8 +656,8 @@ function ProjectDetailInner() {
             {isCostRisk(p) && (
               <div className="mt-4 rounded-2xl border border-danger/15 bg-danger-bg/50 p-5">
                 <p className="flex items-center gap-2 text-[21.8px] font-bold text-danger">
-                  <AlertTriangle size={24} /> 공사는 {p.progress}% 진행됐지만 원가는{" "}
-                  {inputRate}% 투입됐습니다.
+                  <AlertTriangle size={24} /> 공사는 {p.progress}% 진행됐지만
+                  원가는 {inputRate}% 투입됐습니다.
                 </p>
                 <div className="mt-3 space-y-1.5">
                   {overruns.map((o) => (
@@ -552,7 +669,9 @@ function ProjectDetailInner() {
                       <span className="text-ink-3">
                         공정률 기준 {formatMoney(o.expected)} → 실제{" "}
                         <b className="text-ink">{formatMoney(o.actual)}</b>
-                        <b className="ml-2 text-danger">+{formatMoney(o.over)}</b>
+                        <b className="ml-2 text-danger">
+                          +{formatMoney(o.over)}
+                        </b>
                       </span>
                     </div>
                   ))}
@@ -583,11 +702,15 @@ function ProjectDetailInner() {
               <div className="space-y-2 text-[20.2px]">
                 <div className="flex justify-between">
                   <span className="text-ink-2">최초 예상이익</span>
-                  <span className="font-semibold">{formatMoney(initialProfit(p))}</span>
+                  <span className="font-semibold">
+                    {formatMoney(initialProfit(p))}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-ink-2">현재 예상이익</span>
-                  <span className="font-extrabold">{formatMoney(currentProfit(p))}</span>
+                  <span className="font-extrabold">
+                    {formatMoney(currentProfit(p))}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-ink-2">예상이익률</span>
@@ -595,11 +718,18 @@ function ProjectDetailInner() {
                 </div>
                 {p.profitRisks.length > 0 && (
                   <div className="mt-2 space-y-1.5 border-t border-line pt-3">
-                    <p className="text-[18.8px] font-bold text-ink-3">감소 원인</p>
+                    <p className="text-[18.8px] font-bold text-ink-3">
+                      감소 원인
+                    </p>
                     {p.profitRisks.map((r) => (
-                      <div key={r.reason} className="flex justify-between text-[19.5px]">
+                      <div
+                        key={r.reason}
+                        className="flex justify-between text-[19.5px]"
+                      >
                         <span className="text-ink-2">{r.reason}</span>
-                        <span className="font-bold text-danger">-{formatMoney(r.amount)}</span>
+                        <span className="font-bold text-danger">
+                          -{formatMoney(r.amount)}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -614,8 +744,15 @@ function ProjectDetailInner() {
             <div className="w-full overflow-x-auto">
               <div className="h-72 min-w-[840px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={costChartData} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#eceff2" vertical={false} />
+                  <BarChart
+                    data={costChartData}
+                    margin={{ top: 4, right: 8, left: 0, bottom: 4 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#eceff2"
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="name"
                       tick={{ fontSize: 16.5, fill: "#8b95a1" }}
@@ -640,8 +777,18 @@ function ProjectDetailInner() {
                       }}
                     />
                     <Legend wrapperStyle={{ fontSize: 18.8 }} />
-                    <Bar dataKey="예상원가" fill="#b0b8c1" radius={[4, 4, 0, 0]} maxBarSize={22} />
-                    <Bar dataKey="투입원가" fill="#3182f6" radius={[4, 4, 0, 0]} maxBarSize={22} />
+                    <Bar
+                      dataKey="예상원가"
+                      fill="#b0b8c1"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={22}
+                    />
+                    <Bar
+                      dataKey="투입원가"
+                      fill="#3182f6"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={22}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -670,13 +817,19 @@ function ProjectDetailInner() {
             projectLogs.map((d) => (
               <div key={d.id} className="card p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-[21.8px] font-bold">{formatDate(d.date)}</p>
+                  <p className="text-[21.8px] font-bold">
+                    {formatDate(d.date)}
+                  </p>
                   <span className="text-[18.8px] text-ink-3">
                     인원 {d.headcount}명 · {d.hours}시간
                   </span>
                 </div>
                 <p className="mt-2 text-[21px]">{d.work}</p>
-                {d.materials && <p className="mt-1 text-[19.5px] text-ink-2">자재: {d.materials}</p>}
+                {d.materials && (
+                  <p className="mt-1 text-[19.5px] text-ink-2">
+                    자재: {d.materials}
+                  </p>
+                )}
                 {d.issues && (
                   <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-warning-bg px-2.5 py-1.5 text-[18.8px] font-semibold text-warning">
                     <AlertTriangle size={18} /> {d.issues}
@@ -699,7 +852,9 @@ function ProjectDetailInner() {
                 </div>
                 {d.aiReport && (
                   <div className="mt-3 rounded-xl bg-primary-light/60 p-3.5 text-[20.2px] leading-relaxed">
-                    <span className="font-bold text-primary-dark">AI 보고서 · </span>
+                    <span className="font-bold text-primary-dark">
+                      AI 보고서 ·{" "}
+                    </span>
                     {d.aiReport}
                   </div>
                 )}
@@ -726,7 +881,9 @@ function ProjectDetailInner() {
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[21.8px] font-bold">{c.content}</p>
                   <Badge tone={coTone(c.status)}>{c.status}</Badge>
-                  {c.verbalOnly && <Badge tone="danger">전화 요청 · 서면 미승인</Badge>}
+                  {c.verbalOnly && (
+                    <Badge tone="danger">전화 요청 · 서면 미승인</Badge>
+                  )}
                 </div>
                 <p className="mt-1 text-[18.8px] text-ink-3">
                   {formatDate(c.requestDate)} · 요청자 {c.requester}
@@ -736,9 +893,16 @@ function ProjectDetailInner() {
                   {[
                     { label: "예상 추가매출", v: c.addRevenue },
                     { label: "예상 추가원가", v: c.addCost },
-                    { label: "남는 돈", v: c.addRevenue - c.addCost, accent: true },
+                    {
+                      label: "남는 돈",
+                      v: c.addRevenue - c.addCost,
+                      accent: true,
+                    },
                   ].map((x) => (
-                    <div key={x.label} className="rounded-xl bg-[#f7f8fa] p-3.5">
+                    <div
+                      key={x.label}
+                      className="rounded-xl bg-[#f7f8fa] p-3.5"
+                    >
                       <p className="text-[17.2px] text-ink-3">{x.label}</p>
                       <p
                         className={`mt-0.5 text-[22.5px] font-extrabold ${x.accent ? "text-success" : ""}`}
@@ -751,7 +915,8 @@ function ProjectDetailInner() {
                 {c.verbalOnly && (
                   <div className="mt-3.5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-danger-bg px-4 py-3.5">
                     <p className="text-[19.5px] font-semibold text-danger">
-                      작업 전 서면승인이 필요합니다. 견적서를 보내고 승인을 받으세요.
+                      작업 전 서면승인이 필요합니다. 견적서를 보내고 승인을
+                      받으세요.
                     </p>
                     <button
                       onClick={() => {
@@ -780,7 +945,11 @@ function ProjectDetailInner() {
           <div className="card p-5">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-[21.8px] font-bold">준공 체크리스트</p>
-              <Badge tone={doneDocs === p.closeoutDocs.length ? "success" : "warning"}>
+              <Badge
+                tone={
+                  doneDocs === p.closeoutDocs.length ? "success" : "warning"
+                }
+              >
                 {doneDocs}/{p.closeoutDocs.length} 완료
               </Badge>
             </div>
@@ -795,11 +964,18 @@ function ProjectDetailInner() {
                     className="flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-left text-[21px] transition-colors hover:bg-[#f7f8fa]"
                   >
                     {d.done ? (
-                      <CheckCircle2 size={27} className="shrink-0 text-success" />
+                      <CheckCircle2
+                        size={27}
+                        className="shrink-0 text-success"
+                      />
                     ) : (
                       <Circle size={27} className="shrink-0 text-ink-3" />
                     )}
-                    <span className={d.done ? "text-ink-3 line-through" : "font-semibold"}>
+                    <span
+                      className={
+                        d.done ? "text-ink-3 line-through" : "font-semibold"
+                      }
+                    >
                       {d.name}
                     </span>
                   </button>
@@ -822,7 +998,9 @@ function ProjectDetailInner() {
                 ].map(([label, v]) => (
                   <div key={label as string} className="flex justify-between">
                     <span className="text-ink-2">{label}</span>
-                    <span className="font-semibold">{formatMoney(v as number)}</span>
+                    <span className="font-semibold">
+                      {formatMoney(v as number)}
+                    </span>
                   </div>
                 ))}
                 <div className="flex justify-between border-t border-line pt-2.5">
@@ -868,7 +1046,10 @@ function ProjectDetailInner() {
       {tab === "docs" && (
         <div className="rise-in space-y-2.5">
           {projectDocs.length === 0 ? (
-            <EmptyState title="등록된 문서가 없어요" desc="문서함에서 자료를 모을 수 있어요." />
+            <EmptyState
+              title="등록된 문서가 없어요"
+              desc="문서함에서 자료를 모을 수 있어요."
+            />
           ) : (
             projectDocs.map((d) => (
               <div key={d.id} className="card flex items-center gap-3.5 p-4">
@@ -909,8 +1090,9 @@ function ProjectDetailInner() {
                     ))}
                   </div>
                   <p className="mt-4 text-[18.8px] leading-relaxed text-ink-3">
-                    하나인사이트는 프로젝트 기획·운영관리와 자료·원가 관리를 지원합니다. 시공,
-                    안전관리, 준공 책임은 하나정보통신이 담당합니다.
+                    하나인사이트는 프로젝트 기획·운영관리와 자료·원가 관리를
+                    지원합니다. 시공, 안전관리, 준공 책임은 하나정보통신이
+                    담당합니다.
                   </p>
                 </div>
                 <div className="card p-5">
@@ -918,7 +1100,8 @@ function ProjectDetailInner() {
                   <ul className="space-y-1.5 text-[20.2px] text-ink-2">
                     {p.consulting.deliverables.map((d) => (
                       <li key={d} className="flex items-center gap-2">
-                        <FileText size={20} className="shrink-0 text-success" /> {d}
+                        <FileText size={20} className="shrink-0 text-success" />{" "}
+                        {d}
                       </li>
                     ))}
                   </ul>
@@ -957,7 +1140,11 @@ function ProjectDetailInner() {
         </div>
       )}
 
-      <DailyLogModal open={logOpen} onClose={() => setLogOpen(false)} defaultProjectId={p.id} />
+      <DailyLogModal
+        open={logOpen}
+        onClose={() => setLogOpen(false)}
+        defaultProjectId={p.id}
+      />
       <TaskDetailModal task={openTask} onClose={() => setOpenTask(null)} />
     </div>
   );
@@ -966,7 +1153,11 @@ function ProjectDetailInner() {
 export default function ProjectDetailPage() {
   return (
     <Suspense
-      fallback={<div className="card p-10 text-center text-ink-3">불러오는 중입니다...</div>}
+      fallback={
+        <div className="card p-10 text-center text-ink-3">
+          불러오는 중입니다...
+        </div>
+      }
     >
       <ProjectDetailInner />
     </Suspense>

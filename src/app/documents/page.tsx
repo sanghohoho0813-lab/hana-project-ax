@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlertTriangle, Clock, FileText, FolderOpen, Search, Sparkles } from "lucide-react";
+import { AlertTriangle, Clock, FileText, FolderOpen, Search, SearchX, Sparkles } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { DOCUMENTS, DOC_CATEGORIES } from "@/lib/data";
 import { formatDate } from "@/lib/format";
@@ -167,6 +167,7 @@ function DocumentsInner() {
         </h3>
         {results.length === 0 ? (
           <EmptyState
+            icon={<SearchX size={30} />}
             title="찾는 문서가 없어요"
             desc="검색어를 줄이거나 분류를 바꿔서 다시 찾아보세요."
           />

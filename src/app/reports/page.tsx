@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Camera, Plus, Sparkles } from "lucide-react";
+import { Camera, FileBarChart, Plus, Sparkles } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { fullName } from "@/lib/team";
 import { whenLabel } from "@/lib/ops-calc";
@@ -85,7 +85,11 @@ function ReportsInner() {
       </div>
 
       {list.length === 0 ? (
-        <EmptyState title="해당하는 보고가 없어요" desc="업무보고 작성 버튼으로 첫 보고를 남겨 보세요." />
+        <EmptyState
+          icon={<FileBarChart size={30} />}
+          title="해당하는 보고가 없어요"
+          desc="업무보고 작성 버튼으로 첫 보고를 남겨 보세요."
+        />
       ) : (
         <div className="stagger space-y-3">
           {list.map((r) => {

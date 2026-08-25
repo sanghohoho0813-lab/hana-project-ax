@@ -42,6 +42,7 @@ export default function ApprovalsPage() {
         </h3>
         {pending.length === 0 ? (
           <EmptyState
+            icon={<CheckCircle2 size={30} />}
             title="승인 대기 항목이 없어요"
             desc="새 요청이 오면 여기에 표시됩니다."
           />

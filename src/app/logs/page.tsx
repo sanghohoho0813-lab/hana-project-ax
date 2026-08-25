@@ -25,6 +25,7 @@ export default function LogsPage() {
 
       {dailyLogs.length === 0 ? (
         <EmptyState
+          icon={<ClipboardList size={30} />}
           title="아직 등록된 현장일보가 없어요"
           desc="현장일보 작성 버튼으로 첫 일보를 등록해 보세요."
         />

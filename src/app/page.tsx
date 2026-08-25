@@ -35,10 +35,16 @@ import {
 } from "@/lib/ops-calc";
 import { companyKpi } from "@/lib/calc";
 import { formatMoney } from "@/lib/format";
-import { Badge, CountUp } from "@/components/ui";
-import { AlertCard, Avatar, ReportModal, TaskCard, TaskDetailModal } from "@/components/ops";
+import { Badge, CountUp, ProgressBar } from "@/components/ui";
+import {
+  AlertCard,
+  Avatar,
+  ReportModal,
+  TaskCard,
+  TaskDetailModal,
+} from "@/components/ops";
 import { PhoneMemoTaskModal, TaskCreateModal } from "@/components/TaskCreate";
-import type { Task } from "@/lib/ops-types";
+import type { ReportKind, Task } from "@/lib/ops-types";
 
 /* ───────────── 관리자 업무통제실 ───────────── */
 
@@ -73,15 +79,57 @@ function ManagerHome() {
     tasks,
     schedules,
     reports,
-    MEMBERS.filter((m) => m.role !== "ceo" && m.id !== currentUserId).map((m) => m.id)
+    MEMBERS.filter((m) => m.role !== "ceo" && m.id !== currentUserId).map(
+      (m) => m.id,
+    ),
   );
 
   const KPIS = [
-    { label: "오늘 예정 업무", value: kpi.todayTasks, unit: "건", href: "/tasks", tone: "" },
-    { label: "아직 확인하지 않은 업무", value: kpi.unacked, unit: "건", href: "/tasks?filter=unacked", tone: "text-danger" },
-    { label: "기한이 지난 업무", value: kpi.overdue, unit: "건", href: "/tasks?filter=overdue", tone: "text-danger" },
-    { label: "결과보고 대기", value: kpi.reportPending, unit: "건", href: "/reports", tone: "text-warning" },
-    { label: "오늘 일정 충돌", value: kpi.conflicts, unit: "건", href: "/schedule", tone: "text-danger" },
+    {
+      label: "오늘 예정 업무",
+      value: kpi.todayTasks,
+      unit: "건",
+      href: "/tasks",
+      tone: "",
+      icon: ClipboardList,
+      chip: "bg-info-bg text-info",
+    },
+    {
+      label: "아직 확인하지 않은 업무",
+      value: kpi.unacked,
+      unit: "건",
+      href: "/tasks?filter=unacked",
+      tone: "text-danger",
+      icon: AlertTriangle,
+      chip: "bg-danger-bg text-danger",
+    },
+    {
+      label: "기한이 지난 업무",
+      value: kpi.overdue,
+      unit: "건",
+      href: "/tasks?filter=overdue",
+      tone: "text-danger",
+      icon: Clock,
+      chip: "bg-danger-bg text-danger",
+    },
+    {
+      label: "결과보고 대기",
+      value: kpi.reportPending,
+      unit: "건",
+      href: "/reports",
+      tone: "text-warning",
+      icon: Camera,
+      chip: "bg-warning-bg text-warning",
+    },
+    {
+      label: "오늘 일정 충돌",
+      value: kpi.conflicts,
+      unit: "건",
+      href: "/schedule",
+      tone: "text-danger",
+      icon: CalendarDays,
+      chip: "bg-danger-bg text-danger",
+    },
   ];
 
   return (
@@ -90,11 +138,13 @@ function ManagerHome() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-[30px] leading-tight font-extrabold lg:text-[34px]">
-            {memberById(currentUserId)?.name} {memberById(currentUserId)?.roleLabel}님, 아직
-            확인되지 않은 업무부터 살펴보세요.
+            {memberById(currentUserId)?.name}{" "}
+            {memberById(currentUserId)?.roleLabel}님, 아직 확인되지 않은
+            업무부터 살펴보세요.
           </h2>
           <p className="mt-2 text-[20px] text-ink-2">
-            누가 업무를 확인했고, 무엇이 지연되고 있으며, 어떤 보고가 빠졌는지 정리했습니다.
+            누가 업무를 확인했고, 무엇이 지연되고 있으며, 어떤 보고가 빠졌는지
+            정리했습니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2.5">
@@ -116,9 +166,28 @@ function ManagerHome() {
       {/* 핵심 KPI */}
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {KPIS.map((k) => (
-          <Link key={k.label} href={k.href} className="card card-hover block min-w-0 p-5">
-            <p className="text-[18.5px] font-semibold text-ink-3">{k.label}</p>
-            <p className={`mt-1.5 text-[38px] leading-none font-extrabold tracking-tight ${k.tone}`}>
+          <Link
+            key={k.label}
+            href={k.href}
+            className="card card-hover block min-w-0 p-5"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="min-w-0 text-[18.5px] leading-snug font-semibold break-keep text-ink-3">
+                {k.label}
+              </p>
+              <span
+                className={`flex h-[2.6rem] w-[2.6rem] shrink-0 items-center justify-center rounded-xl ${
+                  k.value > 0 ? k.chip : "bg-[#f2f4f6] text-ink-3"
+                }`}
+              >
+                <k.icon size={22} />
+              </span>
+            </div>
+            <p
+              className={`mt-2 text-[38px] leading-none font-extrabold tracking-tight ${
+                k.value > 0 ? k.tone : ""
+              }`}
+            >
               <CountUp value={k.value} format={(v) => `${Math.round(v)}`} />
               <span className="ml-1 text-[22px]">{k.unit}</span>
             </p>
@@ -146,7 +215,7 @@ function ManagerHome() {
               <p key={i} className="px-3 py-2 text-[21px] leading-relaxed">
                 {b.text}
               </p>
-            )
+            ),
           )}
         </div>
         <Link
@@ -161,14 +230,19 @@ function ManagerHome() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-[25.5px] font-bold">
-            먼저 확인할 일<span className="ml-2 text-[19px] text-ink-3">위험한 순서</span>
+            먼저 확인할 일
+            <span className="ml-2 text-[19px] text-ink-3">위험한 순서</span>
           </h3>
-          <span className="text-[19px] font-semibold text-ink-3">{alerts.length}건</span>
+          <span className="text-[19px] font-semibold text-ink-3">
+            {alerts.length}건
+          </span>
         </div>
         {alerts.length === 0 ? (
           <div className="card flex flex-col items-center gap-2 p-12 text-center">
             <CheckCircle2 size={38} className="text-success" />
-            <p className="text-[22px] font-bold">확인이 필요한 항목이 없습니다</p>
+            <p className="text-[22px] font-bold">
+              확인이 필요한 항목이 없습니다
+            </p>
           </div>
         ) : (
           <div className="stagger space-y-3">
@@ -176,7 +250,9 @@ function ManagerHome() {
               <AlertCard
                 key={a.id}
                 alert={a}
-                onOpenTask={(id) => setTaskOpen(tasks.find((t) => t.id === id) ?? null)}
+                onOpenTask={(id) =>
+                  setTaskOpen(tasks.find((t) => t.id === id) ?? null)
+                }
               />
             ))}
           </div>
@@ -189,7 +265,10 @@ function ManagerHome() {
           <h3 className="flex items-center gap-2 text-[25.5px] font-bold">
             <Users size={26} className="text-primary" /> 직원별 진행상황
           </h3>
-          <Link href="/reports" className="text-[19px] font-bold text-primary hover:underline">
+          <Link
+            href="/reports"
+            className="text-[19px] font-bold text-primary hover:underline"
+          >
             업무보고 보기
           </Link>
         </div>
@@ -200,7 +279,9 @@ function ManagerHome() {
               s.assigned === 0
                 ? "오늘 배정된 업무가 없습니다."
                 : `오늘 ${s.assigned}건 중 ${s.acked}건 확인${
-                    s.assigned - s.acked > 0 ? `, ${s.assigned - s.acked}건 미확인` : ""
+                    s.assigned - s.acked > 0
+                      ? `, ${s.assigned - s.acked}건 미확인`
+                      : ""
                   }`;
             const need: string[] = [];
             if (s.assigned - s.acked > 0) need.push("확인 필요");
@@ -230,12 +311,34 @@ function ManagerHome() {
                   </a>
                 </div>
                 <p className="mt-3 text-[19.5px] font-semibold">{line}</p>
+                {s.assigned > 0 && (
+                  <div className="mt-2">
+                    <div className="mb-1 flex justify-between text-[15.5px] font-semibold text-ink-3">
+                      <span>확인률</span>
+                      <span>{Math.round((s.acked / s.assigned) * 100)}%</span>
+                    </div>
+                    <ProgressBar
+                      value={(s.acked / s.assigned) * 100}
+                      tone={
+                        s.acked === s.assigned
+                          ? "success"
+                          : s.assigned - s.acked > 1
+                            ? "danger"
+                            : "warning"
+                      }
+                    />
+                  </div>
+                )}
                 {need.length > 0 && (
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     {need.map((n) => (
                       <Badge
                         key={n}
-                        tone={n === "확인 필요" || n === "일정 겹침" ? "danger" : "warning"}
+                        tone={
+                          n === "확인 필요" || n === "일정 겹침"
+                            ? "danger"
+                            : "warning"
+                        }
                       >
                         {n}
                       </Badge>
@@ -252,7 +355,10 @@ function ManagerHome() {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-[25.5px] font-bold">오늘 업무</h3>
-          <Link href="/tasks" className="text-[19px] font-bold text-primary hover:underline">
+          <Link
+            href="/tasks"
+            className="text-[19px] font-bold text-primary hover:underline"
+          >
             전체 보기
           </Link>
         </div>
@@ -274,14 +380,40 @@ function ManagerHome() {
           </h3>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
-              { label: "올해 누적 수주", value: formatMoney(money.yearOrders), href: "/profit" },
-              { label: "회수 예정금액", value: formatMoney(money.collectible), href: "/closeout" },
-              { label: "미수금", value: formatMoney(money.receivables), href: "/closeout", tone: "text-danger" },
-              { label: "위험·누락 가능금액", value: formatMoney(money.atRisk), href: "/closeout", tone: "text-danger" },
+              {
+                label: "올해 누적 수주",
+                value: formatMoney(money.yearOrders),
+                href: "/profit",
+              },
+              {
+                label: "회수 예정금액",
+                value: formatMoney(money.collectible),
+                href: "/closeout",
+              },
+              {
+                label: "미수금",
+                value: formatMoney(money.receivables),
+                href: "/closeout",
+                tone: "text-danger",
+              },
+              {
+                label: "위험·누락 가능금액",
+                value: formatMoney(money.atRisk),
+                href: "/closeout",
+                tone: "text-danger",
+              },
             ].map((k) => (
-              <Link key={k.label} href={k.href} className="card card-hover block min-w-0 p-5">
-                <p className="text-[18.5px] font-semibold text-ink-3">{k.label}</p>
-                <p className={`mt-1 text-[24px] font-extrabold tracking-tight ${k.tone ?? ""}`}>
+              <Link
+                key={k.label}
+                href={k.href}
+                className="card card-hover block min-w-0 p-5"
+              >
+                <p className="text-[18.5px] font-semibold text-ink-3">
+                  {k.label}
+                </p>
+                <p
+                  className={`mt-1 text-[24px] font-extrabold tracking-tight ${k.tone ?? ""}`}
+                >
                   {k.value}
                 </p>
               </Link>
@@ -300,18 +432,29 @@ function ManagerHome() {
 /* ───────────── 직원 첫 화면 (모바일 우선) ───────────── */
 
 function StaffHome() {
-  const { tasks, schedules, currentUserId, acknowledgeSchedule, showToast } = useApp();
+  const { tasks, schedules, currentUserId, acknowledgeSchedule, showToast } =
+    useApp();
   const [taskOpen, setTaskOpen] = useState<Task | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const [reportKind, setReportKind] = useState<ReportKind>("진행 보고");
+  const quick = (k: ReportKind) => {
+    setReportKind(k);
+    setReportOpen(true);
+  };
 
   const me = memberById(currentUserId)!;
-  const mine = tasks.filter((t) => t.assigneeId === currentUserId && t.status !== "취소");
-  const newTasks = mine.filter(isUnacked);
-  const inProgress = mine.filter((t) => t.status === "진행 중" || t.status === "확인함");
+  const mine = tasks.filter(
+    (t) => t.assigneeId === currentUserId && t.status !== "취소",
+  );
+  const newTasks = mine.filter((t) => isUnacked(t) && !t.ackResponse);
+  const responded = mine.filter((t) => isUnacked(t) && !!t.ackResponse);
+  const inProgress = mine.filter(
+    (t) => t.status === "진행 중" || t.status === "확인함",
+  );
   const reportNeeded = mine.filter(needsResultReport);
   const overdue = mine.filter(isOverdue);
   const mySchedules = schedulesOn(schedules, NOW_DATE).filter(
-    (s) => s.assigneeId === currentUserId
+    (s) => s.assigneeId === currentUserId,
   );
 
   return (
@@ -329,13 +472,23 @@ function StaffHome() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "오늘 내 일정", value: mySchedules.length, tone: "" },
-          { label: "새로 받은 업무", value: newTasks.length, tone: newTasks.length ? "text-danger" : "" },
+          {
+            label: "새로 받은 업무",
+            value: newTasks.length,
+            tone: newTasks.length ? "text-danger" : "",
+          },
           { label: "진행 중", value: inProgress.length, tone: "" },
-          { label: "제출할 보고", value: reportNeeded.length, tone: reportNeeded.length ? "text-warning" : "" },
+          {
+            label: "제출할 보고",
+            value: reportNeeded.length,
+            tone: reportNeeded.length ? "text-warning" : "",
+          },
         ].map((k) => (
           <div key={k.label} className="card min-w-0 p-5">
             <p className="text-[18.5px] font-semibold text-ink-3">{k.label}</p>
-            <p className={`mt-1 text-[38px] leading-none font-extrabold ${k.tone}`}>
+            <p
+              className={`mt-1 text-[38px] leading-none font-extrabold ${k.tone}`}
+            >
               {k.value}
               <span className="ml-1 text-[21px]">건</span>
             </p>
@@ -347,7 +500,8 @@ function StaffHome() {
       {overdue.length > 0 && (
         <div className="card pulse-danger border border-danger/20 p-5">
           <p className="flex items-center gap-2 text-[21px] font-bold text-danger">
-            <AlertTriangle size={24} /> 기한이 지난 업무가 {overdue.length}건 있어요
+            <AlertTriangle size={24} /> 기한이 지난 업무가 {overdue.length}건
+            있어요
           </p>
           <p className="mt-1.5 text-[19px] text-ink-2">
             {overdue[0].title} · 기한 {whenLabel(overdue[0].dueAt)}
@@ -365,7 +519,8 @@ function StaffHome() {
       {newTasks.length > 0 && (
         <section>
           <h3 className="mb-3 text-[25.5px] font-bold">
-            새로 받은 업무 <span className="text-danger">{newTasks.length}건</span>
+            새로 받은 업무{" "}
+            <span className="text-danger">{newTasks.length}건</span>
           </h3>
           <div className="stagger space-y-3">
             {newTasks.map((t) => (
@@ -374,8 +529,12 @@ function StaffHome() {
                   <Badge tone="danger">확인 필요</Badge>
                   {t.priority === "긴급" && <Badge tone="warning">긴급</Badge>}
                 </div>
-                <p className="mt-2.5 text-[23px] leading-snug font-bold">{t.title}</p>
-                <p className="mt-1.5 text-[19px] leading-relaxed text-ink-2">{t.content}</p>
+                <p className="mt-2.5 text-[23px] leading-snug font-bold">
+                  {t.title}
+                </p>
+                <p className="mt-1.5 text-[19px] leading-relaxed text-ink-2">
+                  {t.content}
+                </p>
                 <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[18px] text-ink-3">
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin size={19} /> {t.location}
@@ -397,6 +556,36 @@ function StaffHome() {
         </section>
       )}
 
+      {/* 회신한 업무 — 관리자 답변 대기 */}
+      {responded.length > 0 && (
+        <section>
+          <h3 className="mb-3 text-[25.5px] font-bold">
+            관리자 답변을 기다리는 업무
+          </h3>
+          <div className="space-y-3">
+            {responded.map((t) => (
+              <div key={t.id} className="card border border-warning/25 p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="warning">{t.ackResponse}</Badge>
+                </div>
+                <p className="mt-2 text-[22px] font-bold">{t.title}</p>
+                {t.ackNote && (
+                  <p className="mt-1.5 rounded-xl bg-[#f7f8fa] px-4 py-2.5 text-[18.5px] text-ink-2">
+                    내가 남긴 말 · “{t.ackNote}”
+                  </p>
+                )}
+                <button
+                  onClick={() => setTaskOpen(t)}
+                  className="mt-3 min-h-[3.5rem] w-full rounded-2xl bg-[#f2f4f6] px-5 text-[19px] font-bold text-ink-2 transition-colors hover:bg-[#e8ebee] sm:w-auto"
+                >
+                  업무 다시 열기
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* 오늘 내 일정 */}
       <section>
         <h3 className="mb-3 flex items-center gap-2 text-[25.5px] font-bold">
@@ -411,8 +600,12 @@ function StaffHome() {
             {mySchedules.map((s) => (
               <div key={s.id} className="card min-w-0 p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge tone={s.status === "진행 중" ? "warning" : "info"}>{s.status}</Badge>
-                  {!s.acknowledgedAt && <Badge tone="danger">일정 미확인</Badge>}
+                  <Badge tone={s.status === "진행 중" ? "warning" : "info"}>
+                    {s.status}
+                  </Badge>
+                  {!s.acknowledgedAt && (
+                    <Badge tone="danger">일정 미확인</Badge>
+                  )}
                 </div>
                 <p className="mt-2.5 text-[23px] font-bold">{s.title}</p>
                 <p className="mt-1.5 text-[19.5px] text-ink-2">
@@ -452,10 +645,26 @@ function StaffHome() {
         <p className="mb-3 text-[21px] font-bold">빠른 실행</p>
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "진행상황 보고", icon: Sparkles, action: () => setReportOpen(true) },
-            { label: "사진 추가", icon: Camera, action: () => setReportOpen(true) },
-            { label: "현장 이슈 등록", icon: AlertTriangle, action: () => setReportOpen(true) },
-            { label: "일정 조정 요청", icon: CalendarDays, action: () => setReportOpen(true) },
+            {
+              label: "진행상황 보고",
+              icon: Sparkles,
+              action: () => quick("진행 보고"),
+            },
+            {
+              label: "사진 추가",
+              icon: Camera,
+              action: () => quick("진행 보고"),
+            },
+            {
+              label: "현장 이슈 등록",
+              icon: AlertTriangle,
+              action: () => quick("현장 이슈"),
+            },
+            {
+              label: "일정 조정 요청",
+              icon: CalendarDays,
+              action: () => quick("일정 변경 요청"),
+            },
           ].map((b) => (
             <button
               key={b.label}
@@ -475,7 +684,11 @@ function StaffHome() {
       </section>
 
       <TaskDetailModal task={taskOpen} onClose={() => setTaskOpen(null)} />
-      <ReportModal open={reportOpen} onClose={() => setReportOpen(false)} />
+      <ReportModal
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        defaultKind={reportKind}
+      />
     </div>
   );
 }
@@ -488,7 +701,11 @@ function HomeInner() {
 export default function HomePage() {
   return (
     <Suspense
-      fallback={<div className="card p-12 text-center text-[20px] text-ink-3">불러오는 중입니다...</div>}
+      fallback={
+        <div className="card p-12 text-center text-[20px] text-ink-3">
+          불러오는 중입니다...
+        </div>
+      }
     >
       <HomeInner />
     </Suspense>

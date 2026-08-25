@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -87,6 +87,7 @@ const NAV_GROUPS: { key: string; label: string; items: NavItem[] }[] = [
       { href: "/customers", label: "고객·재수주", icon: Users },
       { href: "/insight", label: COMPANY.insight.name, icon: Handshake },
       { href: "/documents", label: "문서함", icon: FolderOpen },
+      { href: "/approvals", label: "대표 승인함", icon: CheckCircle2 },
     ],
   },
   {
@@ -124,7 +125,15 @@ const PAGE_META: Record<string, { title: string; crumb: string }> = {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { tasks, schedules, currentUserId, setCurrentUserId, permission, reports } = useApp();
+  const {
+    tasks,
+    schedules,
+    currentUserId,
+    setCurrentUserId,
+    permission,
+    reports,
+    approvals,
+  } = useApp();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [switcher, setSwitcher] = useState(false);
 
@@ -137,7 +146,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         "/": kpi.unacked + kpi.overdue,
         "/tasks": kpi.unacked,
         "/schedule": kpi.conflicts,
-        "/reports": reports.filter((r) => r.reviewStatus === "검토 대기").length,
+        "/reports": reports.filter((r) => r.reviewStatus === "검토 대기")
+          .length,
+        "/approvals": approvals.filter((a) => a.status === "대기").length,
       }
     : {
         "/": mine.filter((t) => t.status === "지시됨").length,
@@ -151,7 +162,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col bg-[#101a2e] text-white">
-      <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 px-5 py-4">
+      <Link
+        href="/"
+        onClick={onNavigate}
+        className="flex items-center gap-2.5 px-5 py-4"
+      >
         <span className="flex h-[3.375rem] w-[3.375rem] shrink-0 items-center justify-center rounded-xl bg-primary text-white">
           <CheckCircle2 size={26} strokeWidth={2.4} />
         </span>
@@ -167,7 +182,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
         {groups.map((g) => {
-          const open = !collapsed[g.key];
+          const hasActive = g.items.some((i) =>
+            i.href === "/" ? pathname === "/" : pathname.startsWith(i.href),
+          );
+          const open = !collapsed[g.key] || hasActive;
           return (
             <div key={g.key}>
               <button
@@ -184,13 +202,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 <ul className="space-y-0.5">
                   {g.items.map((item) => {
                     const active =
-                      item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                      item.href === "/"
+                        ? pathname === "/"
+                        : pathname.startsWith(item.href);
                     const count = counts[item.href];
                     return (
                       <li key={item.href}>
                         <Link
                           href={item.href}
                           onClick={onNavigate}
+                          aria-current={active ? "page" : undefined}
                           className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[20.2px] font-semibold transition-colors ${
                             active
                               ? "bg-primary text-white"
@@ -202,7 +223,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                           {count ? (
                             <span
                               className={`rounded-md px-1.5 py-0.5 text-[15.5px] font-bold tabular-nums ${
-                                active ? "bg-white/20 text-white" : "bg-danger text-white"
+                                active
+                                  ? "bg-white/20 text-white"
+                                  : "bg-danger text-white"
                               }`}
                             >
                               {count}
@@ -252,7 +275,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <span className="block truncate text-[20.2px] font-bold">
               {me.name} {me.roleLabel}
             </span>
-            <span className="block truncate text-[17.2px] text-white/50">{me.desc}</span>
+            <span className="block truncate text-[17.2px] text-white/50">
+              {me.desc}
+            </span>
           </span>
           <ChevronDown
             size={20}
@@ -262,7 +287,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         {switcher && (
           <>
-            <div className="fixed inset-0 z-30" onClick={() => setSwitcher(false)} />
+            <div
+              className="fixed inset-0 z-30"
+              onClick={() => setSwitcher(false)}
+            />
             <div className="float-in absolute right-4 bottom-[7rem] left-4 z-40 overflow-hidden rounded-2xl bg-white p-1.5 shadow-[var(--shadow-modal)]">
               <p className="px-3 py-2 text-[16.5px] font-bold text-ink-3">
                 사용자를 바꾸면 화면과 권한이 달라집니다
@@ -276,7 +304,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     onNavigate?.();
                   }}
                   className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                    m.id === currentUserId ? "bg-primary-light" : "hover:bg-[#f7f8fa]"
+                    m.id === currentUserId
+                      ? "bg-primary-light"
+                      : "hover:bg-[#f7f8fa]"
                   }`}
                 >
                   <span
@@ -289,7 +319,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     <span className="block truncate text-[19.5px] font-bold text-ink">
                       {m.name} {m.roleLabel}
                     </span>
-                    <span className="block truncate text-[16.5px] text-ink-3">{m.desc}</span>
+                    <span className="block truncate text-[16.5px] text-ink-3">
+                      {m.desc}
+                    </span>
                   </span>
                 </button>
               ))}
@@ -312,7 +344,9 @@ function HeaderSearch() {
   const results = useMemo(() => {
     if (q.trim().length < 1) return { projects: [], tasks: [] };
     return {
-      projects: projects.filter((p) => p.name.includes(q) || p.region.includes(q)).slice(0, 3),
+      projects: projects
+        .filter((p) => p.name.includes(q) || p.region.includes(q))
+        .slice(0, 3),
       tasks: tasks.filter((t) => t.title.includes(q)).slice(0, 3),
     };
   }, [q, projects, tasks]);
@@ -320,7 +354,7 @@ function HeaderSearch() {
   const total = results.projects.length + results.tasks.length;
 
   return (
-    <div className="relative hidden w-full max-w-[24rem] 2xl:block">
+    <div className="relative hidden w-full max-w-[24rem] xl:block">
       <Search
         size={24}
         className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
@@ -393,6 +427,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isStore = pathname.startsWith("/store");
   const me = memberById(currentUserId)!;
+
+  // 브라우저 탭에 현재 화면 이름을 띄운다 — 데모 중 여러 탭을 오갈 때 구분된다
+  const screenLabel = useMemo(() => {
+    if (isStore) return "서비스 안내";
+    if (pathname === "/") return "오늘";
+    const base = pathname.startsWith("/projects/") ? "/projects" : pathname;
+    for (const g of NAV_GROUPS) {
+      const hit = g.items.find((i) => i.href === base);
+      if (hit) return hit.label;
+    }
+    return null;
+  }, [pathname, isStore]);
+
+  useEffect(() => {
+    const title = screenLabel
+      ? `${screenLabel} · ${COMPANY.product.name}`
+      : COMPANY.product.name;
+    document.title = title;
+    // 최초 진입에서는 Next가 하이드레이션 직후 메타데이터 제목을 덮어쓴다 — 잠깐 동안 다시 적용한다
+    const timers = [0, 200, 600].map((ms) =>
+      window.setTimeout(() => {
+        document.title = title;
+      }, ms),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [screenLabel]);
   const alerts = buildAlerts(tasks, schedules);
   const myAlerts = permission.seeAllMembers
     ? alerts
@@ -406,15 +466,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       ? { title: "프로젝트 상세", crumb: "공사관리" }
       : { title: COMPANY.product.name, crumb: "" });
 
+  // 권한 밖 화면은 URL로 직접 들어와도 열리지 않는다
+  const baseRoute = pathname.startsWith("/projects/") ? "/projects" : pathname;
+  const allowed = baseRoute === "/" || permission.routes.includes(baseRoute);
+
   return (
     <div className="flex min-h-screen">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2.5 focus:text-[20.2px] focus:font-bold focus:text-white"
+      >
+        본문으로 건너뛰기
+      </a>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[22.5rem] lg:block">
         <SidebarContent />
       </aside>
 
       {drawer && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="overlay-in absolute inset-0 bg-ink/45" onClick={() => setDrawer(false)} />
+          <div
+            className="overlay-in absolute inset-0 bg-ink/45"
+            onClick={() => setDrawer(false)}
+          />
           <div className="absolute inset-y-0 left-0 w-[min(22.5rem,88vw)] shadow-2xl">
             <button
               onClick={() => setDrawer(false)}
@@ -451,7 +524,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="flex min-w-0 items-center gap-2 lg:gap-2.5">
               <HeaderSearch />
               {permission.seeMoney && (
-                <div className="hidden shrink-0 xl:block">
+                <div className="hidden shrink-0 2xl:block">
                   <Segment<BusinessView>
                     size="sm"
                     value={business}
@@ -500,7 +573,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </button>
                 {menu && (
                   <>
-                    <div className="fixed inset-0 z-30" onClick={() => setMenu(false)} />
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setMenu(false)}
+                    />
                     <div className="float-in absolute top-full right-0 z-40 mt-2 w-[22.5rem] overflow-hidden rounded-2xl bg-white p-1.5 shadow-[var(--shadow-card-hover)]">
                       <div className="px-3 py-2.5">
                         <p className="text-[20.2px] font-bold">
@@ -551,7 +627,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {permission.seeMoney && (
-            <div className="flex justify-center border-t border-line px-4 py-2 xl:hidden">
+            <div className="flex justify-center border-t border-line px-4 py-2 2xl:hidden">
               <Segment<BusinessView>
                 size="sm"
                 value={business}
@@ -566,17 +642,87 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </header>
 
-        <main className="mx-auto w-full max-w-[1760px] flex-1 px-4 py-6 lg:px-8 lg:py-7">
-          {children}
+        <main
+          id="main"
+          className="mx-auto w-full max-w-[1760px] flex-1 px-4 py-6 pb-[6.5rem] lg:px-8 lg:py-7 lg:pb-7"
+        >
+          {allowed ? (
+            children
+          ) : (
+            <div className="card mx-auto max-w-[42rem] p-10 text-center">
+              <span className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-warning-bg text-warning">
+                <HelpCircle size={34} />
+              </span>
+              <p className="mt-4 text-[26px] font-extrabold">
+                이 화면은 권한이 있는 계정만 볼 수 있어요
+              </p>
+              <p className="mt-2 text-[19.5px] leading-relaxed text-ink-2">
+                {me.name} {me.roleLabel} 계정에는 열려 있지 않은 메뉴입니다.
+                좌측 하단에서 대표 또는 이사 계정으로 전환하면 확인할 수
+                있습니다.
+              </p>
+              <Link
+                href="/"
+                className="mt-5 inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-primary px-6 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark"
+              >
+                오늘의 업무로 돌아가기
+              </Link>
+            </div>
+          )}
         </main>
 
-        <footer className="px-4 pb-6 text-center text-[17.2px] text-ink-3">
-          {COMPANY.product.name} 데모 · {COMPANY.main.name}({COMPANY.main.role})과{" "}
-          {COMPANY.insight.name}({COMPANY.insight.role})의 업무를 구분해 관리합니다
+        {/* 모바일 하단 내비 — 현장에서 엄지로 누르는 5버튼 */}
+        <nav
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+          aria-label="하단 메뉴"
+        >
+          <div className="grid grid-cols-5">
+            {[
+              { href: "/", label: "오늘", icon: LayoutDashboard },
+              { href: "/tasks", label: "업무", icon: ListChecks },
+              { href: "/schedule", label: "일정", icon: CalendarDays },
+              { href: "/reports", label: "보고", icon: FileBarChart },
+            ]
+              .filter((i) => permission.routes.includes(i.href))
+              .map((i) => {
+                const active =
+                  i.href === "/"
+                    ? pathname === "/"
+                    : pathname.startsWith(i.href);
+                return (
+                  <Link
+                    key={i.href}
+                    href={i.href}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex min-h-[4.2rem] flex-col items-center justify-center gap-0.5 text-[15.5px] font-bold transition-colors ${
+                      active ? "text-primary" : "text-ink-3"
+                    }`}
+                  >
+                    <i.icon size={26} strokeWidth={active ? 2.5 : 2} />
+                    {i.label}
+                  </Link>
+                );
+              })}
+            <button
+              onClick={() => setDrawer(true)}
+              className="flex min-h-[4.2rem] flex-col items-center justify-center gap-0.5 text-[15.5px] font-bold text-ink-3"
+            >
+              <Menu size={26} />
+              전체
+            </button>
+          </div>
+        </nav>
+
+        <footer className="hidden px-4 pb-6 text-center text-[17.2px] text-ink-3 lg:block">
+          {COMPANY.product.name} 데모 · {COMPANY.main.name}({COMPANY.main.role}
+          )과 {COMPANY.insight.name}({COMPANY.insight.role})의 업무를 구분해
+          관리합니다
         </footer>
       </div>
 
-      {!demoMode && <GuideOverlay open={guideOpen} onClose={() => setGuideOpen(false)} />}
+      {!demoMode && (
+        <GuideOverlay open={guideOpen} onClose={() => setGuideOpen(false)} />
+      )}
       <DemoPanel />
 
       <Modal
@@ -600,7 +746,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </Modal>
 
       {toast && (
-        <div className="toast-in fixed bottom-6 left-1/2 z-[60] max-w-[92vw] -translate-x-1/2 rounded-2xl bg-ink px-6 py-4 text-[21px] font-semibold text-white shadow-xl">
+        <div
+          role="status"
+          aria-live="polite"
+          className="toast-in fixed bottom-[6.5rem] left-1/2 z-[60] lg:bottom-6 max-w-[92vw] -translate-x-1/2 rounded-2xl bg-ink px-6 py-4 text-[21px] font-semibold text-white shadow-xl"
+        >
           <span className="flex items-center gap-2">
             <CheckCircle2 size={24} className="shrink-0 text-[#7db8ff]" />
             {toast}

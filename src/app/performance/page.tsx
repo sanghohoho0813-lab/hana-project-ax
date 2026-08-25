@@ -9,12 +9,36 @@ import { opsKpi } from "@/lib/ops-calc";
 import { Badge, Modal, PageIntro, ProgressBar } from "@/components/ui";
 
 const ROADMAP = [
-  { step: "01", title: `${COMPANY.main.name} 내부 도입`, desc: "업무지시·일정·보고를 한 시스템으로 통합" },
-  { step: "02", title: "일정·보고 누락 문제 개선", desc: "확인 여부 추적으로 놓치는 일정을 줄임" },
-  { step: "03", title: "운영 데이터 축적", desc: "확인률·완료율·보고 제출률을 실제 사용에서 수집" },
-  { step: "04", title: "업종 표준 기능화", desc: "전기·통신공사업체가 공통으로 쓰는 기능으로 정리" },
-  { step: "05", title: "현장 설비 연동", desc: "CCTV·출입통제 등 현장 기기와 연계 (연동 준비 단계)" },
-  { step: "06", title: "외부 업체 공급", desc: "다른 공사업체와 시설관리업체에 SaaS로 제공" },
+  {
+    step: "01",
+    title: `${COMPANY.main.name} 내부 도입`,
+    desc: "업무지시·일정·보고를 한 시스템으로 통합",
+  },
+  {
+    step: "02",
+    title: "일정·보고 누락 문제 개선",
+    desc: "확인 여부 추적으로 놓치는 일정을 줄임",
+  },
+  {
+    step: "03",
+    title: "운영 데이터 축적",
+    desc: "확인률·완료율·보고 제출률을 실제 사용에서 수집",
+  },
+  {
+    step: "04",
+    title: "업종 표준 기능화",
+    desc: "전기·통신공사업체가 공통으로 쓰는 기능으로 정리",
+  },
+  {
+    step: "05",
+    title: "현장 설비 연동",
+    desc: "CCTV·출입통제 등 현장 기기와 연계 (연동 준비 단계)",
+  },
+  {
+    step: "06",
+    title: "외부 업체 공급",
+    desc: "다른 공사업체와 시설관리업체에 SaaS로 제공",
+  },
 ];
 
 const REPORT_SECTIONS = [
@@ -112,15 +136,16 @@ export default function PerformancePage() {
       <div className="card flex items-start gap-3 border border-warning/25 bg-warning-bg/40 p-5">
         <Info size={24} className="mt-0.5 shrink-0 text-warning" />
         <p className="text-[19px] leading-relaxed text-ink-2">
-          아래 도입 전 수치와 목표치는 <b>데모용 기준값</b>입니다. 실제 확정된 성과가 아니며,
-          시스템을 사용하면서 수집되는 데이터로 대체됩니다.
+          아래 도입 전 수치와 목표치는 <b>데모용 기준값</b>입니다. 실제 확정된
+          성과가 아니며, 시스템을 사용하면서 수집되는 데이터로 대체됩니다.
         </p>
       </div>
 
       {/* 오늘 실측 */}
       <section>
         <h3 className="mb-3 flex items-center gap-2 text-[25.5px] font-bold">
-          <TrendingUp size={26} className="text-primary" /> 오늘 시스템에서 측정된 값
+          <TrendingUp size={26} className="text-primary" /> 오늘 시스템에서
+          측정된 값
         </h3>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
@@ -130,11 +155,19 @@ export default function PerformancePage() {
               label: "현재 확인률",
               value: `${Math.round(((kpi.todayTasks - kpi.unacked) / Math.max(1, kpi.todayTasks)) * 100)}%`,
             },
-            { label: "기한 초과", value: `${kpi.overdue}건`, tone: "text-danger" },
+            {
+              label: "기한 초과",
+              value: `${kpi.overdue}건`,
+              tone: "text-danger",
+            },
           ].map((k) => (
             <div key={k.label} className="card min-w-0 p-5">
-              <p className="text-[18.5px] font-semibold text-ink-3">{k.label}</p>
-              <p className={`mt-1 text-[30px] font-extrabold ${k.tone ?? ""}`}>{k.value}</p>
+              <p className="text-[18.5px] font-semibold text-ink-3">
+                {k.label}
+              </p>
+              <p className={`mt-1 text-[30px] font-extrabold ${k.tone ?? ""}`}>
+                {k.value}
+              </p>
             </div>
           ))}
         </div>
@@ -187,14 +220,19 @@ export default function PerformancePage() {
       <section>
         <h3 className="mb-1 text-[25.5px] font-bold">제품화 방향</h3>
         <p className="mb-3 text-[19.5px] text-ink-2">
-          현장에서 검증한 운영방식을 다른 전기·통신공사업체에도 적용할 수 있도록 표준화합니다.
+          현장에서 검증한 운영방식을 다른 전기·통신공사업체에도 적용할 수 있도록
+          표준화합니다.
         </p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {ROADMAP.map((r) => (
             <div key={r.step} className="card min-w-0 p-5">
-              <span className="text-[19px] font-extrabold text-primary">{r.step}</span>
+              <span className="text-[19px] font-extrabold text-primary">
+                {r.step}
+              </span>
               <p className="mt-1.5 text-[21px] font-bold">{r.title}</p>
-              <p className="mt-1.5 text-[18.5px] leading-relaxed text-ink-2">{r.desc}</p>
+              <p className="mt-1.5 text-[18.5px] leading-relaxed text-ink-2">
+                {r.desc}
+              </p>
             </div>
           ))}
         </div>
@@ -204,8 +242,8 @@ export default function PerformancePage() {
       <section>
         <h3 className="mb-1 text-[25.5px] font-bold">현장 설비 연동 준비</h3>
         <p className="mb-3 text-[19.5px] text-ink-2">
-          아래는 <b>데모 데이터</b>입니다. 실제 CCTV 영상이나 출입통제 장비와 연결돼 있지 않으며,
-          향후 연동을 위한 화면 구조만 준비한 단계입니다.
+          아래는 <b>데모 데이터</b>입니다. 실제 CCTV 영상이나 출입통제 장비와
+          연결돼 있지 않으며, 향후 연동을 위한 화면 구조만 준비한 단계입니다.
         </p>
         <div className="grid gap-3 md:grid-cols-2">
           {FACILITIES.map((f) => (
@@ -222,7 +260,10 @@ export default function PerformancePage() {
         </div>
         <div className="card mt-3 p-5">
           <p className="text-[21px] font-bold">
-            출입 이력 <span className="text-[17.5px] font-semibold text-ink-3">샘플 데이터</span>
+            출입 이력{" "}
+            <span className="text-[17.5px] font-semibold text-ink-3">
+              샘플 데이터
+            </span>
           </p>
           <div className="mt-3 space-y-2">
             {ACCESS_LOGS.map((l, i) => (
@@ -248,12 +289,13 @@ export default function PerformancePage() {
         title="AX 도입·검증 리포트"
         desc={`${COMPANY.main.name} · ${COMPANY.product.name} · 2026년 7월`}
         size="xl"
+        bodyClassName="print-area"
       >
         <div className="rounded-2xl bg-[#f7f8fa] p-5">
           <p className="text-[19px] leading-relaxed text-ink-2">
-            {COMPANY.main.name}이 실제로 사용하는 업무지시·일정·보고 데이터를 기준으로 작성한
-            도입 리포트입니다. 정부지원사업이나 기업 심사 자료로 활용할 수 있도록 인쇄용 A4
-            형식으로 구성했습니다.
+            {COMPANY.main.name}이 실제로 사용하는 업무지시·일정·보고 데이터를
+            기준으로 작성한 도입 리포트입니다. 정부지원사업이나 기업 심사 자료로
+            활용할 수 있도록 인쇄용 A4 형식으로 구성했습니다.
           </p>
         </div>
 
@@ -263,7 +305,10 @@ export default function PerformancePage() {
               <p className="text-[22px] font-bold">{s.h}</p>
               <ul className="mt-2 space-y-1.5">
                 {s.b.map((b) => (
-                  <li key={b} className="flex gap-2.5 text-[19px] leading-relaxed text-ink-2">
+                  <li
+                    key={b}
+                    className="flex gap-2.5 text-[19px] leading-relaxed text-ink-2"
+                  >
                     <span className="mt-3 h-[0.45rem] w-[0.45rem] shrink-0 rounded-full bg-ink-3" />
                     {b}
                   </li>
@@ -274,11 +319,12 @@ export default function PerformancePage() {
         </div>
 
         <p className="mt-6 rounded-xl bg-[#f7f8fa] px-4 py-3 text-[17.5px] leading-relaxed text-ink-3">
-          본 리포트의 도입 목표치는 데모용 기준값이며 확정된 성과가 아닙니다. CCTV·출입통제
-          연동은 준비 단계로, 현재 실제 장비와 연결돼 있지 않습니다.
+          본 리포트의 도입 목표치는 데모용 기준값이며 확정된 성과가 아닙니다.
+          CCTV·출입통제 연동은 준비 단계로, 현재 실제 장비와 연결돼 있지
+          않습니다.
         </p>
 
-        <div className="mt-6 flex justify-end gap-2.5">
+        <div className="print-hide mt-6 flex justify-end gap-2.5">
           <button
             onClick={() => window.print()}
             className="inline-flex min-h-[3.5rem] items-center gap-2 rounded-2xl bg-primary px-6 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark"

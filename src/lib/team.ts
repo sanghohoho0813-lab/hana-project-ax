@@ -91,6 +91,15 @@ export function shortName(id: string): string {
   return memberById(id)?.name ?? "미지정";
 }
 
+/** 받침 유무에 맞춰 '로/으로'를 붙인다 (예: 이사로, 사무담당으로) */
+export function withRo(word: string): string {
+  const last = word.charCodeAt(word.length - 1);
+  if (last < 0xac00 || last > 0xd7a3) return `${word}로`;
+  const jong = (last - 0xac00) % 28;
+  // 받침이 없거나 ㄹ 받침이면 '로'
+  return jong === 0 || jong === 8 ? `${word}로` : `${word}으로`;
+}
+
 export interface Permission {
   /** 원가·매출·용역비 등 민감한 금액 정보를 볼 수 있는가 */
   seeMoney: boolean;
@@ -171,7 +180,15 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
     reviewReport: true,
     seeAllMembers: false,
     managerHome: false,
-    routes: ["/", "/tasks", "/schedule", "/reports", "/comms", "/projects", "/logs"],
+    routes: [
+      "/",
+      "/tasks",
+      "/schedule",
+      "/reports",
+      "/comms",
+      "/projects",
+      "/logs",
+    ],
   },
   engineer: {
     seeMoney: false,
@@ -179,7 +196,15 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
     reviewReport: false,
     seeAllMembers: false,
     managerHome: false,
-    routes: ["/", "/tasks", "/schedule", "/reports", "/comms", "/projects", "/logs"],
+    routes: [
+      "/",
+      "/tasks",
+      "/schedule",
+      "/reports",
+      "/comms",
+      "/projects",
+      "/logs",
+    ],
   },
 };
 

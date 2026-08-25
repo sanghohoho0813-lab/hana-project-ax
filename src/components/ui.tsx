@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Inbox, X } from "lucide-react";
 
 // ───────────── Badge ─────────────
 export type Tone = "success" | "warning" | "danger" | "info" | "neutral";
@@ -124,6 +124,7 @@ export function Modal({
   desc,
   children,
   size = "md",
+  bodyClassName = "",
 }: {
   open: boolean;
   onClose: () => void;
@@ -131,28 +132,45 @@ export function Modal({
   desc?: string;
   children: React.ReactNode;
   size?: "md" | "lg" | "xl";
+  /** 인쇄 등 특수 목적으로 모달 본문에 붙일 클래스 */
+  bodyClassName?: string;
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
+    // 열릴 때 모달로 초점을 옮겨야 키보드 사용자가 바로 내용을 읽는다
+    const restore = document.activeElement as HTMLElement | null;
+    panelRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      restore?.focus?.();
     };
   }, [open, onClose]);
 
   if (!open) return null;
   const width =
-    size === "xl" ? "sm:max-w-[72rem]" : size === "lg" ? "sm:max-w-[60rem]" : "sm:max-w-[48rem]";
+    size === "xl"
+      ? "sm:max-w-[72rem]"
+      : size === "lg"
+        ? "sm:max-w-[60rem]"
+        : "sm:max-w-[48rem]";
   return (
     <div
       className="overlay-in fixed inset-0 z-50 flex items-end justify-center bg-ink/45 backdrop-blur-[2px] sm:items-center sm:p-6"
       onClick={onClose}
     >
       <div
-        className={`modal-in max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-[var(--shadow-modal)] sm:rounded-3xl ${width}`}
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        className={`modal-in max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 shadow-[var(--shadow-modal)] outline-none sm:rounded-3xl ${width} ${bodyClassName}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-5 flex items-start justify-between gap-4">
@@ -191,7 +209,10 @@ export function Field({
 }) {
   const Wrapper = group ? "div" : "label";
   return (
-    <Wrapper className="block" {...(group ? { role: "group", "aria-label": label } : {})}>
+    <Wrapper
+      className="block"
+      {...(group ? { role: "group", "aria-label": label } : {})}
+    >
       <span className="mb-1.5 block text-[19.5px] font-semibold text-ink-2">
         {label}
         {required && <span className="ml-0.5 text-danger">*</span>}
@@ -256,15 +277,24 @@ export function EmptyState({
   title,
   desc,
   action,
+  icon,
 }: {
   title: string;
   desc?: string;
   action?: React.ReactNode;
+  icon?: React.ReactNode;
 }) {
   return (
     <div className="card flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+      <span className="mb-1 flex h-[4rem] w-[4rem] items-center justify-center rounded-2xl bg-[#f2f4f6] text-ink-3">
+        {icon ?? <Inbox size={30} />}
+      </span>
       <p className="text-[23.2px] font-bold text-ink-2">{title}</p>
-      {desc && <p className="max-w-[28rem] text-[20.2px] leading-relaxed text-ink-3">{desc}</p>}
+      {desc && (
+        <p className="max-w-[28rem] text-[20.2px] leading-relaxed text-ink-3">
+          {desc}
+        </p>
+      )}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -289,7 +319,9 @@ export function Segment<T extends string>({
           key={o.value}
           onClick={() => onChange(o.value)}
           className={`shrink-0 rounded-lg font-semibold whitespace-nowrap transition-all ${
-            size === "sm" ? "px-2.5 py-1 text-[18px]" : "px-3.5 py-1.5 text-[19.5px]"
+            size === "sm"
+              ? "px-2.5 py-1 text-[18px]"
+              : "px-3.5 py-1.5 text-[19.5px]"
           } ${value === o.value ? "bg-white text-ink shadow-sm" : "text-ink-3 hover:text-ink-2"}`}
         >
           {o.label}
@@ -335,7 +367,11 @@ export function StatTile({
         <p className="text-[18.8px] font-semibold text-ink-3">{label}</p>
         <p
           className={`mt-1.5 text-[31.5px] leading-tight font-extrabold tracking-tight ${
-            tone === "danger" ? "text-danger" : tone === "success" ? "text-success" : ""
+            tone === "danger"
+              ? "text-danger"
+              : tone === "success"
+                ? "text-success"
+                : ""
           }`}
         >
           {value}

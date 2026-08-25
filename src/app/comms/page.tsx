@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Camera, MessageSquarePlus } from "lucide-react";
+import { Camera, MessageSquarePlus, MessagesSquare } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { fullName } from "@/lib/team";
 import { whenLabel } from "@/lib/ops-calc";
@@ -10,7 +10,10 @@ import { Badge, EmptyState, PageIntro, inputClass } from "@/components/ui";
 import { Avatar } from "@/components/ops";
 import type { TimelineKind } from "@/lib/ops-types";
 
-const KIND_TONE: Record<TimelineKind, "success" | "warning" | "danger" | "info" | "neutral"> = {
+const KIND_TONE: Record<
+  TimelineKind,
+  "success" | "warning" | "danger" | "info" | "neutral"
+> = {
   업무지시: "info",
   "직원 확인": "success",
   "일정 변경": "warning",
@@ -33,10 +36,16 @@ export function Timeline({ projectId }: { projectId?: string }) {
       timeline
         .filter((e) => !projectId || e.projectId === projectId)
         .sort((a, b) => b.at.localeCompare(a.at)),
-    [timeline, projectId]
+    [timeline, projectId],
   );
 
-  if (items.length === 0 && !projectId) return <EmptyState title="아직 기록이 없어요" />;
+  if (items.length === 0 && !projectId)
+    return (
+      <EmptyState
+        icon={<MessagesSquare size={30} />}
+        title="아직 기록이 없어요"
+      />
+    );
 
   return (
     <div>
@@ -51,7 +60,12 @@ export function Timeline({ projectId }: { projectId?: string }) {
           <button
             onClick={() => {
               if (!comment.trim()) return;
-              addTimeline(projectId, "관리자 댓글", currentUserId, comment.trim());
+              addTimeline(
+                projectId,
+                "관리자 댓글",
+                currentUserId,
+                comment.trim(),
+              );
               showToast("현장에 전달했습니다");
               setComment("");
             }}
@@ -63,23 +77,48 @@ export function Timeline({ projectId }: { projectId?: string }) {
         </div>
       )}
 
-      <ol className="space-y-3">
+      <ol className="relative space-y-3 pl-[1.4rem]">
+        {/* 세로 레일 */}
+        <span
+          className="absolute top-3 bottom-3 left-[0.45rem] w-[3px] rounded-full bg-[#e5e8eb]"
+          aria-hidden
+        />
         {items.map((e) => (
-          <li key={e.id} className="card min-w-0 p-5">
-            <div className="flex items-start gap-3">
-              <Avatar id={e.actorId} size={44} />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[20px] font-bold">{fullName(e.actorId)}</span>
-                  <Badge tone={KIND_TONE[e.kind]}>{e.kind}</Badge>
-                  <span className="text-[17.5px] text-ink-3">{whenLabel(e.at)}</span>
-                </div>
-                <p className="mt-1.5 text-[19.5px] leading-relaxed text-ink-2">{e.text}</p>
-                {e.photoCount ? (
-                  <p className="mt-1.5 inline-flex items-center gap-1.5 text-[18px] text-ink-3">
-                    <Camera size={19} /> 사진 {e.photoCount}장
+          <li key={e.id} className="relative">
+            <span
+              className={`absolute top-7 -left-[1.32rem] h-[1rem] w-[1rem] rounded-full border-[3px] border-white ${
+                e.kind === "승인" || e.kind === "직원 확인"
+                  ? "bg-success"
+                  : e.kind === "보완 요청"
+                    ? "bg-danger"
+                    : e.kind === "업무지시"
+                      ? "bg-primary"
+                      : "bg-ink-3"
+              }`}
+              aria-hidden
+            />
+            <div className="card min-w-0 p-5">
+              <div className="flex items-start gap-3">
+                <Avatar id={e.actorId} size={44} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[20px] font-bold">
+                      {fullName(e.actorId)}
+                    </span>
+                    <Badge tone={KIND_TONE[e.kind]}>{e.kind}</Badge>
+                    <span className="text-[17.5px] text-ink-3">
+                      {whenLabel(e.at)}
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[19.5px] leading-relaxed text-ink-2">
+                    {e.text}
                   </p>
-                ) : null}
+                  {e.photoCount ? (
+                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-[18px] text-ink-3">
+                      <Camera size={19} /> 사진 {e.photoCount}장
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
           </li>
@@ -104,7 +143,9 @@ export default function CommsPage() {
           <button
             onClick={() => setProjectId("all")}
             className={`min-h-[3.25rem] shrink-0 rounded-xl px-4 text-[19px] font-bold transition-colors ${
-              projectId === "all" ? "bg-primary text-white" : "bg-[#f2f4f6] text-ink-2"
+              projectId === "all"
+                ? "bg-primary text-white"
+                : "bg-[#f2f4f6] text-ink-2"
             }`}
           >
             전체 {timeline.length}
@@ -116,7 +157,9 @@ export default function CommsPage() {
                 key={p.id}
                 onClick={() => setProjectId(p.id)}
                 className={`min-h-[3.25rem] shrink-0 rounded-xl px-4 text-[19px] font-bold transition-colors ${
-                  projectId === p.id ? "bg-primary text-white" : "bg-[#f2f4f6] text-ink-2"
+                  projectId === p.id
+                    ? "bg-primary text-white"
+                    : "bg-[#f2f4f6] text-ink-2"
                 }`}
               >
                 {p.shortName} {n}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { BellOff, ChevronRight, Sparkles } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { NOW_LABEL } from "@/lib/company";
 import { buildAlerts, managerBrief, opsKpi } from "@/lib/ops-calc";
@@ -88,7 +88,7 @@ export default function BriefPage() {
           알림 <span className="text-ink-3">{alerts.length}건</span>
         </h3>
         {alerts.length === 0 ? (
-          <EmptyState title="지금은 알림이 없습니다" />
+          <EmptyState icon={<BellOff size={30} />} title="지금은 알림이 없습니다" />
         ) : (
           <div className="stagger space-y-3">
             {alerts.map((a) => (

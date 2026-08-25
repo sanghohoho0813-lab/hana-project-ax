@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import {
   APPROVALS,
   CHANGE_ORDERS,
@@ -12,7 +18,7 @@ import {
 } from "./data";
 import { SCHEDULES, TASKS, TIMELINE, WORK_REPORTS } from "./ops-data";
 import { NOW } from "./company";
-import { fullName, permissionOf, type Permission } from "./team";
+import { fullName, permissionOf, withRo, type Permission } from "./team";
 import type {
   Approval,
   BusinessView,
@@ -59,7 +65,11 @@ interface AppState {
   openTask: (id: string) => void;
   startTask: (id: string) => void;
   /** 관리자가 완료보고를 검토 */
-  reviewTask: (id: string, decision: "승인" | "보완 요청", note?: string) => void;
+  reviewTask: (
+    id: string,
+    decision: "승인" | "보완 요청",
+    note?: string,
+  ) => void;
   reassignTask: (id: string, memberId: string) => void;
   /** 다시 알림 — 마지막 알림 시각만 갱신한다 */
   nudgeTask: (id: string) => void;
@@ -73,7 +83,11 @@ interface AppState {
   /* 보고 */
   reports: WorkReport[];
   addReport: (r: WorkReport) => void;
-  reviewReport: (id: string, decision: "승인" | "보완 요청", note?: string) => void;
+  reviewReport: (
+    id: string,
+    decision: "승인" | "보완 요청",
+    note?: string,
+  ) => void;
 
   /* 현장소통 타임라인 */
   timeline: TimelineEvent[];
@@ -82,7 +96,7 @@ interface AppState {
     kind: TimelineKind,
     actorId: string,
     text: string,
-    extra?: { taskId?: string; photoCount?: number }
+    extra?: { taskId?: string; photoCount?: number },
   ) => void;
 
   /* 기존 기능 */
@@ -122,17 +136,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [business, setBusiness] = useState<BusinessView>("all");
 
   const [tasks, setTasks] = useState<Task[]>(() => clone(TASKS));
-  const [schedules, setSchedules] = useState<ScheduleItem[]>(() => clone(SCHEDULES));
-  const [reports, setReports] = useState<WorkReport[]>(() => clone(WORK_REPORTS));
-  const [timeline, setTimeline] = useState<TimelineEvent[]>(() => clone(TIMELINE));
+  const [schedules, setSchedules] = useState<ScheduleItem[]>(() =>
+    clone(SCHEDULES),
+  );
+  const [reports, setReports] = useState<WorkReport[]>(() =>
+    clone(WORK_REPORTS),
+  );
+  const [timeline, setTimeline] = useState<TimelineEvent[]>(() =>
+    clone(TIMELINE),
+  );
 
   const [projects, setProjects] = useState<Project[]>(() => clone(PROJECTS));
-  const [opportunities, setOpportunities] = useState<Opportunity[]>(() => clone(OPPORTUNITIES));
-  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>(() => clone(CHANGE_ORDERS));
-  const [approvals, setApprovals] = useState<Approval[]>(() => clone(APPROVALS));
+  const [opportunities, setOpportunities] = useState<Opportunity[]>(() =>
+    clone(OPPORTUNITIES),
+  );
+  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>(() =>
+    clone(CHANGE_ORDERS),
+  );
+  const [approvals, setApprovals] = useState<Approval[]>(() =>
+    clone(APPROVALS),
+  );
   const [todos, setTodos] = useState<TodoItem[]>(() => clone(TODOS));
-  const [customers, setCustomers] = useState<Customer[]>(() => clone(CUSTOMERS));
-  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>(() => clone(DAILY_LOGS));
+  const [customers, setCustomers] = useState<Customer[]>(() =>
+    clone(CUSTOMERS),
+  );
+  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>(() =>
+    clone(DAILY_LOGS),
+  );
   const [toast, setToast] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
@@ -148,7 +178,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       kind: TimelineKind,
       actorId: string,
       text: string,
-      extra?: { taskId?: string; photoCount?: number }
+      extra?: { taskId?: string; photoCount?: number },
     ) => {
       if (!projectId) return;
       setTimeline((ts) => [
@@ -156,7 +186,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...ts,
       ]);
     },
-    []
+    [],
   );
 
   const resetDemo = useCallback(() => {
@@ -195,8 +225,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ts.map((t) =>
             t.id === id && t.status === "지시됨" && !t.openedAt
               ? { ...t, openedAt: NOW }
-              : t
-          )
+              : t,
+          ),
         ),
       acknowledgeTask: (id, response, note) => {
         const task = tasks.find((t) => t.id === id);
@@ -215,19 +245,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             response === "확인했습니다"
               ? `${fullName(task.assigneeId)}가 업무를 확인했습니다.`
               : `${fullName(task.assigneeId)}가 "${response}"로 회신했습니다.${note ? ` (${note})` : ""}`,
-            { taskId: id }
+            { taskId: id },
           );
       },
       startTask: (id) => {
         const task = tasks.find((t) => t.id === id);
-        patchTask(id, { status: "진행 중", progress: Math.max(10, task?.progress ?? 0), lastUpdateAt: NOW });
+        patchTask(id, {
+          status: "진행 중",
+          progress: Math.max(10, task?.progress ?? 0),
+          lastUpdateAt: NOW,
+        });
         setSchedules((ss) =>
-          ss.map((s) => (s.taskId === id && s.status === "예정" ? { ...s, status: "진행 중" } : s))
+          ss.map((s) =>
+            s.taskId === id && s.status === "예정"
+              ? { ...s, status: "진행 중" }
+              : s,
+          ),
         );
         if (task)
-          pushTimeline(task.projectId, "진행보고", task.assigneeId, `${fullName(task.assigneeId)}가 작업을 시작했습니다.`, {
-            taskId: id,
-          });
+          pushTimeline(
+            task.projectId,
+            "진행보고",
+            task.assigneeId,
+            `${fullName(task.assigneeId)}가 작업을 시작했습니다.`,
+            {
+              taskId: id,
+            },
+          );
       },
       reviewTask: (id, decision, note) => {
         const task = tasks.find((t) => t.id === id);
@@ -248,8 +292,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   reviewedAt: NOW,
                   reviewerId: currentUserId,
                 }
-              : r
-          )
+              : r,
+          ),
         );
         if (task)
           pushTimeline(
@@ -259,7 +303,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             decision === "승인"
               ? `${fullName(currentUserId)}가 완료보고를 승인했습니다.`
               : `${fullName(currentUserId)}가 보완을 요청했습니다.${note ? ` (${note})` : ""}`,
-            { taskId: id }
+            { taskId: id },
           );
       },
       reassignTask: (id, memberId) => {
@@ -273,21 +317,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           lastUpdateAt: NOW,
         });
         setSchedules((ss) =>
-          ss.map((s) => (s.taskId === id ? { ...s, assigneeId: memberId, acknowledgedAt: undefined } : s))
+          ss.map((s) =>
+            s.taskId === id
+              ? { ...s, assigneeId: memberId, acknowledgedAt: undefined }
+              : s,
+          ),
         );
         if (task)
-          pushTimeline(task.projectId, "일정 변경", currentUserId, `담당자가 ${fullName(memberId)}로 변경됐습니다.`, {
-            taskId: id,
-          });
+          pushTimeline(
+            task.projectId,
+            "일정 변경",
+            currentUserId,
+            `담당자가 ${withRo(fullName(memberId))} 변경됐습니다.`,
+            {
+              taskId: id,
+            },
+          );
       },
       nudgeTask: (id) => patchTask(id, { lastUpdateAt: NOW }),
 
       schedules,
       addSchedule: (s) => setSchedules((ss) => [...ss, s]),
       updateSchedule: (id, patch) =>
-        setSchedules((ss) => ss.map((s) => (s.id === id ? { ...s, ...patch } : s))),
+        setSchedules((ss) =>
+          ss.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+        ),
       acknowledgeSchedule: (id) =>
-        setSchedules((ss) => ss.map((s) => (s.id === id ? { ...s, acknowledgedAt: NOW } : s))),
+        setSchedules((ss) =>
+          ss.map((s) => (s.id === id ? { ...s, acknowledgedAt: NOW } : s)),
+        ),
 
       reports,
       addReport: (r) => {
@@ -305,7 +363,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           r.kind === "완료 보고" ? "완료보고" : "진행보고",
           r.authorId,
           `${fullName(r.authorId)}가 ${r.kind}를 올렸습니다. ${r.summary?.done ?? r.raw.slice(0, 60)}`,
-          { taskId: r.taskId, photoCount: r.photoCount }
+          { taskId: r.taskId, photoCount: r.photoCount },
         );
       },
       reviewReport: (id, decision, note) =>
@@ -319,8 +377,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   reviewedAt: NOW,
                   reviewerId: currentUserId,
                 }
-              : r
-          )
+              : r,
+          ),
         ),
 
       timeline,
@@ -328,7 +386,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       projects,
       updateProject: (id, patch) =>
-        setProjects((ps) => ps.map((p) => (p.id === id ? { ...p, ...patch } : p))),
+        setProjects((ps) =>
+          ps.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        ),
       toggleCloseoutDoc: (projectId, docName) =>
         setProjects((ps) =>
           ps.map((p) =>
@@ -336,31 +396,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               ? {
                   ...p,
                   closeoutDocs: p.closeoutDocs.map((d) =>
-                    d.name === docName ? { ...d, done: !d.done } : d
+                    d.name === docName ? { ...d, done: !d.done } : d,
                   ),
                 }
-              : p
-          )
+              : p,
+          ),
         ),
       opportunities,
       addOpportunity: (o) => setOpportunities((os) => [o, ...os]),
       addLead: (o) => setOpportunities((os) => [o, ...os]),
       updateOpportunity: (id, patch) =>
-        setOpportunities((os) => os.map((o) => (o.id === id ? { ...o, ...patch } : o))),
+        setOpportunities((os) =>
+          os.map((o) => (o.id === id ? { ...o, ...patch } : o)),
+        ),
       changeOrders,
       addChangeOrder: (c) => setChangeOrders((cs) => [c, ...cs]),
       updateChangeOrder: (id, patch) =>
-        setChangeOrders((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c))),
+        setChangeOrders((cs) =>
+          cs.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        ),
       approvals,
       decideApproval: (id, decision) =>
-        setApprovals((as) => as.map((a) => (a.id === id ? { ...a, status: decision } : a))),
+        setApprovals((as) =>
+          as.map((a) => (a.id === id ? { ...a, status: decision } : a)),
+        ),
       todos,
       addTodo: (t) => setTodos((ts) => [t, ...ts]),
       toggleTodo: (id) =>
-        setTodos((ts) => ts.map((t) => (t.id === id ? { ...t, done: !t.done } : t))),
+        setTodos((ts) =>
+          ts.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+        ),
       customers,
       updateCustomer: (id, patch) =>
-        setCustomers((cs) => cs.map((c) => (c.id === id ? { ...c, ...patch } : c))),
+        setCustomers((cs) =>
+          cs.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+        ),
       dailyLogs,
       addDailyLog: (d) => setDailyLogs((ds) => [d, ...ds]),
 

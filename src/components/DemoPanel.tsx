@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, PlayCircle, RotateCcw, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  PlayCircle,
+  RotateCcw,
+  X,
+} from "lucide-react";
 import { useApp } from "@/lib/store";
 
 export const DEMO_STEPS: { title: string; desc: string; href: string }[] = [
@@ -65,10 +71,11 @@ export function DemoPanel() {
   };
 
   return (
-    <div className="float-in fixed right-4 bottom-4 z-40 w-[min(34.5rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-ink text-white shadow-[var(--shadow-modal)]">
+    <div className="float-in fixed right-4 bottom-[5.8rem] z-40 lg:bottom-4 w-[min(34.5rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-ink text-white shadow-[var(--shadow-modal)]">
       <div className="flex items-center justify-between gap-2 px-4 pt-3.5">
         <span className="inline-flex items-center gap-1.5 text-[18px] font-bold text-[#8fbcff]">
-          <PlayCircle size={20} /> 시연 모드 · {demoStep + 1} / {DEMO_STEPS.length}
+          <PlayCircle size={20} /> 시연 모드 · {demoStep + 1} /{" "}
+          {DEMO_STEPS.length}
         </span>
         <div className="flex items-center gap-0.5">
           <button
@@ -90,7 +97,9 @@ export function DemoPanel() {
 
       <div className="px-4 pt-2 pb-3.5">
         <p className="text-[22.5px] leading-snug font-bold">{step.title}</p>
-        <p className="mt-1 text-[18.8px] leading-relaxed text-white/70">{step.desc}</p>
+        <p className="mt-1 text-[18.8px] leading-relaxed text-white/70">
+          {step.desc}
+        </p>
       </div>
 
       <div className="flex gap-1 px-4">
@@ -113,7 +122,11 @@ export function DemoPanel() {
           <ChevronLeft size={21} /> 이전
         </button>
         <button
-          onClick={() => (demoStep === DEMO_STEPS.length - 1 ? setDemoMode(false) : go(demoStep + 1))}
+          onClick={() =>
+            demoStep === DEMO_STEPS.length - 1
+              ? setDemoMode(false)
+              : go(demoStep + 1)
+          }
           className="inline-flex flex-1 items-center justify-center gap-1 rounded-xl bg-primary px-3 py-2 text-[19.5px] font-bold text-white transition-colors hover:bg-[#4a92f8] active:scale-[0.98]"
         >
           {demoStep === DEMO_STEPS.length - 1 ? "시연 마치기" : "다음 화면"}

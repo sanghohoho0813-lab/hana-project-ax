@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useApp, nextId } from "@/lib/store";
 import { NOW } from "@/lib/company";
-import { MEMBERS, fullName, memberById } from "@/lib/team";
+import { MEMBERS, fullName, memberById, withRo } from "@/lib/team";
 import {
   ackSentence,
   awaitingReview,
@@ -28,7 +28,12 @@ import {
   summarizeReport,
   whenLabel,
 } from "@/lib/ops-calc";
-import type { AckResponse, ReportKind, Task, WorkReport } from "@/lib/ops-types";
+import type {
+  AckResponse,
+  ReportKind,
+  Task,
+  WorkReport,
+} from "@/lib/ops-types";
 import {
   Badge,
   Field,
@@ -49,6 +54,103 @@ export function statusTone(s: Task["status"]): Tone {
   if (s === "진행 중") return "warning";
   if (s === "취소") return "neutral";
   return "info";
+}
+
+/** 업무 진행 단계 스테퍼 — 지시 → 확인 → 진행 → 보고 → 승인 */
+const STEP_LABELS = ["지시", "확인", "진행", "보고", "승인"] as const;
+
+function stepIndex(t: Task): number {
+  switch (t.status) {
+    case "지시됨":
+      return 0;
+    case "확인함":
+      return 1;
+    case "진행 중":
+    case "보완 요청":
+      return 2;
+    case "완료보고":
+    case "검토 중":
+      return 3;
+    case "승인 완료":
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+export function TaskStepper({
+  task,
+  size = "md",
+}: {
+  task: Task;
+  size?: "sm" | "md";
+}) {
+  const idx = stepIndex(task);
+  const danger = isOverdue(task) || task.status === "보완 요청";
+  if (size === "sm") {
+    return (
+      <div
+        className="mt-3 flex items-center gap-1"
+        aria-label={`진행 단계 ${idx + 1}/5`}
+      >
+        {STEP_LABELS.map((l, i) => (
+          <span
+            key={l}
+            className={`h-[0.45rem] flex-1 rounded-full transition-colors ${
+              i < idx
+                ? "bg-primary/45"
+                : i === idx
+                  ? danger
+                    ? "bg-danger"
+                    : "bg-primary"
+                  : "bg-[#e8ebee]"
+            }`}
+          />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center" aria-label={`진행 단계 ${idx + 1}/5`}>
+      {STEP_LABELS.map((l, i) => (
+        <React.Fragment key={l}>
+          {i > 0 && (
+            <span
+              className={`h-[3px] min-w-[1rem] flex-1 rounded-full ${i <= idx ? "bg-primary" : "bg-[#e8ebee]"}`}
+            />
+          )}
+          <span className="flex flex-col items-center gap-1 px-1">
+            <span
+              className={`flex h-[2.2rem] w-[2.2rem] items-center justify-center rounded-full text-[16px] font-bold transition-colors ${
+                i < idx
+                  ? "bg-primary-light text-primary-dark"
+                  : i === idx
+                    ? danger
+                      ? "bg-danger text-white"
+                      : "bg-primary text-white"
+                    : "bg-[#f2f4f6] text-ink-3"
+              }`}
+            >
+              {i < idx ? "✓" : i + 1}
+            </span>
+            <span
+              className={`text-[15.5px] font-bold whitespace-nowrap ${
+                i === idx
+                  ? danger
+                    ? "text-danger"
+                    : "text-primary-dark"
+                  : i < idx
+                    ? "text-ink-2"
+                    : "text-ink-3"
+              }`}
+            >
+              {l}
+            </span>
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
 }
 
 export function Avatar({ id, size = 44 }: { id: string; size?: number }) {
@@ -96,6 +198,7 @@ export function TaskCard({
         {overdue && <Badge tone="danger">기한 초과</Badge>}
         {task.priority === "긴급" && <Badge tone="warning">긴급</Badge>}
         {awaitingReview(task) && <Badge tone="info">검토 대기</Badge>}
+        {task.needsReport && <Badge tone="neutral">결과보고 필요</Badge>}
       </div>
 
       <p className="mt-2.5 text-[23px] leading-snug font-bold">{task.title}</p>
@@ -126,16 +229,14 @@ export function TaskCard({
           </span>
           {!compact && (
             <span className="block truncate text-[17px] text-ink-3">
-              {fullName(task.assignerId)} 지시 · {whenLabel(task.createdAt)} 전달
+              {fullName(task.assignerId)} 지시 · {whenLabel(task.createdAt)}{" "}
+              전달
             </span>
           )}
         </span>
-        {task.needsReport && (
-          <span className="shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[16.5px] font-bold text-ink-2">
-            결과보고 필요
-          </span>
-        )}
       </div>
+
+      <TaskStepper task={task} size="sm" />
     </button>
   );
 }
@@ -155,6 +256,7 @@ export function TaskDetailModal({
     projects,
     reports,
     acknowledgeTask,
+    openTask,
     startTask,
     reviewTask,
     reassignTask,
@@ -165,6 +267,14 @@ export function TaskDetailModal({
   const [reviewNote, setReviewNote] = useState("");
   const [ackNote, setAckNote] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
+
+  // 담당자가 상세를 열면 '열어봤지만 아직 확인하지 않음' 상태를 기록한다
+  const taskId = task?.id;
+  const isAssignee = task?.assigneeId === currentUserId;
+  const taskStatus = task?.status;
+  React.useEffect(() => {
+    if (taskId && isAssignee && taskStatus === "지시됨") openTask(taskId);
+  }, [taskId, isAssignee, taskStatus, openTask]);
 
   if (!task) return null;
 
@@ -177,7 +287,9 @@ export function TaskDetailModal({
   const respond = (r: AckResponse) => {
     acknowledgeTask(task.id, r, ackNote.trim() || undefined);
     showToast(
-      r === "확인했습니다" ? "업무를 확인했습니다" : `관리자에게 "${r}"로 회신했습니다`
+      r === "확인했습니다"
+        ? "업무를 확인했습니다"
+        : `관리자에게 "${r}"로 회신했습니다`,
     );
     setAckNote("");
     onClose();
@@ -185,7 +297,16 @@ export function TaskDetailModal({
 
   return (
     <>
-      <Modal open={!!task} onClose={onClose} title={task.title} desc={task.location} size="lg">
+      <Modal
+        open={!!task}
+        onClose={onClose}
+        title={task.title}
+        desc={task.location}
+        size="lg"
+      >
+        <div className="mb-5 overflow-x-auto rounded-2xl bg-[#f7f8fa] px-4 py-4">
+          <TaskStepper task={task} />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={statusTone(task.status)}>{task.status}</Badge>
           {isOverdue(task) && <Badge tone="danger">기한 초과</Badge>}
@@ -203,7 +324,9 @@ export function TaskDetailModal({
           <div className="flex items-center gap-3 rounded-2xl border border-line p-4">
             <Avatar id={task.assignerId} size={44} />
             <div className="min-w-0">
-              <p className="text-[19.5px] font-bold">{fullName(task.assignerId)}가 지시</p>
+              <p className="text-[19.5px] font-bold">
+                {fullName(task.assignerId)}가 지시
+              </p>
               <p className="text-[17.5px] text-ink-3">
                 {whenLabel(task.createdAt)} 전달 · {elapsed(task.createdAt)}
               </p>
@@ -221,7 +344,9 @@ export function TaskDetailModal({
             <Avatar id={task.assigneeId} size={44} />
             <div className="min-w-0">
               <p className="text-[19.5px] font-bold">{ack.text}</p>
-              {task.ackNote && <p className="text-[17.5px] text-ink-2">“{task.ackNote}”</p>}
+              {task.ackNote && (
+                <p className="text-[17.5px] text-ink-2">“{task.ackNote}”</p>
+              )}
               <p className="text-[17.5px] text-ink-3">
                 기한 {whenLabel(task.dueAt)} · 진행률 {task.progress}%
               </p>
@@ -232,7 +357,10 @@ export function TaskDetailModal({
         <div className="mt-4 grid gap-x-6 gap-y-2 text-[18.5px] sm:grid-cols-2">
           {[
             ["관련 프로젝트", project?.name ?? "연결 없음"],
-            ["공동 확인자", task.watcherIds.map((w) => fullName(w)).join(", ") || "없음"],
+            [
+              "공동 확인자",
+              task.watcherIds.map((w) => fullName(w)).join(", ") || "없음",
+            ],
             ["시작일", task.startDate],
             ["마지막 업데이트", whenLabel(task.lastUpdateAt)],
           ].map(([k, v]) => (
@@ -245,16 +373,28 @@ export function TaskDetailModal({
 
         {linked.length > 0 && (
           <div className="mt-4">
-            <p className="mb-2 text-[19px] font-bold">제출된 보고 {linked.length}건</p>
+            <p className="mb-2 text-[19px] font-bold">
+              제출된 보고 {linked.length}건
+            </p>
             <div className="space-y-2">
               {linked.map((r) => (
                 <div key={r.id} className="rounded-2xl bg-[#f7f8fa] p-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge tone={r.reviewStatus === "승인" ? "success" : r.reviewStatus === "보완 요청" ? "danger" : "info"}>
+                    <Badge
+                      tone={
+                        r.reviewStatus === "승인"
+                          ? "success"
+                          : r.reviewStatus === "보완 요청"
+                            ? "danger"
+                            : "info"
+                      }
+                    >
                       {r.reviewStatus}
                     </Badge>
                     <span className="text-[18.5px] font-bold">{r.kind}</span>
-                    <span className="text-[17px] text-ink-3">{whenLabel(r.createdAt)}</span>
+                    <span className="text-[17px] text-ink-3">
+                      {whenLabel(r.createdAt)}
+                    </span>
                   </div>
                   <p className="mt-1.5 text-[18.5px] leading-relaxed text-ink-2">
                     {r.summary?.done ?? r.raw}
@@ -305,35 +445,40 @@ export function TaskDetailModal({
           </div>
         )}
 
-        {isMine && (task.status === "확인함" || task.status === "진행 중" || task.status === "보완 요청") && (
-          <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
-            {task.status !== "진행 중" && (
+        {isMine &&
+          (task.status === "확인함" ||
+            task.status === "진행 중" ||
+            task.status === "보완 요청") && (
+            <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+              {task.status !== "진행 중" && (
+                <button
+                  onClick={() => {
+                    startTask(task.id);
+                    showToast("작업을 시작했습니다");
+                    onClose();
+                  }}
+                  className="inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-[20px] font-bold text-white transition-opacity hover:opacity-90"
+                >
+                  <Play size={22} /> 작업 시작
+                </button>
+              )}
               <button
-                onClick={() => {
-                  startTask(task.id);
-                  showToast("작업을 시작했습니다");
-                  onClose();
-                }}
-                className="inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-ink px-5 text-[20px] font-bold text-white transition-opacity hover:opacity-90"
+                onClick={() => setReportOpen(true)}
+                className="inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark sm:col-span-1"
               >
-                <Play size={22} /> 작업 시작
+                <Sparkles size={22} /> 진행·완료보고
               </button>
-            )}
-            <button
-              onClick={() => setReportOpen(true)}
-              className="inline-flex min-h-[3.5rem] items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark sm:col-span-1"
-            >
-              <Sparkles size={22} /> 진행·완료보고
-            </button>
-          </div>
-        )}
+            </div>
+          )}
 
         {/* 관리자 행동 */}
         {permission.assignTask && !isMine && (
           <div className="mt-6 space-y-2.5">
             {awaitingReview(task) && permission.reviewReport && (
               <div className="rounded-2xl border border-primary/25 bg-primary-light/40 p-5">
-                <p className="text-[20px] font-bold">완료보고를 검토해 주세요</p>
+                <p className="text-[20px] font-bold">
+                  완료보고를 검토해 주세요
+                </p>
                 <input
                   className={`${inputClass} mt-3`}
                   value={reviewNote}
@@ -343,7 +488,11 @@ export function TaskDetailModal({
                 <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                   <button
                     onClick={() => {
-                      reviewTask(task.id, "승인", reviewNote.trim() || undefined);
+                      reviewTask(
+                        task.id,
+                        "승인",
+                        reviewNote.trim() || undefined,
+                      );
                       showToast("완료보고를 승인했습니다");
                       onClose();
                     }}
@@ -353,7 +502,11 @@ export function TaskDetailModal({
                   </button>
                   <button
                     onClick={() => {
-                      reviewTask(task.id, "보완 요청", reviewNote.trim() || undefined);
+                      reviewTask(
+                        task.id,
+                        "보완 요청",
+                        reviewNote.trim() || undefined,
+                      );
                       showToast("보완을 요청했습니다");
                       onClose();
                     }}
@@ -396,7 +549,9 @@ export function TaskDetailModal({
                     key={m.id}
                     onClick={() => {
                       reassignTask(task.id, m.id);
-                      showToast(`담당자를 ${m.name} ${m.roleLabel}로 변경했습니다`);
+                      showToast(
+                        `담당자를 ${withRo(`${m.name} ${m.roleLabel}`)} 변경했습니다`,
+                      );
                       setReassign(false);
                       onClose();
                     }}
@@ -451,14 +606,22 @@ export function ReportModal({
   onClose,
   task,
   defaultProjectId,
+  defaultKind = "진행 보고",
 }: {
   open: boolean;
   onClose: () => void;
   task?: Task | null;
   defaultProjectId?: string;
+  defaultKind?: ReportKind;
 }) {
   const { addReport, showToast, currentUserId, projects, tasks } = useApp();
-  const [kind, setKind] = useState<ReportKind>("진행 보고");
+  const [kind, setKind] = useState<ReportKind>(defaultKind);
+  // 열 때마다 요청된 유형으로 맞춘다
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setKind(defaultKind);
+  }
   const [taskId, setTaskId] = useState(task?.id ?? "");
   const [raw, setRaw] = useState("");
   const [progress, setProgress] = useState(task?.progress ?? 50);
@@ -467,7 +630,9 @@ export function ReportModal({
   const [support, setSupport] = useState("");
   const [next, setNext] = useState("");
   const [eta, setEta] = useState("");
-  const [summary, setSummary] = useState<ReturnType<typeof summarizeReport> | null>(null);
+  const [summary, setSummary] = useState<ReturnType<
+    typeof summarizeReport
+  > | null>(null);
   const [generating, setGenerating] = useState(false);
 
   const myTasks = tasks.filter((t) => t.assigneeId === currentUserId);
@@ -670,7 +835,9 @@ export function ReportModal({
               .filter(([, v]) => !!v)
               .map(([k, v]) => (
                 <div key={k} className="flex gap-3">
-                  <dt className="w-[10.5rem] shrink-0 font-semibold text-ink-3">{k}</dt>
+                  <dt className="w-[10.5rem] shrink-0 font-semibold text-ink-3">
+                    {k}
+                  </dt>
                   <dd className="min-w-0 font-medium">{v}</dd>
                 </div>
               ))}
@@ -703,10 +870,14 @@ export function AlertCard({
   alert: import("@/lib/ops-types").OpsAlert;
   onOpenTask?: (id: string) => void;
 }) {
-  const { nudgeTask, showToast, tasks, acknowledgeSchedule } = useApp();
+  const { nudgeTask, showToast, acknowledgeSchedule } = useApp();
   const member = memberById(alert.memberId);
   const tone =
-    alert.severity === "danger" ? "danger" : alert.severity === "warning" ? "warning" : "info";
+    alert.severity === "danger"
+      ? "danger"
+      : alert.severity === "warning"
+        ? "warning"
+        : "info";
 
   return (
     <div
@@ -727,10 +898,14 @@ export function AlertCard({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-[22px] leading-snug font-bold">{alert.title}</p>
+              <p className="text-[22px] leading-snug font-bold">
+                {alert.title}
+              </p>
               <Badge tone={tone}>{alert.rule}</Badge>
             </div>
-            <p className="mt-1.5 text-[19px] leading-relaxed text-ink-2">{alert.detail}</p>
+            <p className="mt-1.5 text-[19px] leading-relaxed text-ink-2">
+              {alert.detail}
+            </p>
             {alert.elapsed && (
               <p className="mt-0.5 text-[18px] text-ink-3">{alert.elapsed}</p>
             )}
@@ -742,7 +917,9 @@ export function AlertCard({
             <button
               onClick={() => {
                 nudgeTask(alert.taskId!);
-                showToast(`${member?.name} ${member?.roleLabel}에게 다시 알렸습니다`);
+                showToast(
+                  `${member?.name} ${member?.roleLabel}에게 다시 알렸습니다`,
+                );
               }}
               className="inline-flex min-h-[3.25rem] items-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 text-[18.5px] font-bold text-ink-2 transition-colors hover:bg-[#e8ebee]"
             >
@@ -774,25 +951,17 @@ export function AlertCard({
               업무 열기 <ArrowRight size={20} />
             </button>
           )}
-          {!alert.taskId && alert.rule === "일정 충돌" && (
+          {!alert.taskId && (
             <Link
               href="/schedule"
               className="inline-flex min-h-[3.25rem] items-center gap-1.5 rounded-xl bg-primary px-4 text-[18.5px] font-bold text-white transition-colors hover:bg-primary-dark"
             >
-              일정 조정 <ArrowRight size={20} />
-            </Link>
-          )}
-          {!alert.taskId && alert.rule !== "일정 충돌" && (
-            <Link
-              href="/schedule"
-              className="inline-flex min-h-[3.25rem] items-center gap-1.5 rounded-xl bg-primary px-4 text-[18.5px] font-bold text-white transition-colors hover:bg-primary-dark"
-            >
-              일정 상세 <ArrowRight size={20} />
+              {alert.rule === "일정 충돌" ? "일정 조정" : "일정 상세"}{" "}
+              <ArrowRight size={20} />
             </Link>
           )}
         </div>
       </div>
-      {alert.taskId && !tasks.find((t) => t.id === alert.taskId) && null}
     </div>
   );
 }

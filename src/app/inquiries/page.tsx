@@ -6,6 +6,7 @@ import {
   CalendarCheck,
   HelpCircle,
   Phone,
+  PhoneCall,
   Plus,
   Send,
   Store as Storefront,
@@ -414,6 +415,7 @@ export default function InquiriesPage() {
 
       {opportunities.length === 0 && (
         <EmptyState
+          icon={<PhoneCall size={30} />}
           title="등록된 문의가 없어요"
           desc="새 문의 등록 버튼으로 첫 문의를 등록해 보세요."
         />

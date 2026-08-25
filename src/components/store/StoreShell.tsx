@@ -29,29 +29,38 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
 
       {/* 헤더 */}
       <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1500px] items-center gap-4 px-4 py-4 lg:px-8">
-          <Link href="/store" className="flex shrink-0 items-center gap-2.5">
+        <div className="mx-auto flex w-full max-w-[1500px] items-center gap-3 px-3 py-4 sm:px-4 lg:gap-4 lg:px-8">
+          <Link
+            href="/store"
+            className="flex min-w-0 shrink items-center gap-2.5"
+          >
             <span className="flex h-[3rem] w-[3rem] items-center justify-center rounded-xl bg-primary text-white">
               <Zap size={26} strokeWidth={2.4} />
             </span>
             <span>
-              <span className="block text-[24px] leading-tight font-extrabold">
+              <span className="block truncate text-[24px] leading-tight font-extrabold">
                 하나정보통신
               </span>
-              <span className="block text-[16px] text-ink-3">서비스·상담센터</span>
+              <span className="block truncate text-[16px] text-ink-3">
+                서비스·상담센터
+              </span>
             </span>
           </Link>
 
           <nav className="ml-6 hidden flex-1 items-center gap-1 lg:flex">
             {NAV.map((n) => {
               const active =
-                n.href === "/store" ? pathname === "/store" : pathname.startsWith(n.href);
+                n.href === "/store"
+                  ? pathname === "/store"
+                  : pathname.startsWith(n.href);
               return (
                 <Link
                   key={n.href}
                   href={n.href}
                   className={`rounded-xl px-4 py-2.5 text-[20px] font-semibold transition-colors ${
-                    active ? "bg-primary-light text-primary-dark" : "text-ink-2 hover:bg-[#f2f4f6]"
+                    active
+                      ? "bg-primary-light text-primary-dark"
+                      : "text-ink-2 hover:bg-[#f2f4f6]"
                   }`}
                 >
                   {n.label}
@@ -60,7 +69,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
             <a
               href="tel:041-000-0000"
               className="hidden items-center gap-2 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[19px] font-bold text-ink-2 transition-colors hover:bg-[#e8ebee] sm:inline-flex"
@@ -69,14 +78,14 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
             </a>
             <Link
               href="/store/request"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[19px] font-bold text-white transition-colors hover:bg-primary-dark active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-[18px] font-bold whitespace-nowrap text-white transition-colors hover:bg-primary-dark active:scale-[0.98] sm:px-4 sm:py-2.5 sm:text-[19px]"
             >
               상담신청
             </Link>
             <button
               onClick={() => setOpen((v) => !v)}
               aria-label="메뉴"
-              className="rounded-xl p-2.5 text-ink-2 hover:bg-[#f2f4f6] lg:hidden"
+              className="rounded-xl p-1.5 text-ink-2 hover:bg-[#f2f4f6] sm:p-2.5 lg:hidden"
             >
               {open ? <X size={26} /> : <Menu size={26} />}
             </button>
@@ -114,7 +123,9 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
               현장 상황에 맞춘 공사와 유지보수를 제공합니다.
             </p>
             <p className="mt-4 text-[18px] font-bold">041-000-0000</p>
-            <p className="text-[17px] text-ink-3">평일 08:30 ~ 18:00 · 주말 상담 예약 가능</p>
+            <p className="text-[17px] text-ink-3">
+              평일 08:30 ~ 18:00 · 주말 상담 예약 가능
+            </p>
           </div>
 
           <div>
@@ -131,8 +142,8 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
           <div>
             <p className="text-[19px] font-bold">함께하는 곳</p>
             <p className="mt-3 text-[18px] leading-relaxed text-ink-2">
-              <b>하나인사이트</b>이 프로젝트 기획·운영관리, 자료 정리, 원가 분석을 지원합니다.
-              시공과 준공 책임은 하나정보통신이 담당합니다.
+              <b>하나인사이트</b>이 프로젝트 기획·운영관리, 자료 정리, 원가
+              분석을 지원합니다. 시공과 준공 책임은 하나정보통신이 담당합니다.
             </p>
             <Link
               href="/"
@@ -143,8 +154,8 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="border-t border-line px-4 py-5 text-center text-[16px] text-ink-3">
-          하나정보통신 서비스·상담센터 데모 · 표시된 금액은 시작 금액이며 실제 금액은 현장 확인 후
-          견적서로 안내드립니다.
+          하나정보통신 서비스·상담센터 데모 · 표시된 금액은 시작 금액이며 실제
+          금액은 현장 확인 후 견적서로 안내드립니다.
         </div>
       </footer>
 

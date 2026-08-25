@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Phone } from "lucide-react";
+import { AlertTriangle, Phone, PlusSquare } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatDate, formatMoney } from "@/lib/format";
 import { Badge, EmptyState, PageIntro, type Tone } from "@/components/ui";
@@ -79,7 +79,7 @@ export default function ChangeOrdersPage() {
       )}
 
       {changeOrders.length === 0 ? (
-        <EmptyState title="등록된 추가공사가 없어요" />
+        <EmptyState icon={<PlusSquare size={30} />} title="등록된 추가공사가 없어요" />
       ) : (
         <div className="space-y-3">
           {changeOrders.map((c) => {

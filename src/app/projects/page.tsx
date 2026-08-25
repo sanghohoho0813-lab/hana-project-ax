@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Filter } from "lucide-react";
+import { ChevronRight, Filter, SearchX } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatMoney, formatPercent } from "@/lib/format";
 import { collectRate, costInputRate, costRiskGap, currentProfit } from "@/lib/calc";
@@ -106,7 +106,11 @@ export default function ProjectsPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title="조건에 맞는 프로젝트가 없어요" desc="필터를 바꿔서 다시 찾아보세요." />
+        <EmptyState
+          icon={<SearchX size={30} />}
+          title="조건에 맞는 프로젝트가 없어요"
+          desc="필터를 바꿔서 다시 찾아보세요."
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((p) => (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lightbulb, MapPin } from "lucide-react";
+import { Lightbulb, MapPin, Users } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { formatMoney, formatDateFull } from "@/lib/format";
 import { Badge, EmptyState, Modal, PageIntro, GhostButton, type Tone } from "@/components/ui";
@@ -56,7 +56,7 @@ export default function CustomersPage() {
           <Lightbulb size={26} className="text-warning" /> 재수주 추천
         </h3>
         {targets.length === 0 ? (
-          <EmptyState title="지금은 재수주 추천 대상이 없어요" />
+          <EmptyState icon={<Users size={30} />} title="지금은 재수주 추천 대상이 없어요" />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {targets.map((c) => (
