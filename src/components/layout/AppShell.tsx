@@ -11,6 +11,7 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
+  Clapperboard,
   ClipboardList,
   FileBarChart,
   FolderOpen,
@@ -20,6 +21,7 @@ import {
   ListChecks,
   Menu,
   MessagesSquare,
+  MonitorPlay,
   PhoneCall,
   PieChart,
   PlayCircle,
@@ -56,6 +58,14 @@ const NAV_GROUPS: { key: string; label: string; items: NavItem[] }[] = [
     items: [
       { href: "/", label: "오늘의 업무", icon: LayoutDashboard },
       { href: "/brief", label: "관리자 브리핑", icon: Sparkles },
+    ],
+  },
+  {
+    key: "media",
+    label: "영상",
+    items: [
+      { href: "/videos/inspection", label: "실사용 영상", icon: Clapperboard },
+      { href: "/videos/guide", label: "대표님·이사님 안내 영상", icon: MonitorPlay },
     ],
   },
   {
@@ -119,6 +129,8 @@ const PAGE_META: Record<string, { title: string; crumb: string }> = {
   "/procurement": { title: "조달 인사이트", crumb: "인사이트" },
   "/performance": { title: "운영성과", crumb: "인사이트" },
   "/approvals": { title: "대표 승인함", crumb: "경영관리" },
+  "/videos/inspection": { title: "실사용 영상", crumb: "영상" },
+  "/videos/guide": { title: "대표님·이사님 안내 영상", crumb: "영상" },
 };
 
 /* ───────────── 사이드바 ───────────── */

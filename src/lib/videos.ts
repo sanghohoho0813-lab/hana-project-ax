@@ -1,0 +1,60 @@
+import type { VideoInfo } from "@/components/VideoPage";
+
+/** 영상 두 편 — 파일은 public/videos 에 둔다. 자막은 영상 안에 들어가 있다. */
+export const VIDEOS: Record<"inspection" | "guide", VideoInfo> = {
+  inspection: {
+    src: "/videos/inspection.mp4",
+    poster: "/videos/inspection.jpg",
+    title: "복수 현장 업무 위험관리 AX 소개",
+    audience: "실사용 · 시스템 소개",
+    desc: "하나정보통신이 현장에서 겪어 온 문제, 복수 현장 위험관리 시스템의 처리 구조, 특허출원과 현재 단계, 앞으로의 검증 계획을 소개합니다.",
+    duration: 254.8,
+    chapters: [
+      { at: 0, label: "시스템 소개 · 특허출원" },
+      { at: 7.1, label: "현장에서 반복되던 문제" },
+      { at: 60.9, label: "사례 · A현장에서 B현장으로" },
+      { at: 97.3, label: "해결 방식 · 상태 흐름과 위험 판단" },
+      { at: 137.9, label: "대응 우선순위와 핵심 차별점" },
+      { at: 160.4, label: "현장에서 시작해 만든 MVP" },
+      { at: 180.9, label: "특허출원 완료" },
+      { at: 195.7, label: "현재 단계" },
+      { at: 202.6, label: "검증과 확대 계획" },
+      { at: 228.4, label: "정리" },
+    ],
+    notes: [
+      "특허는 2026년 9월 11일 출원을 마친 상태이며, 등록된 특허가 아닙니다.",
+      "사례의 시각(11:00 · 11:25 · 11:40)과 이동시간은 이해를 돕기 위한 예시입니다.",
+      "영상 속 앱 화면은 실제 MVP 화면이며, 업무와 인물은 예시 데이터입니다.",
+    ],
+    srt: "/videos/inspection.srt",
+    other: { href: "/videos/guide", label: "대표님·이사님 안내 영상 보기" },
+  },
+  guide: {
+    src: "/videos/guide.mp4",
+    poster: "/videos/guide.jpg",
+    title: "MVP로 보는 달라지는 운영 방식",
+    audience: "대표님 · 이사님께",
+    desc: "정식으로 쓰게 되면 하루 업무가 어떻게 달라지는지, 여러 현장을 연결해 보는 기능, 지금 MVP의 범위와 작게 시작하는 도입 방법을 안내합니다.",
+    duration: 291.2,
+    chapters: [
+      { at: 0, label: "들어가며" },
+      { at: 6, label: "지금 반복되는 일" },
+      { at: 30.6, label: "MVP로 먼저 보여드리는 것" },
+      { at: 37.7, label: "달라지는 점 ① 아침 화면" },
+      { at: 61.9, label: "달라지는 점 ② 업무지시" },
+      { at: 76.1, label: "버튼 하나로 상태 공유" },
+      { at: 100.8, label: "여러 현장을 연결해서 보기" },
+      { at: 145.8, label: "효과 · 반복 확인과 누락 감소" },
+      { at: 173, label: "현재 MVP의 범위" },
+      { at: 197.1, label: "정식 운영으로 고도화" },
+      { at: 231.7, label: "작게 시작하는 도입 방법" },
+      { at: 256, label: "목표" },
+    ],
+    notes: [
+      "지금 화면은 구조를 먼저 보여드리기 위한 MVP이며, 정식 운영용 DB · 실제 계정 · 실시간 알림 · 지도 연동은 아직 포함되지 않았습니다.",
+      "영상 속 앱 화면은 실제 MVP 화면이며, 업무와 인물은 예시 데이터입니다.",
+    ],
+    srt: "/videos/guide.srt",
+    other: { href: "/videos/inspection", label: "실사용 영상 보기" },
+  },
+};

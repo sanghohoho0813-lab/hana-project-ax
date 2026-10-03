@@ -134,6 +134,8 @@ const MANAGER_ROUTES = [
   "/procurement",
   "/performance",
   "/approvals",
+  "/videos/inspection",
+  "/videos/guide",
 ];
 
 export const PERMISSIONS: Record<RoleKey, Permission> = {
@@ -172,6 +174,8 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/inquiries",
       "/customers",
       "/documents",
+      "/videos/inspection",
+      "/videos/guide",
     ],
   },
   siteLead: {
