@@ -28,7 +28,6 @@ import {
   PlusSquare,
   RotateCcw,
   Search,
-  Sparkles,
   Store as Storefront,
   TrendingUp,
   Users,
@@ -51,27 +50,21 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-const NAV_GROUPS: { key: string; label: string; items: NavItem[] }[] = [
+/** 그룹마다 색 하나 — 항목은 같은 색의 톤만 달리해 구분한다 */
+interface NavGroup {
+  key: string;
+  label: string;
+  hue: number;
+  items: NavItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
   {
-    key: "today",
-    label: "오늘",
+    key: "work",
+    label: "업무",
+    hue: 214,
     items: [
       { href: "/", label: "오늘의 업무", icon: LayoutDashboard },
-      { href: "/brief", label: "관리자 브리핑", icon: Sparkles },
-    ],
-  },
-  {
-    key: "media",
-    label: "영상",
-    items: [
-      { href: "/videos/inspection", label: "실사용 영상", icon: Clapperboard },
-      { href: "/videos/guide", label: "대표님·이사님 안내 영상", icon: MonitorPlay },
-    ],
-  },
-  {
-    key: "ops",
-    label: "소통·일정",
-    items: [
       { href: "/tasks", label: "업무지시", icon: ListChecks },
       { href: "/schedule", label: "통합일정", icon: CalendarDays },
       { href: "/reports", label: "업무보고", icon: FileBarChart },
@@ -79,8 +72,9 @@ const NAV_GROUPS: { key: string; label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    key: "work",
-    label: "공사관리",
+    key: "site",
+    label: "공사",
+    hue: 168,
     items: [
       { href: "/projects", label: "프로젝트", icon: Briefcase },
       { href: "/logs", label: "현장일보", icon: ClipboardList },
@@ -90,47 +84,65 @@ const NAV_GROUPS: { key: string; label: string; items: NavItem[] }[] = [
   },
   {
     key: "biz",
-    label: "경영관리",
+    label: "경영",
+    hue: 36,
     items: [
-      { href: "/profit", label: "원가·수익", icon: PieChart },
       { href: "/inquiries", label: "문의·견적", icon: PhoneCall },
       { href: "/customers", label: "고객·재수주", icon: Users },
-      { href: "/insight", label: COMPANY.insight.name, icon: Handshake },
-      { href: "/documents", label: "문서함", icon: FolderOpen },
+      { href: "/profit", label: "원가·수익", icon: PieChart },
       { href: "/approvals", label: "대표 승인함", icon: CheckCircle2 },
     ],
   },
   {
-    key: "intel",
-    label: "인사이트",
+    key: "support",
+    label: "지원·분석",
+    hue: 256,
     items: [
-      { href: "/procurement", label: "조달 인사이트", icon: Building2 },
+      { href: "/insight", label: COMPANY.insight.name, icon: Handshake },
+      { href: "/documents", label: "문서함", icon: FolderOpen },
       { href: "/performance", label: "운영성과", icon: TrendingUp },
+      { href: "/procurement", label: "조달 인사이트", icon: Building2 },
     ],
   },
 ];
 
+/** 맨 위 영상 바로가기 */
+const VIDEO_LINKS: NavItem[] = [
+  { href: "/videos/inspection", label: "실사용 영상", icon: Clapperboard },
+  { href: "/videos/guide", label: "사용법 영상", icon: MonitorPlay },
+];
+
+/** 같은 색 계열 안에서 항목 순서대로 톤을 달리한다 */
+function toneOf(hue: number, i: number) {
+  const l = 64 + (i % 5) * 4;
+  return {
+    icon: `hsl(${hue} 78% ${l}%)`,
+    tile: `hsl(${hue} 70% ${l - 6}% / 0.16)`,
+    solid: `hsl(${hue} 62% ${Math.min(l - 14, 58)}%)`,
+  };
+}
+
 const PAGE_META: Record<string, { title: string; crumb: string }> = {
-  "/": { title: "오늘의 업무", crumb: "오늘" },
-  "/brief": { title: "관리자 브리핑", crumb: "오늘" },
-  "/tasks": { title: "업무지시", crumb: "소통·일정" },
-  "/schedule": { title: "통합일정", crumb: "소통·일정" },
-  "/reports": { title: "업무보고", crumb: "소통·일정" },
-  "/comms": { title: "현장소통", crumb: "소통·일정" },
-  "/projects": { title: "프로젝트", crumb: "공사관리" },
-  "/logs": { title: "현장일보", crumb: "공사관리" },
-  "/change-orders": { title: "추가공사", crumb: "공사관리" },
-  "/closeout": { title: "준공·수금", crumb: "공사관리" },
-  "/profit": { title: "원가·수익", crumb: "경영관리" },
-  "/inquiries": { title: "문의·견적", crumb: "경영관리" },
-  "/customers": { title: "고객·재수주", crumb: "경영관리" },
-  "/insight": { title: COMPANY.insight.name, crumb: "경영관리" },
-  "/documents": { title: "문서함", crumb: "경영관리" },
-  "/procurement": { title: "조달 인사이트", crumb: "인사이트" },
-  "/performance": { title: "운영성과", crumb: "인사이트" },
-  "/approvals": { title: "대표 승인함", crumb: "경영관리" },
+  "/": { title: "오늘의 업무", crumb: "업무" },
+  "/brief": { title: "관리자 브리핑", crumb: "업무" },
+  "/tasks": { title: "업무지시", crumb: "업무" },
+  "/schedule": { title: "통합일정", crumb: "업무" },
+  "/reports": { title: "업무보고", crumb: "업무" },
+  "/comms": { title: "현장소통", crumb: "업무" },
+  "/projects": { title: "프로젝트", crumb: "공사" },
+  "/logs": { title: "현장일보", crumb: "공사" },
+  "/change-orders": { title: "추가공사", crumb: "공사" },
+  "/closeout": { title: "준공·수금", crumb: "공사" },
+  "/profit": { title: "원가·수익", crumb: "경영" },
+  "/inquiries": { title: "문의·견적", crumb: "경영" },
+  "/customers": { title: "고객·재수주", crumb: "경영" },
+  "/insight": { title: COMPANY.insight.name, crumb: "지원·분석" },
+  "/documents": { title: "문서함", crumb: "지원·분석" },
+  "/procurement": { title: "조달 인사이트", crumb: "지원·분석" },
+  "/performance": { title: "운영성과", crumb: "지원·분석" },
+  "/approvals": { title: "대표 승인함", crumb: "경영" },
   "/videos/inspection": { title: "실사용 영상", crumb: "영상" },
-  "/videos/guide": { title: "대표님·이사님 안내 영상", crumb: "영상" },
+  "/videos/guide": { title: "사용법 영상", crumb: "영상" },
 };
 
 /* ───────────── 사이드바 ───────────── */
@@ -192,7 +204,40 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </span>
       </Link>
 
-      <nav className="flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+      <nav className="flex-1 space-y-3 overflow-y-auto px-3 pb-3">
+        {/* 영상 바로가기 — 가장 먼저 눈에 띄게 */}
+        <div className="rounded-2xl border border-[#e8b89a]/25 bg-gradient-to-br from-[#d47a4a]/22 via-[#d47a4a]/8 to-transparent p-1.5">
+          <p className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-[15.5px] font-extrabold tracking-wide text-[#f0c2a2]">
+            <PlayCircle size={17} /> 실사용 · 사용법 영상
+          </p>
+          <ul className="space-y-0.5">
+            {VIDEO_LINKS.map((item, i) => {
+              const active = pathname.startsWith(item.href);
+              const tone = toneOf(22, i);
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[20.2px] font-bold transition-colors ${
+                      active ? "bg-white/12 text-white" : "text-white/85 hover:bg-white/8 hover:text-white"
+                    }`}
+                  >
+                    <span
+                      className="flex h-[2.4rem] w-[2.4rem] shrink-0 items-center justify-center rounded-[0.7rem]"
+                      style={{ background: active ? tone.solid : tone.tile, color: active ? "#fff" : tone.icon }}
+                    >
+                      <item.icon size={21} strokeWidth={2.2} />
+                    </span>
+                    <span className="flex-1 truncate">{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
         {groups.map((g) => {
           const hasActive = g.items.some((i) =>
             i.href === "/" ? pathname === "/" : pathname.startsWith(i.href),
@@ -202,9 +247,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <div key={g.key}>
               <button
                 onClick={() => setCollapsed((c) => ({ ...c, [g.key]: open }))}
-                className="flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-[16.5px] font-bold tracking-wide text-white/40 transition-colors hover:text-white/70"
+                className="flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-[16.5px] font-bold tracking-wide text-white/45 transition-colors hover:text-white/75"
               >
-                {g.label}
+                <span className="flex items-center gap-2">
+                  <span className="h-[0.95rem] w-[3px] rounded-full" style={{ background: toneOf(g.hue, 0).icon }} />
+                  {g.label}
+                </span>
                 <ChevronDown
                   size={18}
                   className={`transition-transform ${open ? "" : "-rotate-90"}`}
@@ -212,25 +260,37 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               </button>
               {open && (
                 <ul className="space-y-0.5">
-                  {g.items.map((item) => {
+                  {g.items.map((item, idx) => {
                     const active =
                       item.href === "/"
                         ? pathname === "/"
                         : pathname.startsWith(item.href);
                     const count = counts[item.href];
+                    const tone = toneOf(g.hue, idx);
                     return (
                       <li key={item.href}>
                         <Link
                           href={item.href}
                           onClick={onNavigate}
                           aria-current={active ? "page" : undefined}
-                          className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-[20.2px] font-semibold transition-colors ${
+                          className={`relative flex items-center gap-2.5 rounded-xl px-2 py-1.5 text-[20.2px] font-semibold transition-colors ${
                             active
-                              ? "bg-primary text-white"
-                              : "text-white/65 hover:bg-white/8 hover:text-white"
+                              ? "bg-white/10 text-white"
+                              : "text-white/70 hover:bg-white/6 hover:text-white"
                           }`}
                         >
-                          <item.icon size={22} strokeWidth={active ? 2.4 : 2} />
+                          {active && (
+                            <span
+                              className="absolute top-2 bottom-2 -left-3 w-[4px] rounded-r-full"
+                              style={{ background: tone.icon }}
+                            />
+                          )}
+                          <span
+                            className="flex h-[2.4rem] w-[2.4rem] shrink-0 items-center justify-center rounded-[0.7rem] transition-colors"
+                            style={{ background: active ? tone.solid : tone.tile, color: active ? "#fff" : tone.icon }}
+                          >
+                            <item.icon size={21} strokeWidth={2.2} />
+                          </span>
                           <span className="flex-1 truncate">{item.label}</span>
                           {count ? (
                             <span
@@ -475,7 +535,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const meta =
     PAGE_META[pathname] ??
     (pathname.startsWith("/projects/")
-      ? { title: "프로젝트 상세", crumb: "공사관리" }
+      ? { title: "프로젝트 상세", crumb: "공사" }
       : { title: COMPANY.product.name, crumb: "" });
 
   // 권한 밖 화면은 URL로 직접 들어와도 열리지 않는다

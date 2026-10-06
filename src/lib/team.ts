@@ -192,6 +192,8 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/comms",
       "/projects",
       "/logs",
+      "/videos/inspection",
+      "/videos/guide",
     ],
   },
   engineer: {
@@ -208,6 +210,8 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/comms",
       "/projects",
       "/logs",
+      "/videos/inspection",
+      "/videos/guide",
     ],
   },
 };
