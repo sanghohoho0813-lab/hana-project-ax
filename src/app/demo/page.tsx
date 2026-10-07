@@ -1,27 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   CheckCircle2,
   CircleDashed,
   Clapperboard,
   Clock,
-  ListChecks,
   Map,
   MonitorPlay,
   PlayCircle,
-  RotateCcw,
   Route,
-  Target,
-  Workflow,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
 import { TOUR_STEPS } from "@/lib/demo-tour";
 import { PATENT_NO, VIDEOS } from "@/lib/videos";
 import { VideoPage } from "@/components/VideoPage";
-import { useFontScale } from "@/components/FontScale";
 
 /**
  * 실사 시연 화면의 강조색 — 기본 파랑에 어울리는 두 가지만 더한다.
@@ -37,30 +30,8 @@ type AccentKey = keyof typeof ACCENT;
 /** 실사 당일 진행 순서 — 처음 보는 분도 따라올 수 있게 '왜 → 무엇 → 어떻게 → 앞으로' 순서 */
 const AGENDA: { id: string; n: number; label: string; min: string; tone: AccentKey }[] = [
   { id: "video", n: 1, label: "실사용 영상", min: "4분", tone: "coral" },
-  { id: "summary", n: 2, label: "한 장으로 정리", min: "1분", tone: "blue" },
-  { id: "live", n: 3, label: "실제 화면 시연", min: "6~8분", tone: "blue" },
-  { id: "roadmap", n: 4, label: "앞으로의 개발", min: "2분", tone: "teal" },
-];
-
-const SUMMARY: { k: string; tone: AccentKey; title: string; body: string }[] = [
-  {
-    k: "문제",
-    tone: "coral",
-    title: "확인하려면 계속 전화해야 했습니다",
-    body: "업무지시는 전화·카카오톡으로, 일정은 따로, 진행상황은 다시 전화로 확인했습니다. 한 현장이 늦어지면 다음 현장 문제는 터진 뒤에야 알았습니다.",
-  },
-  {
-    k: "해결",
-    tone: "blue",
-    title: "업무를 상태 흐름으로 관리합니다",
-    body: "업무지시 → 확인 → 작업개시 → 작업보고 → 관리자 확인. 직원은 버튼으로 상태를 남기고, 관리자는 문제가 있는 업무만 봅니다.",
-  },
-  {
-    k: "차별점",
-    tone: "teal",
-    title: "다음 현장의 위험까지 미리 판단합니다",
-    body: "같은 직원의 앞뒤 일정, 현장 위치, 필요한 이동시간을 함께 보고, 아직 시작 전인 업무도 늦어질 위험이 있으면 대응 순서를 먼저 알려줍니다.",
-  },
+  { id: "live", n: 2, label: "실제 화면 시연", min: "6~8분", tone: "blue" },
+  { id: "roadmap", n: 3, label: "앞으로의 개발", min: "2분", tone: "teal" },
 ];
 
 type Status = "done" | "now" | "next";
@@ -99,17 +70,8 @@ const ROADMAP: { status: Status; when: string; title: string; items: string[] }[
 
 const MEASURE = ["업무 누락", "일정 지연", "이동시간 부족", "일정 충돌", "반복 확인 전화"];
 
-const CHECKLIST = [
-  "오른쪽 위 메뉴에서 '데모 데이터 초기화' 한 번 누르기",
-  "글자 크기는 화면 크기에 맞게 '크게'로 (오른쪽 위 메뉴)",
-  "실사용 영상은 가로 · 모니터로, 소리 켜고 처음부터",
-  "현재 사용자가 '구본석 이사'인지 확인 (왼쪽 아래)",
-  "라이브 시연은 → 키 또는 발표용 리모컨으로 넘기기",
-];
-
 function Section({
   id,
-  n,
   tone,
   icon: Icon,
   title,
@@ -117,7 +79,7 @@ function Section({
   children,
 }: {
   id: string;
-  n: number;
+  n?: number;
   tone: AccentKey;
   icon: React.ComponentType<{ size?: number }>;
   title: string;
@@ -135,9 +97,6 @@ function Section({
           <Icon size={24} />
         </span>
         <div className="min-w-0">
-          <p className="text-[16.5px] font-extrabold tracking-wide" style={{ color: c.text }}>
-            {n}단계
-          </p>
           <h2 className="text-[28px] leading-tight font-extrabold">{title}</h2>
         </div>
       </div>
@@ -149,9 +108,7 @@ function Section({
 
 export default function DemoGuidePage() {
   const router = useRouter();
-  const { setDemoMode, setDemoStep, resetDemo, showToast } = useApp();
-  const { setScale } = useFontScale();
-  const [checked, setChecked] = useState<boolean[]>(() => CHECKLIST.map(() => false));
+  const { setDemoMode, setDemoStep } = useApp();
 
   const startTour = (i = 0) => {
     setDemoStep(i);
@@ -160,7 +117,6 @@ export default function DemoGuidePage() {
   };
 
   const jump = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  const tick = (i: number) => setChecked((c) => c.map((x, j) => (j === i ? true : x)));
 
   return (
     <div className="page-in space-y-12">
@@ -189,11 +145,11 @@ export default function DemoGuidePage() {
         </div>
 
         {/* 진행 순서 */}
-        <ol className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {AGENDA.map((s) => (
             <li key={s.id}>
               <button
-                onClick={() => jump(s.id)}
+                onClick={() => (s.id === "live" ? startTour(0) : jump(s.id))}
                 className="flex w-full items-center gap-3 rounded-2xl bg-white/8 px-4 py-3 text-left transition-colors hover:bg-white/14"
               >
                 <span
@@ -214,57 +170,6 @@ export default function DemoGuidePage() {
         </ol>
       </div>
 
-      {/* 시작 전 점검 */}
-      <div className="card border-l-[6px] p-6" style={{ borderLeftColor: ACCENT.teal.solid }}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="flex items-center gap-2 text-[22.5px] font-bold">
-            <ListChecks size={24} style={{ color: ACCENT.teal.solid }} /> 시작 전 점검
-            <span className="rounded-full px-2.5 py-0.5 text-[17px] font-bold" style={{ background: ACCENT.teal.soft, color: ACCENT.teal.text }}>
-              {checked.filter(Boolean).length} / {CHECKLIST.length}
-            </span>
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => {
-                resetDemo();
-                tick(0);
-                showToast("데모 데이터를 처음 상태로 되돌렸습니다");
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[19px] font-bold text-ink-2 hover:bg-[#e8ebee]"
-            >
-              <RotateCcw size={19} /> 데모 데이터 초기화
-            </button>
-            <button
-              onClick={() => {
-                setScale("large");
-                tick(1);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#f2f4f6] px-4 py-2.5 text-[19px] font-bold text-ink-2 hover:bg-[#e8ebee]"
-            >
-              글자 크게
-            </button>
-          </div>
-        </div>
-        <ul className="mt-3 grid gap-1.5 md:grid-cols-2">
-          {CHECKLIST.map((c, i) => (
-            <li key={c}>
-              <button
-                onClick={() => setChecked((s) => s.map((x, j) => (j === i ? !x : x)))}
-                aria-pressed={checked[i]}
-                className="flex w-full items-start gap-2.5 rounded-xl px-3 py-2 text-left hover:bg-[#f7f8fa]"
-              >
-                {checked[i] ? (
-                  <CheckCircle2 size={23} className="mt-[0.1em] shrink-0" style={{ color: ACCENT.teal.solid }} />
-                ) : (
-                  <CircleDashed size={23} className="mt-[0.1em] shrink-0 text-ink-3" />
-                )}
-                <span className={`text-[19.5px] ${checked[i] ? "text-ink-3 line-through" : "text-ink"}`}>{c}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-
       {/* 1. 영상 — 가로·세로, 배속, 목차까지 여기서 바로 */}
       <Section
         id="video"
@@ -277,98 +182,13 @@ export default function DemoGuidePage() {
         <VideoPage video={VIDEOS.inspection} embedded />
       </Section>
 
-      {/* 2. 요약 */}
-      <Section id="summary" n={2} tone="blue" icon={Target} title="한 장으로 정리" desc="영상 직후, 세 문장으로 다시 짚어 주세요.">
-        <div className="grid gap-3 lg:grid-cols-3">
-          {SUMMARY.map((s) => {
-            const c = ACCENT[s.tone];
-            return (
-              <div key={s.k} className="card overflow-hidden p-0">
-                <div className="h-[6px]" style={{ background: c.solid }} />
-                <div className="p-6">
-                  <span className="inline-block rounded-full px-3 py-1 text-[17px] font-extrabold" style={{ background: c.soft, color: c.text }}>
-                    {s.k}
-                  </span>
-                  <p className="mt-2.5 text-[24px] leading-snug font-extrabold">{s.title}</p>
-                  <p className="mt-2.5 text-[19.5px] leading-relaxed text-ink-2">{s.body}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="card mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 p-5">
-          <Workflow size={24} className="text-primary" />
-          {["업무지시", "확인", "작업개시", "작업보고", "관리자 확인"].map((s, i, a) => (
-            <span key={s} className="flex items-center gap-3 text-[20.5px] font-bold">
-              {i > 0 && <ArrowRight size={18} className="text-ink-3" />}
-              <span
-                className="rounded-xl px-3 py-1.5"
-                style={i === a.length - 1 ? { background: ACCENT.teal.soft, color: ACCENT.teal.text } : { background: ACCENT.blue.soft, color: ACCENT.blue.text }}
-              >
-                {s}
-              </span>
-            </span>
-          ))}
-        </div>
-      </Section>
-
-      {/* 3. 라이브 시연 */}
-      <Section
-        id="live"
-        n={3}
-        tone="blue"
-        icon={MonitorPlay}
-        title="실제 화면으로 시연"
-        desc="버튼을 누르면 화면이 차례로 열리고, 보여줄 곳이 밝게 표시되며, 설명할 문장이 함께 뜹니다."
-      >
-        <div className="card p-6">
-          <ol className="grid gap-2 md:grid-cols-2">
-            {TOUR_STEPS.map((s, i) => {
-              const staff = s.chapter === "직원 화면";
-              const c = staff ? ACCENT.coral : ACCENT.blue;
-              return (
-                <li key={i}>
-                  <button
-                    onClick={() => startTour(i)}
-                    className="flex w-full items-start gap-3 rounded-2xl border border-line px-4 py-3.5 text-left transition-colors hover:bg-[#f7f8fa]"
-                    style={{ borderLeft: `5px solid ${c.solid}` }}
-                  >
-                    <span
-                      className="flex h-[2.2rem] w-[2.2rem] shrink-0 items-center justify-center rounded-full text-[17px] font-extrabold"
-                      style={{ background: c.soft, color: c.text }}
-                    >
-                      {i + 1}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-[16.5px] font-bold" style={{ color: c.text }}>
-                        {s.chapter}
-                      </span>
-                      <span className="block text-[20.5px] leading-snug font-bold">{s.title}</span>
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-          <button
-            onClick={() => startTour(0)}
-            className="mt-4 inline-flex min-h-[3.75rem] w-full items-center justify-center gap-2 rounded-2xl bg-primary text-[21px] font-bold text-white transition-colors hover:bg-primary-dark active:scale-[0.99]"
-          >
-            <MonitorPlay size={24} /> 1번부터 시연 시작
-          </button>
-          <p className="mt-2.5 text-center text-[17.5px] text-ink-3">
-            <b style={{ color: ACCENT.coral.text }}>직원 화면</b> 단계에서는 자동으로 현장책임자 계정으로 바뀌고, 시연을 마치면 이사 계정으로 돌아옵니다.
-          </p>
-        </div>
-      </Section>
-
-      {/* 4. 로드맵 */}
+      {/* 2. 로드맵 */}
       <Section
         id="roadmap"
-        n={4}
+        n={2}
         tone="teal"
         icon={Route}
-        title="앞으로 어떻게 개발되는가"
+        title="앞으로 어떻게 개발될 예정인가"
         desc="지금 만든 MVP를 기준으로, 작게 실증하고 확인한 뒤 넓혀 갑니다."
       >
         <div className="card p-6">
