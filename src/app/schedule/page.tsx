@@ -352,7 +352,7 @@ export default function SchedulePage() {
       </div>
 
       {conflicts.length > 0 && (
-        <div className="card pulse-danger border border-danger/20 p-5">
+        <div data-tour="conflict" className="card pulse-danger border border-danger/20 p-5">
           <p className="flex items-center gap-2 text-[22px] font-bold text-danger">
             <AlertTriangle size={25} /> 일정이 겹치는 담당자가 있어요
           </p>
@@ -421,6 +421,7 @@ export default function SchedulePage() {
 
       {view === "today" && (
         <>
+          <div data-tour="timeline">
           <TimelineToday
             items={today}
             conflictIds={conflictIds}
@@ -432,6 +433,7 @@ export default function SchedulePage() {
               setTimeout(() => setHighlight(null), 1600);
             }}
           />
+          </div>
           <p className="text-[20px] font-semibold text-ink-2">
             {dayTitle(NOW_DATE)} · {today.length}건
           </p>

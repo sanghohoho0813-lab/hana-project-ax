@@ -164,7 +164,7 @@ function ManagerHome() {
       </div>
 
       {/* 핵심 KPI */}
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <section data-tour="kpi" className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {KPIS.map((k) => (
           <Link
             key={k.label}
@@ -196,7 +196,7 @@ function ManagerHome() {
       </section>
 
       {/* AI 브리핑 */}
-      <section className="hero-navy overflow-hidden rounded-3xl px-6 py-6 text-white lg:px-8">
+      <section data-tour="brief" className="hero-navy overflow-hidden rounded-3xl px-6 py-6 text-white lg:px-8">
         <p className="flex items-center gap-2 text-[18.5px] font-bold text-[#8fbcff]">
           <Sparkles size={21} /> AI 관리자 브리핑 · 오늘 아침
         </p>
@@ -517,7 +517,7 @@ function StaffHome() {
 
       {/* 새로 받은 업무 */}
       {newTasks.length > 0 && (
-        <section>
+        <section data-tour="newtask">
           <h3 className="mb-3 text-[25.5px] font-bold">
             새로 받은 업무{" "}
             <span className="text-danger">{newTasks.length}건</span>

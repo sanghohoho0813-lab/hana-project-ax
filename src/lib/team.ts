@@ -23,7 +23,7 @@ export const MEMBERS: Member[] = [
     desc: "경영 전반 · 승인 · 권한관리",
     phone: "010-2211-0001",
     initial: "장",
-    color: "#1b64da",
+    color: "#1b4f9c",
   },
   {
     id: "u2",
@@ -43,7 +43,7 @@ export const MEMBERS: Member[] = [
     desc: "일정 등록 · 견적 · 문서 · 수금",
     phone: "010-2211-0003",
     initial: "김",
-    color: "#7c5cd6",
+    color: "#2b5aa8",
   },
   {
     id: "u4",
@@ -53,7 +53,7 @@ export const MEMBERS: Member[] = [
     desc: "현장 배정 · 진행 관리 · 보고 검토",
     phone: "010-2211-0004",
     initial: "박",
-    color: "#0f766e",
+    color: "#3d6db5",
   },
   {
     id: "u5",
@@ -63,7 +63,7 @@ export const MEMBERS: Member[] = [
     desc: "현장 작업 · 진행·완료보고",
     phone: "010-2211-0005",
     initial: "이",
-    color: "#b45309",
+    color: "#4f7fc4",
   },
   {
     id: "u6",
@@ -73,7 +73,7 @@ export const MEMBERS: Member[] = [
     desc: "현장 작업 · 진행·완료보고",
     phone: "010-2211-0006",
     initial: "최",
-    color: "#be185d",
+    color: "#6a92cf",
   },
 ];
 
@@ -136,6 +136,7 @@ const MANAGER_ROUTES = [
   "/approvals",
   "/videos/inspection",
   "/videos/guide",
+  "/demo",
 ];
 
 export const PERMISSIONS: Record<RoleKey, Permission> = {
@@ -176,6 +177,7 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/documents",
       "/videos/inspection",
       "/videos/guide",
+      "/demo",
     ],
   },
   siteLead: {
@@ -194,6 +196,7 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/logs",
       "/videos/inspection",
       "/videos/guide",
+      "/demo",
     ],
   },
   engineer: {
@@ -212,6 +215,7 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/logs",
       "/videos/inspection",
       "/videos/guide",
+      "/demo",
     ],
   },
 };

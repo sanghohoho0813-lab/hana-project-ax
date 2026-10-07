@@ -174,7 +174,7 @@ export default function PerformancePage() {
       </section>
 
       {/* 도입 전 → 목표 */}
-      <section>
+      <section data-tour="metrics">
         <h3 className="mb-3 text-[25.5px] font-bold">도입 전 기준과 목표치</h3>
         <div className="grid gap-3 md:grid-cols-2">
           {PERF_METRICS.map((m) => {

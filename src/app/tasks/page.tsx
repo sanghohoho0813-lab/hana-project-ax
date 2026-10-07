@@ -78,6 +78,7 @@ function TasksInner() {
         {permission.assignTask && (
           <>
             <button
+              data-tour="memo"
               onClick={() => setMemoOpen(true)}
               className="inline-flex min-h-[3.5rem] items-center gap-2 rounded-2xl bg-white px-5 text-[20px] font-bold text-ink-2 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)]"
             >

@@ -7,11 +7,11 @@ import { formatMoney } from "@/lib/format";
 import { Badge, EmptyState, PageIntro, type Tone } from "@/components/ui";
 
 const KIND_TONE: Record<string, Tone> = {
-  견적: "info",
-  추가공사: "danger",
-  "자재 발주": "warning",
-  용역비: "success",
-  "잔금 청구": "success",
+  견적: "neutral",
+  추가공사: "neutral",
+  "자재 발주": "neutral",
+  용역비: "neutral",
+  "잔금 청구": "neutral",
 };
 
 export default function ApprovalsPage() {

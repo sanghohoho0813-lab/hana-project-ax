@@ -64,7 +64,7 @@ export function ProgressBar({
     tone === "danger"
       ? "bg-danger"
       : tone === "warning"
-        ? "bg-amber-500"
+        ? "bg-warning"
         : tone === "success"
           ? "bg-success"
           : "bg-primary";

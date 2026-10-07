@@ -46,7 +46,7 @@ function ReportsInner() {
         </button>
       </PageIntro>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div data-tour="reportkpi" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
           { label: "전체 보고", value: visible.length },
           { label: "검토 대기", value: pending, tone: pending ? "text-warning" : "" },

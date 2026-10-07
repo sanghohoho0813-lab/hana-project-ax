@@ -14,16 +14,16 @@ const KIND_TONE: Record<
   TimelineKind,
   "success" | "warning" | "danger" | "info" | "neutral"
 > = {
-  업무지시: "info",
-  "직원 확인": "success",
+  업무지시: "neutral",
+  "직원 확인": "info",
   "일정 변경": "warning",
-  진행보고: "info",
+  진행보고: "neutral",
   사진: "neutral",
   "관리자 댓글": "neutral",
   "보완 요청": "danger",
-  완료보고: "info",
-  승인: "success",
-  추가공사: "warning",
+  완료보고: "neutral",
+  승인: "info",
+  추가공사: "neutral",
   문서: "neutral",
 };
 
