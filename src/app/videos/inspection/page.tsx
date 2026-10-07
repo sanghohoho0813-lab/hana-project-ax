@@ -1,13 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { VideoPage } from "@/components/VideoPage";
-import { VIDEOS } from "@/lib/videos";
-
+/** 실사용 영상은 '실사 시연' 화면으로 합쳤다 */
 export default function InspectionVideoPage() {
-  return (
-    <VideoPage
-      video={VIDEOS.inspection}
-      intro="실사(현장 확인) 때 시스템을 소개하는 영상입니다."
-    />
-  );
+  redirect("/demo#video");
 }

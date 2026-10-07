@@ -11,7 +11,6 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  Clapperboard,
   ClipboardList,
   FileBarChart,
   FolderOpen,
@@ -75,7 +74,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "site",
     label: "공사",
-    hue: 214,
+    hue: 168,
     items: [
       { href: "/projects", label: "프로젝트", icon: Briefcase },
       { href: "/logs", label: "현장일보", icon: ClipboardList },
@@ -86,7 +85,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "biz",
     label: "경영",
-    hue: 214,
+    hue: 36,
     items: [
       { href: "/inquiries", label: "문의·견적", icon: PhoneCall },
       { href: "/customers", label: "고객·재수주", icon: Users },
@@ -97,7 +96,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     key: "support",
     label: "지원·분석",
-    hue: 214,
+    hue: 256,
     items: [
       { href: "/insight", label: COMPANY.insight.name, icon: Handshake },
       { href: "/documents", label: "문서함", icon: FolderOpen },
@@ -109,14 +108,13 @@ const NAV_GROUPS: NavGroup[] = [
 
 /** 맨 위 영상 바로가기 */
 const VIDEO_LINKS: NavItem[] = [
-  { href: "/demo", label: "실사 시연 가이드", icon: Presentation },
-  { href: "/videos/inspection", label: "실사용 영상", icon: Clapperboard },
+  { href: "/demo", label: "실사 시연 · 실사용 영상", icon: Presentation },
   { href: "/videos/guide", label: "사용법 영상", icon: MonitorPlay },
 ];
 
 /** 같은 색 계열 안에서 항목 순서대로 톤을 달리한다 */
 function toneOf(hue: number, i: number) {
-  const l = 66 + (i % 5) * 3;
+  const l = 64 + (i % 5) * 4;
   return {
     icon: `hsl(${hue} 78% ${l}%)`,
     tile: `hsl(${hue} 70% ${l - 6}% / 0.16)`,
@@ -143,9 +141,9 @@ const PAGE_META: Record<string, { title: string; crumb: string }> = {
   "/procurement": { title: "조달 인사이트", crumb: "지원·분석" },
   "/performance": { title: "운영성과", crumb: "지원·분석" },
   "/approvals": { title: "대표 승인함", crumb: "경영" },
-  "/videos/inspection": { title: "실사용 영상", crumb: "영상" },
+  "/videos/inspection": { title: "실사 시연 · 실사용 영상", crumb: "실사 시연" },
   "/videos/guide": { title: "사용법 영상", crumb: "영상" },
-  "/demo": { title: "실사 시연 가이드", crumb: "영상" },
+  "/demo": { title: "실사 시연 · 실사용 영상", crumb: "실사 시연" },
 };
 
 /* ───────────── 사이드바 ───────────── */
@@ -209,14 +207,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 space-y-3 overflow-y-auto px-3 pb-3">
         {/* 영상 바로가기 — 가장 먼저 눈에 띄게 */}
-        <div className="rounded-2xl border border-[#4a92f8]/30 bg-gradient-to-br from-[#3182f6]/28 via-[#3182f6]/10 to-transparent p-1.5">
-          <p className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-[15.5px] font-extrabold tracking-wide text-[#8fbcff]">
+        <div className="rounded-2xl border border-[#e8b89a]/25 bg-gradient-to-br from-[#d47a4a]/22 via-[#d47a4a]/8 to-transparent p-1.5">
+          <p className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-[15.5px] font-extrabold tracking-wide text-[#f0c2a2]">
             <PlayCircle size={17} /> 실사 시연 · 영상
           </p>
           <ul className="space-y-0.5">
             {VIDEO_LINKS.map((item, i) => {
               const active = pathname.startsWith(item.href);
-              const tone = toneOf(214, i);
+              const tone = toneOf(22, i);
               return (
                 <li key={item.href}>
                   <Link

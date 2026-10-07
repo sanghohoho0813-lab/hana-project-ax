@@ -59,7 +59,7 @@ function subscribeMq(cb: () => void) {
   return () => m.removeEventListener("change", cb);
 }
 
-export function VideoPage({ video, intro }: { video: VideoInfo; intro: string }) {
+export function VideoPage({ video, intro, embedded = false }: { video: VideoInfo; intro?: string; embedded?: boolean }) {
   const ref = useRef<HTMLVideoElement>(null);
   // 화면 폭으로 기본 방향을 고르고, 사용자가 누르면 그 선택을 따른다
   const isNarrow = useSyncExternalStore(subscribeMq, () => window.matchMedia(MQ).matches, () => false);
@@ -266,8 +266,8 @@ export function VideoPage({ video, intro }: { video: VideoInfo; intro: string })
   );
 
   return (
-    <div className="page-in space-y-6">
-      <PageIntro message={intro} />
+    <div className={embedded ? "space-y-6" : "page-in space-y-6"}>
+      {intro && !embedded && <PageIntro message={intro} />}
 
       {H ? (
         <div className="space-y-6">

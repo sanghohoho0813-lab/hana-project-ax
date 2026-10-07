@@ -58,6 +58,6 @@ export const VIDEOS: Record<"inspection" | "guide", VideoInfo> = {
       "영상 속 앱 화면은 실제 MVP 화면이며, 업무와 인물은 예시 데이터입니다.",
     ],
     srt: "/videos/guide.srt",
-    other: { href: "/videos/inspection", label: "실사용 영상 보기" },
+    other: { href: "/demo", label: "실사 시연 · 실사용 영상 보기" },
   },
 };
