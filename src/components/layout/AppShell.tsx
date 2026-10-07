@@ -207,14 +207,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       <nav className="flex-1 space-y-3 overflow-y-auto px-3 pb-3">
         {/* 영상 바로가기 — 가장 먼저 눈에 띄게 */}
-        <div className="rounded-2xl border border-[#e8b89a]/25 bg-gradient-to-br from-[#d47a4a]/22 via-[#d47a4a]/8 to-transparent p-1.5">
-          <p className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-[15.5px] font-extrabold tracking-wide text-[#f0c2a2]">
+        <div className="rounded-2xl border border-[#f0a3aa]/25 bg-gradient-to-br from-[#e0525e]/22 via-[#e0525e]/8 to-transparent p-1.5">
+          <p className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-[15.5px] font-extrabold tracking-wide text-[#f6b6bc]">
             <PlayCircle size={17} /> 실사 시연 · 영상
           </p>
           <ul className="space-y-0.5">
             {VIDEO_LINKS.map((item, i) => {
               const active = pathname.startsWith(item.href);
-              const tone = toneOf(22, i);
+              const tone = toneOf(356, i);
               return (
                 <li key={item.href}>
                   <Link

@@ -18,10 +18,10 @@ import { VideoPage } from "@/components/VideoPage";
 
 /**
  * 실사 시연 화면의 강조색 — 기본 파랑에 어울리는 두 가지만 더한다.
- * 코랄: 영상·문제 / 파랑: 해결·라이브 시연 / 청록: 차별점·앞으로의 개발
+ * 빨강: 영상·문제 / 파랑: 해결·라이브 시연 / 청록: 차별점·앞으로의 개발
  */
 const ACCENT = {
-  coral: { solid: "#e5734a", text: "#c2532b", soft: "#fdf0ea", line: "#f3c3ae" },
+  coral: { solid: "#e5545f", text: "#c43843", soft: "#fdeeef", line: "#f4bfc4" },
   blue: { solid: "#3182f6", text: "#1b64da", soft: "#e8f1fe", line: "#b7d3fb" },
   teal: { solid: "#14a08f", text: "#0b7d70", soft: "#e4f6f3", line: "#a6ddd5" },
 } as const;
@@ -122,7 +122,7 @@ export default function DemoGuidePage() {
     <div className="page-in space-y-12">
       {/* 머리말 */}
       <div className="hero-navy overflow-hidden rounded-3xl px-6 py-7 text-white lg:px-9 lg:py-8">
-        <p className="text-[18px] font-bold tracking-wide text-[#f0c2a2]">실사 시연 · 실사용 영상</p>
+        <p className="text-[18px] font-bold tracking-wide text-[#f6b6bc]">실사 시연 · 실사용 영상</p>
         <h1 className="mt-1.5 text-[36px] leading-tight font-extrabold lg:text-[42px]">복수 현장 업무 위험관리 AX</h1>
         <p className="mt-2 max-w-[54rem] text-[21px] leading-relaxed text-white/75">
           처음 보시는 분도 따라오실 수 있게{" "}
