@@ -239,7 +239,7 @@ describe("11. 여러 위험업무의 우선순위 산출", () => {
     expect(p.items[0].title).toBe("C현장 일정 중복");
     expect(p.items[0].breakdown.find((b) => b.factor === "업무 중요도")).toMatchObject({ points: 0, value: "연결 업무 없음" });
   });
-  it("가중치를 설정으로 바꾸면 순위가 바뀐다 — 설정값으로 관리", () => {
+  it("가중치를 설정으로 바꾸면 점수와 순위가 설정을 따른다 — 설정값으로 관리", () => {
     const flat: PriorityConfig = { ...DEFAULT_PRIORITY_CONFIG, gradePoints: { 중간: 0, 높음: 0, "매우 높음": 0 }, perShortfallMin: 0, perExtraSite: 0, taskPriorityPoints: { 긴급: 0, 보통: 0, 낮음: 0 }, urgency: [{ withinMin: 140, points: 50 }] };
     const r = runFlow("S1");
     const p = rankResponses(r.risk, { asOf: FLOW_STATES.S1.asOf, config: flat });
@@ -247,6 +247,13 @@ describe("11. 여러 위험업무의 우선순위 산출", () => {
     expect(p.items.map((i) => [i.title, i.score])).toEqual([
       ["B현장 작업지연 위험", 50],
       ["E현장 이동시간 부족", 0],
+    ]);
+    // 업무 중요도 '보통'에만 점수를 주는 설정 → E현장(보통) 30점이 B현장(긴급) 0점보다 앞선다
+    const swap: PriorityConfig = { ...flat, urgency: [], taskPriorityPoints: { 긴급: 0, 보통: 30, 낮음: 0 } };
+    const meta = FLOW_CONTEXTS.map((c) => ({ siteId: c.siteId, priority: c.priority }));
+    expect(rankResponses(r.risk, { asOf: FLOW_STATES.S1.asOf, meta, config: swap }).items.map((i) => [i.rank, i.title, i.score])).toEqual([
+      [1, "E현장 이동시간 부족", 30],
+      [2, "B현장 작업지연 위험", 0],
     ]);
   });
 });
