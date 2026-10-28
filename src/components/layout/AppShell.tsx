@@ -144,6 +144,7 @@ const PAGE_META: Record<string, { title: string; crumb: string }> = {
   "/videos/inspection": { title: "실사 시연 · 실사용 영상", crumb: "실사 시연" },
   "/videos/guide": { title: "사용법 영상", crumb: "영상" },
   "/demo": { title: "실사 시연 · 실사용 영상", crumb: "실사 시연" },
+  "/demo/verify": { title: "기술검증 시뮬레이션", crumb: "실사 시연" },
 };
 
 /* ───────────── 사이드바 ───────────── */

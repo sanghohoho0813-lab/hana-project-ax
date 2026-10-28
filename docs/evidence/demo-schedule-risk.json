@@ -1,0 +1,284 @@
+{
+  "note": "하나 프로젝트 AX 데모 일정 데이터(src/lib/ops-data.ts)를 데모 기준시각으로 판단한 결과입니다. 실제 운영데이터가 아닙니다.",
+  "baseline": [
+    {
+      "key": "s1>s2",
+      "reason": "이동시간 부족",
+      "gap": 30
+    }
+  ],
+  "engine": {
+    "ruleVersion": "chain-risk/1.0.0",
+    "asOf": "2026-07-28T10:40",
+    "sites": [
+      {
+        "id": "s7",
+        "title": "보령시청 준공검수 협의",
+        "workerId": "u3",
+        "date": "2026-07-28",
+        "region": "충남 보령",
+        "status": "예정",
+        "plannedStart": "14:00",
+        "plannedEnd": "15:00",
+        "expectedStart": "14:00",
+        "expectedEnd": "15:00",
+        "endSource": "예정",
+        "startDelay": 0,
+        "endDelay": 0
+      },
+      {
+        "id": "s1",
+        "title": "서천 장항산단 통신상태 점검",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "region": "충남 서천",
+        "status": "예정",
+        "plannedStart": "10:00",
+        "plannedEnd": "11:00",
+        "expectedStart": "10:00",
+        "expectedEnd": "11:00",
+        "endSource": "예정",
+        "startDelay": 0,
+        "endDelay": 0
+      },
+      {
+        "id": "s2",
+        "title": "보령 공공시설 준공사진 촬영",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "region": "충남 보령",
+        "status": "예정",
+        "plannedStart": "11:30",
+        "plannedEnd": "13:00",
+        "expectedStart": "11:55",
+        "expectedEnd": "13:25",
+        "endSource": "연쇄 계산",
+        "startDelay": 25,
+        "endDelay": 25,
+        "delayRootId": "s1"
+      },
+      {
+        "id": "s3",
+        "title": "군산 CCTV 위치 재확인",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "region": "전북 군산",
+        "status": "진행 중",
+        "plannedStart": "09:00",
+        "plannedEnd": "12:00",
+        "expectedStart": "09:00",
+        "expectedEnd": "12:00",
+        "endSource": "예정",
+        "startDelay": 0,
+        "endDelay": 0
+      },
+      {
+        "id": "s4",
+        "title": "홍성 네트워크 속도 측정",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "region": "충남 홍성",
+        "status": "예정",
+        "plannedStart": "15:00",
+        "plannedEnd": "16:30",
+        "expectedStart": "15:00",
+        "expectedEnd": "16:30",
+        "endSource": "예정",
+        "startDelay": 0,
+        "endDelay": 0
+      },
+      {
+        "id": "s5",
+        "title": "서천 자재 입고 입회",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "region": "충남 서천",
+        "status": "진행 중",
+        "plannedStart": "09:30",
+        "plannedEnd": "10:30",
+        "expectedStart": "09:30",
+        "expectedEnd": "10:40",
+        "endSource": "추정 규칙",
+        "startDelay": 0,
+        "endDelay": 10,
+        "delayRootId": "s5"
+      },
+      {
+        "id": "s6",
+        "title": "익산 물류창고 사양 협의",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "region": "전북 익산",
+        "status": "예정",
+        "plannedStart": "13:30",
+        "plannedEnd": "15:00",
+        "expectedStart": "13:30",
+        "expectedEnd": "15:00",
+        "endSource": "예정",
+        "startDelay": 0,
+        "endDelay": 0
+      }
+    ],
+    "links": [
+      {
+        "key": "s1>s2",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "order": 1,
+        "prev": {
+          "id": "s1",
+          "title": "서천 장항산단 통신상태 점검",
+          "region": "충남 서천",
+          "plannedEnd": "11:00",
+          "expectedEnd": "11:00",
+          "endSource": "예정",
+          "delay": 0
+        },
+        "next": {
+          "id": "s2",
+          "title": "보령 공공시설 준공사진 촬영",
+          "region": "충남 보령",
+          "plannedStart": "11:30",
+          "status": "예정"
+        },
+        "travel": {
+          "minutes": 55,
+          "source": "데모 가정값"
+        },
+        "plannedGap": 30,
+        "arrival": "11:55",
+        "slack": -25,
+        "shortfall": 25,
+        "status": "판정",
+        "grade": "높음",
+        "cause": "이동시간 부족",
+        "staticConflict": true,
+        "downstream": [
+          "s2"
+        ],
+        "formula": [
+          "서천 장항산단 통신상태 점검 예상 종료 11:00 (예정)",
+          "예상 도착 = 11:00 + 이동 55분 = 11:55",
+          "여유 = 보령 공공시설 준공사진 촬영 예정 시작 11:30 − 예상 도착 11:55 = -25분 → 25분 부족"
+        ],
+        "reason": "예정 종료 11:00에 이동 55분을 더하면 예정대로 진행해도 후속 현장 시작 11:30보다 늦습니다 (25분 부족).",
+        "actions": [
+          "일정 시간 또는 이동시간 재확인",
+          "후속 현장 일정 조정 검토",
+          "대체 작업자 가능 여부 확인",
+          "후속 현장 고객에게 지연 가능성 안내 검토"
+        ],
+        "rules": [
+          "R1",
+          "R2",
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ]
+      },
+      {
+        "key": "s3>s4",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "order": 1,
+        "prev": {
+          "id": "s3",
+          "title": "군산 CCTV 위치 재확인",
+          "region": "전북 군산",
+          "plannedEnd": "12:00",
+          "expectedEnd": "12:00",
+          "endSource": "예정",
+          "delay": 0
+        },
+        "next": {
+          "id": "s4",
+          "title": "홍성 네트워크 속도 측정",
+          "region": "충남 홍성",
+          "plannedStart": "15:00",
+          "status": "예정"
+        },
+        "travel": {
+          "minutes": 95,
+          "source": "데모 가정값"
+        },
+        "plannedGap": 180,
+        "arrival": "13:35",
+        "slack": 85,
+        "shortfall": 0,
+        "status": "판정",
+        "grade": "없음",
+        "cause": "정상",
+        "staticConflict": false,
+        "downstream": [],
+        "formula": [
+          "군산 CCTV 위치 재확인 예상 종료 12:00 (예정)",
+          "예상 도착 = 12:00 + 이동 95분 = 13:35",
+          "여유 = 홍성 네트워크 속도 측정 예정 시작 15:00 − 예상 도착 13:35 = 85분"
+        ],
+        "reason": "예상 도착 13:35, 후속 현장 시작까지 85분 여유가 있습니다.",
+        "actions": [],
+        "rules": [
+          "R1",
+          "R2",
+          "R3",
+          "R4",
+          "R9"
+        ]
+      },
+      {
+        "key": "s5>s6",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "order": 1,
+        "prev": {
+          "id": "s5",
+          "title": "서천 자재 입고 입회",
+          "region": "충남 서천",
+          "plannedEnd": "10:30",
+          "expectedEnd": "10:40",
+          "endSource": "추정 규칙",
+          "delay": 10
+        },
+        "next": {
+          "id": "s6",
+          "title": "익산 물류창고 사양 협의",
+          "region": "전북 익산",
+          "plannedStart": "13:30",
+          "status": "예정"
+        },
+        "travel": {
+          "minutes": 80,
+          "source": "데모 가정값"
+        },
+        "plannedGap": 180,
+        "arrival": "12:00",
+        "slack": 90,
+        "shortfall": 0,
+        "status": "판정",
+        "grade": "없음",
+        "cause": "정상",
+        "staticConflict": false,
+        "downstream": [],
+        "formula": [
+          "서천 자재 입고 입회 예상 종료 10:40 (추정 규칙)",
+          "선행 지연 = 10:40 − 예정 종료 10:30 = 10분",
+          "예상 도착 = 10:40 + 이동 80분 = 12:00",
+          "여유 = 익산 물류창고 사양 협의 예정 시작 13:30 − 예상 도착 12:00 = 90분"
+        ],
+        "reason": "예상 도착 12:00, 후속 현장 시작까지 90분 여유가 있습니다.",
+        "actions": [],
+        "rules": [
+          "R1",
+          "R2",
+          "R3",
+          "R4",
+          "R2-1",
+          "R9"
+        ]
+      }
+    ],
+    "issues": [],
+    "excluded": []
+  }
+}

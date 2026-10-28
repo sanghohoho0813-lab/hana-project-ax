@@ -7,6 +7,7 @@ import type {
   Task,
   WorkReport,
 } from "./ops-types";
+import { evaluateChainRisk, riskyLinks, type RiskResult, type SiteInput } from "./risk-engine";
 
 /* ── 시간 유틸 ─────────────────────────────────── */
 
@@ -158,6 +159,43 @@ export function findConflicts(list: ScheduleItem[], date = NOW_DATE): ScheduleCo
     }
   });
   return out;
+}
+
+/* ── 연쇄위험 사전판단 (risk-engine 연결) ─────────── */
+
+/** 일정 → 엔진 입력. 이동시간 출처가 없으면 데모 가정값으로 본다 */
+export function toSiteInput(s: ScheduleItem): SiteInput {
+  return {
+    id: s.id,
+    title: s.title,
+    workerId: s.assigneeId,
+    date: s.date,
+    plannedStart: s.start,
+    plannedEnd: s.end,
+    status: s.status,
+    region: s.region,
+    actualEnd: s.actualEnd,
+    expectedEnd: s.expectedEnd,
+    expectedEndSource: s.expectedEndSource,
+    travelMinutes: s.travelMinutes,
+    travelSource: s.travelSource ?? "데모 가정값",
+  };
+}
+
+/**
+ * 하루 일정의 연쇄위험 판단 — 데모 기준시각(NOW)으로 계산해 화면마다 같은 결과를 낸다.
+ * 일정 화면·알림·판단 이력이 모두 이 함수를 쓴다.
+ */
+export function chainRisk(list: ScheduleItem[], date = NOW_DATE): RiskResult {
+  return evaluateChainRisk(
+    list.filter((s) => s.date === date).map(toSiteInput),
+    { asOf: NOW },
+  );
+}
+
+/** 모든 날짜를 한 번에 판단 — 판단 이력(변경 전후 비교)에 쓴다 */
+export function chainRiskAll(list: ScheduleItem[]): RiskResult {
+  return evaluateChainRisk(list.map(toSiteInput), { asOf: NOW });
 }
 
 /** 시작시간이 지났는데 아직 시작되지 않은 일정 */
@@ -318,6 +356,22 @@ export function buildAlerts(tasks: Task[], schedules: ScheduleItem[]): OpsAlert[
       projectId: c.b.projectId,
     });
   });
+
+  // 연쇄 지연 위험 — 예정값만으로는 문제없지만 선행 현장 지연을 반영하면 늦어지는 경우
+  // (예정값만으로 걸리는 경우는 위 '일정 충돌'과 같으므로 중복해서 띄우지 않는다)
+  riskyLinks(chainRisk(schedules))
+    .filter((l) => !l.staticConflict)
+    .forEach((l) => {
+      out.push({
+        id: `a-chain-${l.key}`,
+        rule: "연쇄 지연 위험",
+        severity: l.grade === "중간" ? "warning" : "danger",
+        title: `${fullName(l.workerId)}의 ${l.next.title} 일정이 늦어질 수 있어요.`,
+        detail: `${l.prev.title} 예상 종료 ${l.prev.expectedEnd} + 이동 ${l.travel.minutes}분 = 도착 ${l.arrival} · 시작 ${l.next.plannedStart} 대비 ${l.shortfall}분 부족 (위험 ${l.grade})`,
+        memberId: l.workerId,
+        scheduleId: l.next.id,
+      });
+    });
 
   const order = { danger: 0, warning: 1, info: 2 };
   return out.sort((a, b) => order[a.severity] - order[b.severity]);

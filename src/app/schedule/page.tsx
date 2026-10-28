@@ -10,6 +10,7 @@ import {
   Clock,
   MapPin,
   Navigation,
+  Timer,
   UserCog,
 } from "lucide-react";
 import { useApp } from "@/lib/store";
@@ -23,6 +24,7 @@ import {
 } from "@/lib/ops-calc";
 import { Badge, EmptyState, PageIntro, Segment } from "@/components/ui";
 import { Avatar } from "@/components/ops";
+import { ChainRiskPanel, EstimateModal } from "@/components/RiskPanel";
 import type { ScheduleItem } from "@/lib/ops-types";
 
 type ViewKey = "today" | "week" | "member" | "project" | "region";
@@ -201,6 +203,7 @@ function ScheduleCard({
   const { projects, acknowledgeSchedule, showToast, permission } = useApp();
   const project = projects.find((p) => p.id === s.projectId);
   const member = memberById(s.assigneeId);
+  const [estimating, setEstimating] = useState(false);
 
   return (
     <div className="card min-w-0 p-5">
@@ -232,6 +235,11 @@ function ScheduleCard({
         <span className="inline-flex items-center gap-1.5">
           <MapPin size={19} /> {s.region}
         </span>
+        {s.expectedEnd && (
+          <span className="inline-flex items-center gap-1.5 font-semibold text-warning">
+            <Timer size={19} /> 예상 종료 {s.expectedEnd} · {s.expectedEndSource ?? "관리자 입력"}
+          </span>
+        )}
         {project && (
           <Link
             href={`/projects/${project.id}`}
@@ -287,8 +295,17 @@ function ScheduleCard({
           >
             <CheckCircle2 size={20} /> 확인 처리
           </button>
+          {(s.status === "예정" || s.status === "진행 중") && (
+            <button
+              onClick={() => setEstimating(true)}
+              className="inline-flex min-h-[3.25rem] min-w-[9rem] flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#f2f4f6] px-3 text-[18px] font-bold whitespace-nowrap text-ink-2 transition-colors hover:bg-[#e8ebee]"
+            >
+              <Timer size={20} /> 예상 종료
+            </button>
+          )}
         </div>
       )}
+      {estimating && <EstimateModal schedule={s} onClose={() => setEstimating(false)} />}
     </div>
   );
 }
@@ -400,6 +417,9 @@ export default function SchedulePage() {
           ))}
         </div>
       )}
+
+      {/* 연쇄위험 판단 근거 · 판단 이력 */}
+      <ChainRiskPanel list={visible} />
 
       {/* 보기 방식 */}
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

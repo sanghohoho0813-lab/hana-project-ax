@@ -1,0 +1,91 @@
+{
+  "note": "같은 A→B 일정(이동 30분 · B 11:40 시작)에서 A현장 예상 종료만 바꿔 본 결과입니다.",
+  "ruleVersion": "chain-risk/1.0.0",
+  "thresholds": {
+    "cautionBufferMin": 10,
+    "highShortfallMin": 10,
+    "criticalShortfallMin": 30
+  },
+  "rows": [
+    {
+      "expectedEnd": "11:00",
+      "baselineDetected": false,
+      "arrival": "11:30",
+      "slack": 10,
+      "grade": "없음",
+      "engineDetected": false
+    },
+    {
+      "expectedEnd": "11:05",
+      "baselineDetected": false,
+      "arrival": "11:35",
+      "slack": 5,
+      "grade": "주의",
+      "engineDetected": false
+    },
+    {
+      "expectedEnd": "11:10",
+      "baselineDetected": false,
+      "arrival": "11:40",
+      "slack": 0,
+      "grade": "주의",
+      "engineDetected": false
+    },
+    {
+      "expectedEnd": "11:15",
+      "baselineDetected": false,
+      "arrival": "11:45",
+      "slack": -5,
+      "grade": "중간",
+      "engineDetected": true
+    },
+    {
+      "expectedEnd": "11:20",
+      "baselineDetected": false,
+      "arrival": "11:50",
+      "slack": -10,
+      "grade": "높음",
+      "engineDetected": true
+    },
+    {
+      "expectedEnd": "11:25",
+      "baselineDetected": false,
+      "arrival": "11:55",
+      "slack": -15,
+      "grade": "높음",
+      "engineDetected": true
+    },
+    {
+      "expectedEnd": "11:30",
+      "baselineDetected": false,
+      "arrival": "12:00",
+      "slack": -20,
+      "grade": "높음",
+      "engineDetected": true
+    },
+    {
+      "expectedEnd": "11:35",
+      "baselineDetected": false,
+      "arrival": "12:05",
+      "slack": -25,
+      "grade": "높음",
+      "engineDetected": true
+    },
+    {
+      "expectedEnd": "11:40",
+      "baselineDetected": false,
+      "arrival": "12:10",
+      "slack": -30,
+      "grade": "매우 높음",
+      "engineDetected": true
+    },
+    {
+      "expectedEnd": "11:45",
+      "baselineDetected": false,
+      "arrival": "12:15",
+      "slack": -35,
+      "grade": "매우 높음",
+      "engineDetected": true
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "note": "기존 코드(findConflicts) 대비 기능검증 결과입니다. 외부 상용 제품과의 비교가 아닙니다. 입력은 검증용 가상 시나리오입니다.",
+  "ruleVersion": "chain-risk/1.0.0",
+  "asOf": "2026-07-28T10:40",
+  "rows": [
+    {
+      "caseId": "A",
+      "label": "예정대로 종료",
+      "baseline": [],
+      "engine": [],
+      "held": [],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "B",
+      "label": "A현장 예상 종료 11:25",
+      "baseline": [],
+      "engine": [
+        "A>B"
+      ],
+      "held": [],
+      "engineOnly": [
+        "A>B"
+      ],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "C",
+      "label": "B현장 12:10 시작",
+      "baseline": [],
+      "engine": [],
+      "held": [],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "D",
+      "label": "A 11:25 종료 → B → C",
+      "baseline": [],
+      "engine": [
+        "A>B",
+        "B>C"
+      ],
+      "held": [],
+      "engineOnly": [
+        "A>B",
+        "B>C"
+      ],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E1",
+      "label": "담당자 변경",
+      "baseline": [],
+      "engine": [],
+      "held": [],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E2",
+      "label": "중간 일정 취소",
+      "baseline": [],
+      "engine": [],
+      "held": [
+        "A>C"
+      ],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E3",
+      "label": "이동시간 누락",
+      "baseline": [],
+      "engine": [],
+      "held": [
+        "A>B"
+      ],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E4",
+      "label": "잘못된 시각 (25:70)",
+      "baseline": [],
+      "engine": [],
+      "held": [
+        "A>C"
+      ],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E5",
+      "label": "시간 역전 (12:30~11:40)",
+      "baseline": [],
+      "engine": [],
+      "held": [
+        "A>C"
+      ],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E6",
+      "label": "잘못된 날짜 (2026-02-30)",
+      "baseline": [],
+      "engine": [],
+      "held": [],
+      "engineOnly": [],
+      "baselineOnly": []
+    },
+    {
+      "caseId": "E7",
+      "label": "같은 일정 중복 입력",
+      "baseline": [
+        "B>B"
+      ],
+      "engine": [
+        "A>B"
+      ],
+      "held": [],
+      "engineOnly": [
+        "A>B"
+      ],
+      "baselineOnly": [
+        "B>B"
+      ]
+    }
+  ],
+  "totals": {
+    "cases": 11,
+    "baselineDetected": 1,
+    "engineDetected": 4,
+    "engineOnly": 4,
+    "baselineOnly": 1,
+    "engineHeld": 4
+  }
+}

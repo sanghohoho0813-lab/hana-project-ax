@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   CircleDashed,
   Clapperboard,
   Clock,
+  FlaskConical,
   Map,
   MonitorPlay,
   PlayCircle,
@@ -142,6 +144,12 @@ export default function DemoGuidePage() {
           >
             <MonitorPlay size={23} className="text-primary" /> 실제 화면 시연 시작
           </button>
+          <Link
+            href="/demo/verify"
+            className="inline-flex min-h-[3.5rem] items-center gap-2 rounded-2xl border-2 border-white/35 px-5 text-[20px] font-bold text-white transition-colors hover:bg-white/10"
+          >
+            <FlaskConical size={23} /> 기술검증 시뮬레이션
+          </Link>
         </div>
 
         {/* 진행 순서 */}

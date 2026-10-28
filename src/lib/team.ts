@@ -137,6 +137,7 @@ const MANAGER_ROUTES = [
   "/videos/inspection",
   "/videos/guide",
   "/demo",
+  "/demo/verify",
 ];
 
 export const PERMISSIONS: Record<RoleKey, Permission> = {
@@ -178,6 +179,7 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/videos/inspection",
       "/videos/guide",
       "/demo",
+      "/demo/verify",
     ],
   },
   siteLead: {
@@ -197,6 +199,7 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/videos/inspection",
       "/videos/guide",
       "/demo",
+      "/demo/verify",
     ],
   },
   engineer: {
@@ -216,6 +219,7 @@ export const PERMISSIONS: Record<RoleKey, Permission> = {
       "/videos/inspection",
       "/videos/guide",
       "/demo",
+      "/demo/verify",
     ],
   },
 };

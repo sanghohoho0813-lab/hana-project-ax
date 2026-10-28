@@ -72,7 +72,14 @@ export interface ScheduleItem {
   end: string;
   /** 직전 일정에서 이동하는 데 걸리는 예상 시간(분) */
   travelMinutes: number;
+  /** 이동시간 출처 — 입력값 또는 데모 가정값 (실시간 교통정보 아님). 없으면 데모 가정값으로 본다 */
+  travelSource?: "입력값" | "데모 가정값";
   status: ScheduleStatus;
+  /** 실제 종료 시각 HH:MM (완료 시) */
+  actualEnd?: string;
+  /** 예상 종료 시각 HH:MM — 현장 보고 또는 관리자 입력 */
+  expectedEnd?: string;
+  expectedEndSource?: "현장 보고" | "관리자 입력";
   /** 담당자가 일정을 확인했는지 */
   acknowledgedAt?: string;
   taskId?: string;
@@ -155,6 +162,7 @@ export type AlertRule =
   | "기한 초과"
   | "검토 지연"
   | "일정 충돌"
+  | "연쇄 지연 위험"
   | "결과보고 미제출";
 
 export interface OpsAlert {

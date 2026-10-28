@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
@@ -18,6 +19,7 @@ import {
 } from "./data";
 import { SCHEDULES, TASKS, TIMELINE, WORK_REPORTS } from "./ops-data";
 import { NOW } from "./company";
+import { buildRiskLogEntry, RISK_FIELDS, type RiskEvent, type RiskLogEntry } from "./risk-log";
 import { fullName, permissionOf, withRo, type Permission } from "./team";
 import type {
   Approval,
@@ -79,6 +81,14 @@ interface AppState {
   addSchedule: (s: ScheduleItem) => void;
   updateSchedule: (id: string, patch: Partial<ScheduleItem>) => void;
   acknowledgeSchedule: (id: string) => void;
+  /** 예상 종료 입력 (없애려면 undefined) — 연쇄위험 판단에 쓴다 */
+  setScheduleEstimate: (
+    id: string,
+    expectedEnd: string | undefined,
+    source?: "현장 보고" | "관리자 입력",
+  ) => void;
+  /** 위험판단 이력 — 데모 세션 안에서만 남는다 (서버 기록 아님) */
+  riskLog: RiskLogEntry[];
 
   /* 보고 */
   reports: WorkReport[];
@@ -139,6 +149,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [schedules, setSchedules] = useState<ScheduleItem[]>(() =>
     clone(SCHEDULES),
   );
+  /** 아직 렌더되지 않은 변경까지 포함한 최신 일정 — 연달아 바꿔도 변경 전후를 정확히 비교한다 */
+  const schedRef = useRef<ScheduleItem[]>(schedules);
+  const [riskLog, setRiskLog] = useState<RiskLogEntry[]>([]);
   const [reports, setReports] = useState<WorkReport[]>(() =>
     clone(WORK_REPORTS),
   );
@@ -172,6 +185,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => setToast((t) => (t === msg ? null : t)), 2800);
   }, []);
 
+  /** 일정 변경은 모두 여기를 거친다. event 가 있으면 위험판단 전후 결과를 이력에 남긴다 */
+  const commitSchedules = useCallback(
+    (fn: (ss: ScheduleItem[]) => ScheduleItem[], event?: RiskEvent) => {
+      const before = schedRef.current;
+      const after = fn(before);
+      if (after === before) return;
+      schedRef.current = after;
+      setSchedules(after);
+      if (event)
+        setRiskLog((l) => [
+          ...l,
+          buildRiskLogEntry(l.length + 1, event, before, after),
+        ]);
+    },
+    [],
+  );
+
   const pushTimeline = useCallback(
     (
       projectId: string | undefined,
@@ -191,7 +221,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const resetDemo = useCallback(() => {
     setTasks(clone(TASKS));
-    setSchedules(clone(SCHEDULES));
+    const fresh = clone(SCHEDULES);
+    schedRef.current = fresh;
+    setSchedules(fresh);
+    setRiskLog([]);
     setReports(clone(WORK_REPORTS));
     setTimeline(clone(TIMELINE));
     setProjects(clone(PROJECTS));
@@ -255,12 +288,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           progress: Math.max(10, task?.progress ?? 0),
           lastUpdateAt: NOW,
         });
-        setSchedules((ss) =>
-          ss.map((s) =>
-            s.taskId === id && s.status === "예정"
-              ? { ...s, status: "진행 중" }
-              : s,
-          ),
+        const started = schedRef.current.find(
+          (s) => s.taskId === id && s.status === "예정",
+        );
+        commitSchedules(
+          (ss) =>
+            started
+              ? ss.map((s) =>
+                  s.taskId === id && s.status === "예정"
+                    ? { ...s, status: "진행 중" }
+                    : s,
+                )
+              : ss,
+          started && {
+            kind: "일정 상태 변경",
+            scheduleId: started.id,
+            title: started.title,
+            field: "상태",
+            before: "예정",
+            after: "진행 중",
+            actorId: task?.assigneeId ?? currentUserId,
+          },
         );
         if (task)
           pushTimeline(
@@ -316,12 +364,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ackResponse: undefined,
           lastUpdateAt: NOW,
         });
-        setSchedules((ss) =>
-          ss.map((s) =>
-            s.taskId === id
-              ? { ...s, assigneeId: memberId, acknowledgedAt: undefined }
-              : s,
-          ),
+        const moved = schedRef.current.find((s) => s.taskId === id);
+        commitSchedules(
+          (ss) =>
+            moved
+              ? ss.map((s) =>
+                  s.taskId === id
+                    ? { ...s, assigneeId: memberId, acknowledgedAt: undefined }
+                    : s,
+                )
+              : ss,
+          moved && {
+            kind: "담당자 변경",
+            scheduleId: moved.id,
+            title: moved.title,
+            field: "담당자",
+            before: fullName(moved.assigneeId),
+            after: fullName(memberId),
+            actorId: currentUserId,
+          },
         );
         if (task)
           pushTimeline(
@@ -337,15 +398,91 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       nudgeTask: (id) => patchTask(id, { lastUpdateAt: NOW }),
 
       schedules,
-      addSchedule: (s) => setSchedules((ss) => [...ss, s]),
-      updateSchedule: (id, patch) =>
-        setSchedules((ss) =>
-          ss.map((s) => (s.id === id ? { ...s, ...patch } : s)),
-        ),
+      addSchedule: (s) =>
+        commitSchedules((ss) => [...ss, s], {
+          kind: "일정 추가",
+          scheduleId: s.id,
+          title: s.title,
+          field: "일정",
+          before: "-",
+          after: `${s.date} ${s.start}~${s.end} · ${fullName(s.assigneeId)}`,
+          actorId: currentUserId,
+        }),
+      updateSchedule: (id, patch) => {
+        const cur = schedRef.current.find((s) => s.id === id);
+        const touched = cur
+          ? RISK_FIELDS.filter((f) => f in patch && patch[f] !== cur[f])
+          : [];
+        const event: RiskEvent | undefined =
+          cur && touched.length > 0
+            ? touched.includes("assigneeId")
+              ? {
+                  kind: "담당자 변경",
+                  scheduleId: id,
+                  title: cur.title,
+                  field: "담당자",
+                  before: fullName(cur.assigneeId),
+                  after: fullName(patch.assigneeId ?? cur.assigneeId),
+                  actorId: currentUserId,
+                }
+              : touched.includes("status")
+                ? {
+                    kind: "일정 상태 변경",
+                    scheduleId: id,
+                    title: cur.title,
+                    field: "상태",
+                    before: cur.status,
+                    after: patch.status ?? cur.status,
+                    actorId: currentUserId,
+                  }
+                : {
+                    kind: "일정 시간 변경",
+                    scheduleId: id,
+                    title: cur.title,
+                    field: "예정 시간",
+                    before: `${cur.start}~${cur.end}`,
+                    after: `${patch.start ?? cur.start}~${patch.end ?? cur.end}`,
+                    actorId: currentUserId,
+                  }
+            : undefined;
+        commitSchedules(
+          (ss) => ss.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+          event,
+        );
+      },
       acknowledgeSchedule: (id) =>
-        setSchedules((ss) =>
+        commitSchedules((ss) =>
           ss.map((s) => (s.id === id ? { ...s, acknowledgedAt: NOW } : s)),
         ),
+      setScheduleEstimate: (id, expectedEnd, source = "관리자 입력") => {
+        const cur = schedRef.current.find((s) => s.id === id);
+        if (!cur) return;
+        const label = (v?: string, src?: string) =>
+          v ? `${v} (${src ?? "관리자 입력"})` : `${cur.end} (예정)`;
+        commitSchedules(
+          (ss) =>
+            ss.map((s) =>
+              s.id === id
+                ? {
+                    ...s,
+                    expectedEnd,
+                    expectedEndSource: expectedEnd ? source : undefined,
+                  }
+                : s,
+            ),
+          {
+            kind: expectedEnd ? "예상 종료 입력" : "예상 종료 삭제",
+            scheduleId: id,
+            title: cur.title,
+            field: "예상 종료",
+            before: label(cur.expectedEnd, cur.expectedEndSource),
+            after: label(expectedEnd, source),
+            source: expectedEnd ? source : undefined,
+            actorId: currentUserId,
+          },
+        );
+      },
+      riskLog,
 
       reports,
       addReport: (r) => {
@@ -459,6 +596,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     toast,
     showToast,
     pushTimeline,
+    commitSchedules,
+    riskLog,
     demoMode,
     demoStep,
     resetDemo,
