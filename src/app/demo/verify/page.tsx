@@ -17,6 +17,7 @@ import {
 import { RISK_RULE_VERSION, RISK_RULES, THRESHOLDS, diffRisk, type RiskDiff } from "@/lib/risk-engine";
 import { RiskLinkCard, downloadJSON } from "@/components/RiskPanel";
 import { Badge, Segment } from "@/components/ui";
+import { StateFlowVerify } from "@/components/StateFlowVerify";
 
 const workerName = (id: string) => SCENARIO_WORKERS[id] ?? (id || "(작업자 없음)");
 const RULE_NAME: Record<string, string> = Object.fromEntries(RISK_RULES.map((r) => [r.id, r.name]));
@@ -318,6 +319,12 @@ export default function VerifyPage() {
         </div>
       </div>
 
+      <StateFlowVerify />
+
+      <div>
+        <p className="text-[25px] font-extrabold">기본 시나리오 A~E</p>
+        <p className="mt-0.5 text-[18px] text-ink-2">예상 종료 보고를 직접 입력한 경우의 연쇄위험 판정과 예외 처리입니다.</p>
+      </div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Segment<Scenario["id"]>
           value={sid}

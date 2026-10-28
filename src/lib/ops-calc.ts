@@ -8,6 +8,8 @@ import type {
   WorkReport,
 } from "./ops-types";
 import { evaluateChainRisk, riskyLinks, type RiskResult, type SiteInput } from "./risk-engine";
+import { rankResponses, type PriorityResult } from "./priority-engine";
+import { runStatePipeline, type PipelineResult, type StateEvent, type WorkContext } from "./state-events";
 
 /* ── 시간 유틸 ─────────────────────────────────── */
 
@@ -163,6 +165,15 @@ export function findConflicts(list: ScheduleItem[], date = NOW_DATE): ScheduleCo
 
 /* ── 연쇄위험 사전판단 (risk-engine 연결) ─────────── */
 
+/**
+ * 운영 화면에 적용하는 명시적 가정 — 화면에 그대로 표시한다.
+ * 늦게 시작한 작업도 예정 작업시간이 그대로 걸린다고 보고 예상 종료를 추정한다 (R2-2).
+ */
+export const OPS_ASSUMPTIONS = {
+  assumeDurationKept: true,
+  label: "가정: 늦게 시작해도 예정 작업시간이 그대로 걸린다 (규칙 기반 추정 R2-2)",
+} as const;
+
 /** 일정 → 엔진 입력. 이동시간 출처가 없으면 데모 가정값으로 본다 */
 export function toSiteInput(s: ScheduleItem): SiteInput {
   return {
@@ -174,6 +185,8 @@ export function toSiteInput(s: ScheduleItem): SiteInput {
     plannedEnd: s.end,
     status: s.status,
     region: s.region,
+    actualStart: s.actualStart,
+    actualStartSource: s.actualStartSource,
     actualEnd: s.actualEnd,
     expectedEnd: s.expectedEnd,
     expectedEndSource: s.expectedEndSource,
@@ -189,13 +202,84 @@ export function toSiteInput(s: ScheduleItem): SiteInput {
 export function chainRisk(list: ScheduleItem[], date = NOW_DATE): RiskResult {
   return evaluateChainRisk(
     list.filter((s) => s.date === date).map(toSiteInput),
-    { asOf: NOW },
+    { asOf: NOW, assumeDurationKept: OPS_ASSUMPTIONS.assumeDurationKept },
   );
 }
 
 /** 모든 날짜를 한 번에 판단 — 판단 이력(변경 전후 비교)에 쓴다 */
 export function chainRiskAll(list: ScheduleItem[]): RiskResult {
-  return evaluateChainRisk(list.map(toSiteInput), { asOf: NOW });
+  return evaluateChainRisk(list.map(toSiteInput), { asOf: NOW, assumeDurationKept: OPS_ASSUMPTIONS.assumeDurationKept });
+}
+
+/* ── 작업상태 이벤트 · 대응 우선순위 (state-events · priority-engine 연결) ── */
+
+/** 일정에 연결된 업무 정보 — 일정의 taskId 로 정확히 연결되는 것만 */
+export function contextsOf(schedules: ScheduleItem[], tasks: Task[]): WorkContext[] {
+  return schedules.map((s) => {
+    const t = s.taskId ? tasks.find((x) => x.id === s.taskId) : undefined;
+    return t
+      ? { siteId: s.id, taskId: t.id, assignedAt: t.createdAt, dueAt: t.dueAt, needsReport: t.needsReport, priority: t.priority }
+      : { siteId: s.id };
+  });
+}
+
+/**
+ * 기존 데이터에서 실제 상태이벤트를 모은다. 기록에 없는 시각은 만들지 않는다.
+ * - 업무 확인: 연결된 업무의 확인 시각 (없으면 일정 확인 처리 시각)
+ * - 작업개시·작업종료: 일정에 기록된 실제 시작·종료 시각
+ * - 완료보고: 연결된 업무의 '완료 보고' 제출 시각 (시작 보고는 어느 일정의 시작인지 정확히 연결되지 않아 쓰지 않음)
+ * - 예상 종료 보고: 일정에 입력된 예상 종료 (입력 시각은 기록하지 않으므로 at 없음)
+ */
+export function eventsFromOps(schedules: ScheduleItem[], tasks: Task[], reports: WorkReport[]): StateEvent[] {
+  const out: StateEvent[] = [];
+  for (const s of schedules) {
+    const t = s.taskId ? tasks.find((x) => x.id === s.taskId) : undefined;
+    if (t?.acknowledgedAt) out.push({ id: `ack-${s.id}`, kind: "업무 확인", siteId: s.id, at: t.acknowledgedAt, source: "업무 확인 버튼", origin: "데모 데이터" });
+    else if (s.acknowledgedAt) out.push({ id: `sack-${s.id}`, kind: "업무 확인", siteId: s.id, at: s.acknowledgedAt, source: "일정 확인 처리", origin: "데모 데이터" });
+    if (s.actualStart)
+      out.push({ id: `start-${s.id}`, kind: "작업개시", siteId: s.id, at: `${s.date}T${s.actualStart}`, source: s.actualStartSource ?? "작업 시작 기록", origin: "데모 세션 입력" });
+    if (s.status === "완료" && s.actualEnd)
+      out.push({ id: `end-${s.id}`, kind: "작업종료", siteId: s.id, at: `${s.date}T${s.actualEnd}`, source: "완료보고 반영", origin: "데모 세션 입력" });
+    if (s.expectedEnd)
+      out.push({ id: `eta-${s.id}`, kind: "예상 종료 보고", siteId: s.id, value: s.expectedEnd, source: s.expectedEndSource ?? "관리자 입력", origin: "데모 세션 입력" });
+    if (s.taskId)
+      reports
+        .filter((r) => r.taskId === s.taskId && r.kind === "완료 보고")
+        .forEach((r) => out.push({ id: `rep-${r.id}-${s.id}`, kind: "완료보고", siteId: s.id, at: r.createdAt, source: "완료보고 제출", origin: "데모 데이터" }));
+  }
+  return out;
+}
+
+/** 일정의 예정값만 남긴 엔진 입력 — 실제 이벤트는 eventsFromOps 로 다시 얹는다 */
+export function plannedOf(s: ScheduleItem): SiteInput {
+  const x = toSiteInput(s);
+  delete x.actualStart;
+  delete x.actualStartSource;
+  delete x.actualEnd;
+  delete x.expectedEnd;
+  delete x.expectedEndSource;
+  return { ...x, status: s.status === "완료" && s.actualEnd ? "진행 중" : s.status };
+}
+
+/** 데모 화면 전체 흐름 — 데모 기준시각 고정 (재현 가능) */
+export function opsPipeline(schedules: ScheduleItem[], tasks: Task[], reports: WorkReport[], date = NOW_DATE): PipelineResult {
+  const day = schedules.filter((s) => s.date === date);
+  return runStatePipeline({
+    planned: day.map(plannedOf),
+    events: eventsFromOps(day, tasks, reports),
+    contexts: contextsOf(day, tasks),
+    asOf: NOW,
+    assumeDurationKept: OPS_ASSUMPTIONS.assumeDurationKept,
+  });
+}
+
+/** 관리자 대응 우선순위 — 판단 이력에서도 같은 함수를 쓴다 */
+export function opsPriority(schedules: ScheduleItem[], tasks: Task[], date = NOW_DATE): PriorityResult {
+  const day = schedules.filter((s) => s.date === date);
+  return rankResponses(chainRisk(day, date), {
+    asOf: NOW,
+    meta: contextsOf(day, tasks).map((c) => ({ siteId: c.siteId, priority: c.priority })),
+  });
 }
 
 /** 시작시간이 지났는데 아직 시작되지 않은 일정 */

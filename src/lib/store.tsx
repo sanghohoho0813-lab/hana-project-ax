@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -18,7 +19,7 @@ import {
   TODOS,
 } from "./data";
 import { SCHEDULES, TASKS, TIMELINE, WORK_REPORTS } from "./ops-data";
-import { NOW } from "./company";
+import { NOW, NOW_DATE } from "./company";
 import { buildRiskLogEntry, RISK_FIELDS, type RiskEvent, type RiskLogEntry } from "./risk-log";
 import { fullName, permissionOf, withRo, type Permission } from "./team";
 import type {
@@ -87,6 +88,12 @@ interface AppState {
     expectedEnd: string | undefined,
     source?: "현장 보고" | "관리자 입력",
   ) => void;
+  /** 실제 작업 시작 시각 기록 (없애려면 undefined) — 작업상태 편차·예상 종료 추정에 쓴다 */
+  recordActualStart: (
+    id: string,
+    time: string | undefined,
+    source?: "현장 보고" | "관리자 입력",
+  ) => void;
   /** 위험판단 이력 — 데모 세션 안에서만 남는다 (서버 기록 아님) */
   riskLog: RiskLogEntry[];
 
@@ -146,6 +153,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [business, setBusiness] = useState<BusinessView>("all");
 
   const [tasks, setTasks] = useState<Task[]>(() => clone(TASKS));
+  /** 판단 이력의 우선순위 계산에 쓰는 최신 업무 목록 */
+  const tasksRef = useRef<Task[]>(tasks);
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
   const [schedules, setSchedules] = useState<ScheduleItem[]>(() =>
     clone(SCHEDULES),
   );
@@ -196,7 +208,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (event)
         setRiskLog((l) => [
           ...l,
-          buildRiskLogEntry(l.length + 1, event, before, after),
+          buildRiskLogEntry(l.length + 1, event, before, after, tasksRef.current),
         ]);
     },
     [],
@@ -291,22 +303,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const started = schedRef.current.find(
           (s) => s.taskId === id && s.status === "예정",
         );
+        // 오늘(데모 기준일) 일정만 시작 시각을 남긴다 — 데모 기준시각이며 실제 시계가 아니다
+        const nowTime = NOW.slice(11);
+        const stamp = started?.date === NOW_DATE;
         commitSchedules(
           (ss) =>
             started
               ? ss.map((s) =>
                   s.taskId === id && s.status === "예정"
-                    ? { ...s, status: "진행 중" }
+                    ? {
+                        ...s,
+                        status: "진행 중",
+                        ...(s.date === NOW_DATE
+                          ? { actualStart: nowTime, actualStartSource: "작업 시작 버튼" as const }
+                          : {}),
+                      }
                     : s,
                 )
               : ss,
           started && {
-            kind: "일정 상태 변경",
+            kind: stamp ? "작업개시 기록" : "일정 상태 변경",
             scheduleId: started.id,
             title: started.title,
-            field: "상태",
-            before: "예정",
-            after: "진행 중",
+            field: stamp ? "실제 시작" : "상태",
+            before: stamp ? `기록 없음 (예정 ${started.start})` : "예정",
+            after: stamp ? `${nowTime} (작업 시작 버튼)` : "진행 중",
+            source: stamp ? "작업 시작 버튼" : undefined,
             actorId: task?.assigneeId ?? currentUserId,
           },
         );
@@ -482,11 +504,69 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           },
         );
       },
+      recordActualStart: (id, time, source = "관리자 입력") => {
+        const cur = schedRef.current.find((s) => s.id === id);
+        if (!cur) return;
+        commitSchedules(
+          (ss) =>
+            ss.map((s) =>
+              s.id === id
+                ? {
+                    ...s,
+                    actualStart: time,
+                    actualStartSource: time ? source : undefined,
+                    status: time && s.status === "예정" ? "진행 중" : s.status,
+                  }
+                : s,
+            ),
+          {
+            kind: "작업개시 기록",
+            scheduleId: id,
+            title: cur.title,
+            field: "실제 시작",
+            before: cur.actualStart ? `${cur.actualStart} (${cur.actualStartSource ?? "기록"})` : `기록 없음 (예정 ${cur.start})`,
+            after: time ? `${time} (${source})` : `기록 없음 (예정 ${cur.start})`,
+            source: time ? source : undefined,
+            actorId: currentUserId,
+          },
+        );
+      },
       riskLog,
 
       reports,
       addReport: (r) => {
         setReports((rs) => [r, ...rs]);
+        // 완료 보고 → 같은 날 연결 일정의 실제 종료로 반영 (보고 시각이 예정 시작 뒤일 때만)
+        if (r.kind === "완료 보고" && r.taskId) {
+          const day = r.createdAt.slice(0, 10);
+          const t = r.createdAt.slice(11);
+          const target = schedRef.current.find(
+            (s) =>
+              s.taskId === r.taskId &&
+              s.date === day &&
+              (s.status === "예정" || s.status === "진행 중") &&
+              t > s.start,
+          );
+          if (target)
+            commitSchedules(
+              (ss) =>
+                ss.map((s) =>
+                  s.id === target.id
+                    ? { ...s, status: "완료", actualEnd: t }
+                    : s,
+                ),
+              {
+                kind: "작업종료 반영",
+                scheduleId: target.id,
+                title: target.title,
+                field: "실제 종료",
+                before: `기록 없음 (예정 ${target.end})`,
+                after: `${t} (완료보고 제출)`,
+                source: "완료보고 제출",
+                actorId: r.authorId,
+              },
+            );
+        }
         if (r.taskId) {
           const isDone = r.kind === "완료 보고";
           patchTask(r.taskId, {

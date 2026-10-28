@@ -1,6 +1,6 @@
 {
   "note": "같은 A→B 일정(이동 30분 · B 11:40 시작)에서 A현장 예상 종료만 바꿔 본 결과입니다.",
-  "ruleVersion": "chain-risk/1.0.0",
+  "ruleVersion": "chain-risk/1.1.0",
   "thresholds": {
     "cautionBufferMin": 10,
     "highShortfallMin": 10,

@@ -75,6 +75,10 @@ export interface ScheduleItem {
   /** 이동시간 출처 — 입력값 또는 데모 가정값 (실시간 교통정보 아님). 없으면 데모 가정값으로 본다 */
   travelSource?: "입력값" | "데모 가정값";
   status: ScheduleStatus;
+  /** 실제 작업 시작 시각 HH:MM — 작업 시작 기록이 있을 때만 (기록 없는 시각을 만들지 않는다) */
+  actualStart?: string;
+  /** 실제 시작 기록의 출처 */
+  actualStartSource?: "작업 시작 버튼" | "현장 보고" | "관리자 입력";
   /** 실제 종료 시각 HH:MM (완료 시) */
   actualEnd?: string;
   /** 예상 종료 시각 HH:MM — 현장 보고 또는 관리자 입력 */

@@ -1,0 +1,973 @@
+{
+  "note": "하나 프로젝트 AX 데모 데이터(src/lib/ops-data.ts)를 데모 기준시각(2026-07-28 10:40)으로 분석한 작업상태 편차·우선순위입니다. 실제 운영데이터가 아닙니다.",
+  "result": {
+    "stateVersion": "state-deviation/1.0.0",
+    "accepted": [
+      {
+        "id": "ack-s2",
+        "kind": "업무 확인",
+        "siteId": "s2",
+        "at": "2026-07-27T09:30",
+        "source": "업무 확인 버튼",
+        "origin": "데모 데이터"
+      },
+      {
+        "id": "ack-s3",
+        "kind": "업무 확인",
+        "siteId": "s3",
+        "at": "2026-07-26T09:20",
+        "source": "업무 확인 버튼",
+        "origin": "데모 데이터"
+      },
+      {
+        "id": "ack-s4",
+        "kind": "업무 확인",
+        "siteId": "s4",
+        "at": "2026-07-28T08:20",
+        "source": "업무 확인 버튼",
+        "origin": "데모 데이터"
+      },
+      {
+        "id": "ack-s5",
+        "kind": "업무 확인",
+        "siteId": "s5",
+        "at": "2026-07-28T08:45",
+        "source": "업무 확인 버튼",
+        "origin": "데모 데이터"
+      },
+      {
+        "id": "ack-s7",
+        "kind": "업무 확인",
+        "siteId": "s7",
+        "at": "2026-07-28T09:05",
+        "source": "업무 확인 버튼",
+        "origin": "데모 데이터"
+      }
+    ],
+    "eventIssues": [],
+    "sites": [
+      {
+        "id": "s1",
+        "title": "서천 장항산단 통신상태 점검",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "plannedStart": "10:00",
+        "plannedEnd": "11:00",
+        "status": "예정",
+        "region": "충남 서천",
+        "travelMinutes": 0,
+        "travelSource": "데모 가정값"
+      },
+      {
+        "id": "s2",
+        "title": "보령 공공시설 준공사진 촬영",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "plannedStart": "11:30",
+        "plannedEnd": "13:00",
+        "status": "예정",
+        "region": "충남 보령",
+        "travelMinutes": 55,
+        "travelSource": "데모 가정값"
+      },
+      {
+        "id": "s3",
+        "title": "군산 CCTV 위치 재확인",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "plannedStart": "09:00",
+        "plannedEnd": "12:00",
+        "status": "진행 중",
+        "region": "전북 군산",
+        "travelMinutes": 0,
+        "travelSource": "데모 가정값"
+      },
+      {
+        "id": "s4",
+        "title": "홍성 네트워크 속도 측정",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "plannedStart": "15:00",
+        "plannedEnd": "16:30",
+        "status": "예정",
+        "region": "충남 홍성",
+        "travelMinutes": 95,
+        "travelSource": "데모 가정값"
+      },
+      {
+        "id": "s5",
+        "title": "서천 자재 입고 입회",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "plannedStart": "09:30",
+        "plannedEnd": "10:30",
+        "status": "진행 중",
+        "region": "충남 서천",
+        "travelMinutes": 0,
+        "travelSource": "데모 가정값"
+      },
+      {
+        "id": "s6",
+        "title": "익산 물류창고 사양 협의",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "plannedStart": "13:30",
+        "plannedEnd": "15:00",
+        "status": "예정",
+        "region": "전북 익산",
+        "travelMinutes": 80,
+        "travelSource": "데모 가정값"
+      },
+      {
+        "id": "s7",
+        "title": "보령시청 준공검수 협의",
+        "workerId": "u3",
+        "date": "2026-07-28",
+        "plannedStart": "14:00",
+        "plannedEnd": "15:00",
+        "status": "예정",
+        "region": "충남 보령",
+        "travelMinutes": 20,
+        "travelSource": "데모 가정값"
+      }
+    ],
+    "deviations": [
+      {
+        "siteId": "s7",
+        "title": "보령시청 준공검수 협의",
+        "workerId": "u3",
+        "date": "2026-07-28",
+        "plannedStart": "14:00",
+        "plannedEnd": "15:00",
+        "status": "예정",
+        "expectedPhase": "확인 대기",
+        "actualPhase": "확인 완료 · 작업 전",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-28T11:00",
+            "dueBasis": "업무 전달 2026-07-28 09:00 + 120분",
+            "actual": "2026-07-28T09:05",
+            "source": "업무 확인 버튼",
+            "origin": "데모 데이터",
+            "minutes": -115,
+            "status": "기한 내",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T14:00",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 예정 시작 전입니다."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T15:00",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 종료 기준 전입니다."
+          },
+          {
+            "stage": "결과보고",
+            "due": null,
+            "dueBasis": "결과보고가 필요 없는 업무",
+            "actual": null,
+            "minutes": null,
+            "status": "해당 없음",
+            "affectsEnd": false,
+            "meaning": "결과보고 기준이 없습니다."
+          }
+        ],
+        "end": {
+          "time": "15:00",
+          "source": "예정",
+          "basis": "예정 종료 15:00",
+          "determined": true,
+          "delay": 0
+        },
+        "passedToEngine": []
+      },
+      {
+        "siteId": "s1",
+        "title": "서천 장항산단 통신상태 점검",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "plannedStart": "10:00",
+        "plannedEnd": "11:00",
+        "status": "예정",
+        "expectedPhase": "작업 중",
+        "actualPhase": "미확인 · 작업 전",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-27T18:40",
+            "dueBasis": "업무 전달 2026-07-27 16:40 + 120분",
+            "actual": null,
+            "minutes": 960,
+            "status": "미발생 · 기한 경과",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T10:00",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": 40,
+            "status": "미발생 · 기한 경과",
+            "affectsEnd": false,
+            "meaning": "예정 시작이 지났는데 시작 기록이 없습니다. 실제로 늦었는지 확인되지 않아 예상 종료를 확정하지 않습니다 (R2-3)."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T11:00",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 종료 기준 전입니다."
+          },
+          {
+            "stage": "결과보고",
+            "due": "2026-07-28T12:00",
+            "dueBasis": "업무 완료기한",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+          }
+        ],
+        "end": {
+          "time": "11:00",
+          "source": "예정",
+          "basis": "예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
+          "determined": false,
+          "delay": 0
+        },
+        "passedToEngine": []
+      },
+      {
+        "siteId": "s2",
+        "title": "보령 공공시설 준공사진 촬영",
+        "workerId": "u4",
+        "date": "2026-07-28",
+        "plannedStart": "11:30",
+        "plannedEnd": "13:00",
+        "status": "예정",
+        "expectedPhase": "확인 완료 · 작업 전",
+        "actualPhase": "확인 완료 · 작업 전",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-27T11:00",
+            "dueBasis": "업무 전달 2026-07-27 09:00 + 120분",
+            "actual": "2026-07-27T09:30",
+            "source": "업무 확인 버튼",
+            "origin": "데모 데이터",
+            "minutes": -90,
+            "status": "기한 내",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T11:30",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 예정 시작 전입니다."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T13:00",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 종료 기준 전입니다."
+          },
+          {
+            "stage": "결과보고",
+            "due": "2026-07-28T18:00",
+            "dueBasis": "업무 완료기한",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+          }
+        ],
+        "end": {
+          "time": "13:00",
+          "source": "예정",
+          "basis": "예정 종료 13:00",
+          "determined": true,
+          "delay": 0
+        },
+        "passedToEngine": []
+      },
+      {
+        "siteId": "s3",
+        "title": "군산 CCTV 위치 재확인",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "plannedStart": "09:00",
+        "plannedEnd": "12:00",
+        "status": "진행 중",
+        "expectedPhase": "작업 중",
+        "actualPhase": "작업 중",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-26T11:00",
+            "dueBasis": "업무 전달 2026-07-26 09:00 + 120분",
+            "actual": "2026-07-26T09:20",
+            "source": "업무 확인 버튼",
+            "origin": "데모 데이터",
+            "minutes": -100,
+            "status": "기한 내",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T09:00",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": null,
+            "status": "시각 기록 없음",
+            "affectsEnd": false,
+            "meaning": "작업은 시작된 상태지만 시작 시각 기록이 없어 편차를 계산하지 않습니다."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T12:00",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 종료 기준 전입니다."
+          },
+          {
+            "stage": "결과보고",
+            "due": "2026-07-27T17:00",
+            "dueBasis": "업무 완료기한",
+            "actual": null,
+            "minutes": 1060,
+            "status": "미발생 · 기한 경과",
+            "affectsEnd": false,
+            "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+          }
+        ],
+        "end": {
+          "time": "12:00",
+          "source": "예정",
+          "basis": "예정 종료 12:00",
+          "determined": true,
+          "delay": 0
+        },
+        "passedToEngine": []
+      },
+      {
+        "siteId": "s4",
+        "title": "홍성 네트워크 속도 측정",
+        "workerId": "u5",
+        "date": "2026-07-28",
+        "plannedStart": "15:00",
+        "plannedEnd": "16:30",
+        "status": "예정",
+        "expectedPhase": "확인 완료 · 작업 전",
+        "actualPhase": "확인 완료 · 작업 전",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-28T10:00",
+            "dueBasis": "업무 전달 2026-07-28 08:00 + 120분",
+            "actual": "2026-07-28T08:20",
+            "source": "업무 확인 버튼",
+            "origin": "데모 데이터",
+            "minutes": -100,
+            "status": "기한 내",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T15:00",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 예정 시작 전입니다."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T16:30",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 종료 기준 전입니다."
+          },
+          {
+            "stage": "결과보고",
+            "due": "2026-07-28T17:00",
+            "dueBasis": "업무 완료기한",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+          }
+        ],
+        "end": {
+          "time": "16:30",
+          "source": "예정",
+          "basis": "예정 종료 16:30",
+          "determined": true,
+          "delay": 0
+        },
+        "passedToEngine": []
+      },
+      {
+        "siteId": "s5",
+        "title": "서천 자재 입고 입회",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "plannedStart": "09:30",
+        "plannedEnd": "10:30",
+        "status": "진행 중",
+        "expectedPhase": "작업 종료",
+        "actualPhase": "작업 중",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-28T10:30",
+            "dueBasis": "업무 전달 2026-07-28 08:30 + 120분",
+            "actual": "2026-07-28T08:45",
+            "source": "업무 확인 버튼",
+            "origin": "데모 데이터",
+            "minutes": -105,
+            "status": "기한 내",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T09:30",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": null,
+            "status": "시각 기록 없음",
+            "affectsEnd": false,
+            "meaning": "작업은 시작된 상태지만 시작 시각 기록이 없어 편차를 계산하지 않습니다."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T10:30",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": 10,
+            "status": "미발생 · 기한 경과",
+            "affectsEnd": true,
+            "meaning": "진행 중인데 예정 종료가 지났습니다. 종료를 최소 기준시각으로 봅니다 (R2-1)."
+          },
+          {
+            "stage": "결과보고",
+            "due": "2026-07-28T15:00",
+            "dueBasis": "업무 완료기한",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+          }
+        ],
+        "end": {
+          "time": "10:40",
+          "source": "추정 규칙",
+          "basis": "진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
+          "determined": true,
+          "delay": 10
+        },
+        "passedToEngine": []
+      },
+      {
+        "siteId": "s6",
+        "title": "익산 물류창고 사양 협의",
+        "workerId": "u6",
+        "date": "2026-07-28",
+        "plannedStart": "13:30",
+        "plannedEnd": "15:00",
+        "status": "예정",
+        "expectedPhase": "확인 완료 · 작업 전",
+        "actualPhase": "미확인 · 작업 전",
+        "stages": [
+          {
+            "stage": "업무 확인",
+            "due": "2026-07-28T09:50",
+            "dueBasis": "업무 전달 2026-07-28 07:50 + 120분",
+            "actual": null,
+            "minutes": 50,
+            "status": "미발생 · 기한 경과",
+            "affectsEnd": false,
+            "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+          },
+          {
+            "stage": "작업개시",
+            "due": "2026-07-28T13:30",
+            "dueBasis": "예정 시작",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 예정 시작 전입니다."
+          },
+          {
+            "stage": "작업종료",
+            "due": "2026-07-28T15:00",
+            "dueBasis": "예정 종료",
+            "actual": null,
+            "minutes": null,
+            "status": "기한 전",
+            "affectsEnd": false,
+            "meaning": "아직 종료 기준 전입니다."
+          },
+          {
+            "stage": "결과보고",
+            "due": null,
+            "dueBasis": "결과보고가 필요 없는 업무",
+            "actual": null,
+            "minutes": null,
+            "status": "해당 없음",
+            "affectsEnd": false,
+            "meaning": "결과보고 기준이 없습니다."
+          }
+        ],
+        "end": {
+          "time": "15:00",
+          "source": "예정",
+          "basis": "예정 종료 15:00",
+          "determined": true,
+          "delay": 0
+        },
+        "passedToEngine": []
+      }
+    ],
+    "risk": {
+      "ruleVersion": "chain-risk/1.1.0",
+      "asOf": "2026-07-28T10:40",
+      "sites": [
+        {
+          "id": "s7",
+          "title": "보령시청 준공검수 협의",
+          "workerId": "u3",
+          "date": "2026-07-28",
+          "region": "충남 보령",
+          "status": "예정",
+          "plannedStart": "14:00",
+          "plannedEnd": "15:00",
+          "expectedStart": "14:00",
+          "expectedEnd": "15:00",
+          "endSource": "예정",
+          "endBasis": "예정 종료 15:00",
+          "endDetermined": true,
+          "startDelay": 0,
+          "endDelay": 0
+        },
+        {
+          "id": "s1",
+          "title": "서천 장항산단 통신상태 점검",
+          "workerId": "u4",
+          "date": "2026-07-28",
+          "region": "충남 서천",
+          "status": "예정",
+          "plannedStart": "10:00",
+          "plannedEnd": "11:00",
+          "expectedStart": "10:00",
+          "expectedEnd": "11:00",
+          "endSource": "예정",
+          "endBasis": "예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
+          "endDetermined": false,
+          "startDelay": 0,
+          "endDelay": 0
+        },
+        {
+          "id": "s2",
+          "title": "보령 공공시설 준공사진 촬영",
+          "workerId": "u4",
+          "date": "2026-07-28",
+          "region": "충남 보령",
+          "status": "예정",
+          "plannedStart": "11:30",
+          "plannedEnd": "13:00",
+          "expectedStart": "11:55",
+          "expectedEnd": "13:25",
+          "endSource": "연쇄 계산",
+          "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 90분",
+          "endDetermined": true,
+          "startDelay": 25,
+          "endDelay": 25,
+          "delayRootId": "s1"
+        },
+        {
+          "id": "s3",
+          "title": "군산 CCTV 위치 재확인",
+          "workerId": "u5",
+          "date": "2026-07-28",
+          "region": "전북 군산",
+          "status": "진행 중",
+          "plannedStart": "09:00",
+          "plannedEnd": "12:00",
+          "expectedStart": "09:00",
+          "expectedEnd": "12:00",
+          "endSource": "예정",
+          "endBasis": "예정 종료 12:00",
+          "endDetermined": true,
+          "startDelay": 0,
+          "endDelay": 0
+        },
+        {
+          "id": "s4",
+          "title": "홍성 네트워크 속도 측정",
+          "workerId": "u5",
+          "date": "2026-07-28",
+          "region": "충남 홍성",
+          "status": "예정",
+          "plannedStart": "15:00",
+          "plannedEnd": "16:30",
+          "expectedStart": "15:00",
+          "expectedEnd": "16:30",
+          "endSource": "예정",
+          "endBasis": "예정 종료 16:30",
+          "endDetermined": true,
+          "startDelay": 0,
+          "endDelay": 0
+        },
+        {
+          "id": "s5",
+          "title": "서천 자재 입고 입회",
+          "workerId": "u6",
+          "date": "2026-07-28",
+          "region": "충남 서천",
+          "status": "진행 중",
+          "plannedStart": "09:30",
+          "plannedEnd": "10:30",
+          "expectedStart": "09:30",
+          "expectedEnd": "10:40",
+          "endSource": "추정 규칙",
+          "endBasis": "진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
+          "endDetermined": true,
+          "startDelay": 0,
+          "endDelay": 10,
+          "delayRootId": "s5"
+        },
+        {
+          "id": "s6",
+          "title": "익산 물류창고 사양 협의",
+          "workerId": "u6",
+          "date": "2026-07-28",
+          "region": "전북 익산",
+          "status": "예정",
+          "plannedStart": "13:30",
+          "plannedEnd": "15:00",
+          "expectedStart": "13:30",
+          "expectedEnd": "15:00",
+          "endSource": "예정",
+          "endBasis": "예정 종료 15:00",
+          "endDetermined": true,
+          "startDelay": 0,
+          "endDelay": 0
+        }
+      ],
+      "links": [
+        {
+          "key": "s1>s2",
+          "workerId": "u4",
+          "date": "2026-07-28",
+          "order": 1,
+          "prev": {
+            "id": "s1",
+            "title": "서천 장항산단 통신상태 점검",
+            "region": "충남 서천",
+            "plannedEnd": "11:00",
+            "expectedEnd": "11:00",
+            "endSource": "예정",
+            "endBasis": "예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
+            "endDetermined": false,
+            "delay": 0
+          },
+          "next": {
+            "id": "s2",
+            "title": "보령 공공시설 준공사진 촬영",
+            "region": "충남 보령",
+            "plannedStart": "11:30",
+            "status": "예정"
+          },
+          "travel": {
+            "minutes": 55,
+            "source": "데모 가정값"
+          },
+          "plannedGap": 30,
+          "arrival": "11:55",
+          "slack": -25,
+          "shortfall": 25,
+          "status": "판정",
+          "grade": "높음",
+          "cause": "이동시간 부족",
+          "staticConflict": true,
+          "downstream": [
+            "s2"
+          ],
+          "formula": [
+            "서천 장항산단 통신상태 점검 예상 종료 11:00 (예정)",
+            "근거: 예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
+            "예상 도착 = 11:00 + 이동 55분 = 11:55",
+            "여유 = 보령 공공시설 준공사진 촬영 예정 시작 11:30 − 예상 도착 11:55 = -25분 → 25분 부족"
+          ],
+          "reason": "예정 종료 11:00에 이동 55분을 더하면 예정대로 진행해도 후속 현장 시작 11:30보다 늦습니다 (25분 부족). 단, 선행 현장 예상 종료가 확정되지 않아 예정 종료 기준으로 계산했습니다 — 실제 지연은 더 클 수 있습니다.",
+          "actions": [
+            "선행 현장 종료 예상시각 확인",
+            "일정 시간 또는 이동시간 재확인",
+            "후속 현장 일정 조정 검토",
+            "대체 작업자 가능 여부 확인",
+            "후속 현장 고객에게 지연 가능성 안내 검토"
+          ],
+          "rules": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R2-3",
+            "R5",
+            "R9"
+          ]
+        },
+        {
+          "key": "s3>s4",
+          "workerId": "u5",
+          "date": "2026-07-28",
+          "order": 1,
+          "prev": {
+            "id": "s3",
+            "title": "군산 CCTV 위치 재확인",
+            "region": "전북 군산",
+            "plannedEnd": "12:00",
+            "expectedEnd": "12:00",
+            "endSource": "예정",
+            "endBasis": "예정 종료 12:00",
+            "endDetermined": true,
+            "delay": 0
+          },
+          "next": {
+            "id": "s4",
+            "title": "홍성 네트워크 속도 측정",
+            "region": "충남 홍성",
+            "plannedStart": "15:00",
+            "status": "예정"
+          },
+          "travel": {
+            "minutes": 95,
+            "source": "데모 가정값"
+          },
+          "plannedGap": 180,
+          "arrival": "13:35",
+          "slack": 85,
+          "shortfall": 0,
+          "status": "판정",
+          "grade": "없음",
+          "cause": "정상",
+          "staticConflict": false,
+          "downstream": [],
+          "formula": [
+            "군산 CCTV 위치 재확인 예상 종료 12:00 (예정)",
+            "예상 도착 = 12:00 + 이동 95분 = 13:35",
+            "여유 = 홍성 네트워크 속도 측정 예정 시작 15:00 − 예상 도착 13:35 = 85분"
+          ],
+          "reason": "예상 도착 13:35, 후속 현장 시작까지 85분 여유가 있습니다.",
+          "actions": [],
+          "rules": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R9"
+          ]
+        },
+        {
+          "key": "s5>s6",
+          "workerId": "u6",
+          "date": "2026-07-28",
+          "order": 1,
+          "prev": {
+            "id": "s5",
+            "title": "서천 자재 입고 입회",
+            "region": "충남 서천",
+            "plannedEnd": "10:30",
+            "expectedEnd": "10:40",
+            "endSource": "추정 규칙",
+            "endBasis": "진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
+            "endDetermined": true,
+            "delay": 10
+          },
+          "next": {
+            "id": "s6",
+            "title": "익산 물류창고 사양 협의",
+            "region": "전북 익산",
+            "plannedStart": "13:30",
+            "status": "예정"
+          },
+          "travel": {
+            "minutes": 80,
+            "source": "데모 가정값"
+          },
+          "plannedGap": 180,
+          "arrival": "12:00",
+          "slack": 90,
+          "shortfall": 0,
+          "status": "판정",
+          "grade": "없음",
+          "cause": "정상",
+          "staticConflict": false,
+          "downstream": [],
+          "formula": [
+            "서천 자재 입고 입회 예상 종료 10:40 (추정 규칙)",
+            "근거: 진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
+            "선행 지연 = 10:40 − 예정 종료 10:30 = 10분",
+            "예상 도착 = 10:40 + 이동 80분 = 12:00",
+            "여유 = 익산 물류창고 사양 협의 예정 시작 13:30 − 예상 도착 12:00 = 90분"
+          ],
+          "reason": "예상 도착 12:00, 후속 현장 시작까지 90분 여유가 있습니다.",
+          "actions": [],
+          "rules": [
+            "R1",
+            "R2",
+            "R3",
+            "R4",
+            "R2-1",
+            "R9"
+          ]
+        }
+      ],
+      "issues": [],
+      "excluded": []
+    },
+    "priority": {
+      "version": "response-priority/1.0.0",
+      "ruleVersion": "chain-risk/1.1.0",
+      "asOf": "2026-07-28T10:40",
+      "config": {
+        "gradePoints": {
+          "중간": 20,
+          "높음": 40,
+          "매우 높음": 60
+        },
+        "perShortfallMin": 1,
+        "shortfallCapMin": 60,
+        "perExtraSite": 10,
+        "urgency": [
+          {
+            "withinMin": 30,
+            "points": 15
+          },
+          {
+            "withinMin": 60,
+            "points": 10
+          },
+          {
+            "withinMin": 120,
+            "points": 5
+          }
+        ],
+        "taskPriorityPoints": {
+          "긴급": 10,
+          "보통": 0,
+          "낮음": 0
+        }
+      },
+      "items": [
+        {
+          "rank": 1,
+          "key": "link:s1>s2",
+          "kind": "이동시간 부족",
+          "title": "보령 공공시설 준공사진 촬영 이동시간 부족",
+          "grade": "높음",
+          "maxShortfall": 25,
+          "sites": [
+            {
+              "id": "s2",
+              "title": "보령 공공시설 준공사진 촬영",
+              "plannedStart": "11:30",
+              "shortfall": 25,
+              "grade": "높음"
+            }
+          ],
+          "earliestStart": "11:30",
+          "minutesUntil": 50,
+          "score": 85,
+          "breakdown": [
+            {
+              "factor": "위험등급",
+              "value": "높음",
+              "points": 40,
+              "reason": "등급별 기본점수 (높음 = 40점)"
+            },
+            {
+              "factor": "예상 지연",
+              "value": "25분",
+              "points": 25,
+              "reason": "가장 큰 예상 지연 25분 × 1점"
+            },
+            {
+              "factor": "후속 현장 영향",
+              "value": "1곳",
+              "points": 0,
+              "reason": "영향 현장 1곳 — 추가 점수 없음"
+            },
+            {
+              "factor": "대응 시한",
+              "value": "50분 남음",
+              "points": 10,
+              "reason": "가장 이른 영향 현장 시작 11:30까지 50분 (60분 이내 = 10점)"
+            },
+            {
+              "factor": "업무 중요도",
+              "value": "긴급",
+              "points": 10,
+              "reason": "영향 현장에 연결된 업무 우선순위 '긴급' = 10점"
+            }
+          ],
+          "basis": "이동 가능시간이 필요 이동시간보다 25분 부족합니다 (서천 장항산단 통신상태 점검 → 보령 공공시설 준공사진 촬영).",
+          "actions": [
+            "선행 현장 종료 예상시각 확인",
+            "일정 시간 또는 이동시간 재확인",
+            "후속 현장 일정 조정 검토",
+            "대체 작업자 가능 여부 확인",
+            "후속 현장 고객에게 지연 가능성 안내 검토"
+          ],
+          "linkKeys": [
+            "s1>s2"
+          ]
+        }
+      ],
+      "held": [],
+      "watch": []
+    }
+  }
+}

@@ -1,0 +1,5520 @@
+{
+  "note": "상태이벤트 연속 검증(STEP 1~9)과 3단계 검증 예시의 입력값·결과 전체입니다. 검증용 가상 데이터이며 실제 운영데이터가 아닙니다. 우선순위 점수는 관리자 판단 보조용 규칙 점수이며 사고 확률이 아닙니다.",
+  "ruleVersion": "chain-risk/1.1.0",
+  "priorityVersion": "response-priority/1.0.0",
+  "stateRules": [
+    {
+      "id": "S1",
+      "name": "이벤트 정규화",
+      "desc": "발생시각이 없거나 형식이 틀린 이벤트, 연결 대상이 없는 이벤트는 쓰지 않는다. 같은 단계 이벤트가 여러 번이면 가장 이른 기록을 쓰고(예상 종료 보고는 가장 늦은 보고), 나머지는 중복으로 표시한다."
+    },
+    {
+      "id": "S2",
+      "name": "기대상태 모델",
+      "desc": "확인 기준 = 업무 전달 + 120분 (업무 연결이 없으면 예정 시작), 작업개시 기준 = 예정 시작, 작업종료 기준 = 예정 종료, 결과보고 기준 = 업무 완료기한(결과보고가 필요한 업무만)."
+    },
+    {
+      "id": "S3",
+      "name": "단계별 편차",
+      "desc": "편차 = 실제 발생시각 − 기준시각 (분). 아직 발생하지 않았고 기준시각이 지났으면 '미발생 · 기한 경과'와 경과 분을 표시한다. 단계별 편차는 합산하지 않는다."
+    },
+    {
+      "id": "S4",
+      "name": "엔진 반영 범위",
+      "desc": "예상 종료에 영향을 주는 이벤트(작업개시·작업종료·예상 종료 보고)만 일정에 반영해 연쇄위험 엔진에 넘긴다. 업무 확인·결과보고 편차는 넘기지 않는다."
+    }
+  ],
+  "priorityRules": [
+    {
+      "id": "P1",
+      "name": "묶음·중복 방지",
+      "desc": "같은 지연 출발점에서 나온 연쇄 위험은 한 항목으로 묶는다. 이동시간 부족·일정 중복은 연결별 항목. 각 후속 현장은 한 항목에만 들어가 두 번 집계되지 않는다."
+    },
+    {
+      "id": "P2",
+      "name": "점수",
+      "desc": "점수 = 위험등급 기본점수 + 예상 지연(상한 적용) + 추가 영향 현장 + 대응 시한 + 업무 중요도. 가중치는 초기 운영 가정값(설정으로 변경 가능). 데이터가 없는 요소는 0점."
+    },
+    {
+      "id": "P3",
+      "name": "정렬·보류",
+      "desc": "점수 내림차순 → 가장 이른 영향 현장 시작 → 항목 키 순. 판단 보류 연결은 점수 없이 '데이터 확인 대상'으로 따로 둔다."
+    }
+  ],
+  "priorityConfig": {
+    "gradePoints": {
+      "중간": 20,
+      "높음": 40,
+      "매우 높음": 60
+    },
+    "perShortfallMin": 1,
+    "shortfallCapMin": 60,
+    "perExtraSite": 10,
+    "urgency": [
+      {
+        "withinMin": 30,
+        "points": 15
+      },
+      {
+        "withinMin": 60,
+        "points": 10
+      },
+      {
+        "withinMin": 120,
+        "points": 5
+      }
+    ],
+    "taskPriorityPoints": {
+      "긴급": 10,
+      "보통": 0,
+      "낮음": 0
+    }
+  },
+  "contexts": [
+    {
+      "siteId": "A",
+      "taskId": "TA",
+      "assignedAt": "2026-07-27T17:00",
+      "dueAt": "2026-07-28T12:00",
+      "needsReport": true,
+      "priority": "보통"
+    },
+    {
+      "siteId": "B",
+      "taskId": "TB",
+      "assignedAt": "2026-07-28T07:00",
+      "dueAt": "2026-07-28T15:00",
+      "needsReport": true,
+      "priority": "긴급"
+    },
+    {
+      "siteId": "C"
+    },
+    {
+      "siteId": "D",
+      "taskId": "TD",
+      "assignedAt": "2026-07-27T16:00",
+      "dueAt": "2026-07-28T12:30",
+      "needsReport": true,
+      "priority": "보통"
+    },
+    {
+      "siteId": "E",
+      "taskId": "TE",
+      "assignedAt": "2026-07-27T16:00",
+      "dueAt": "2026-07-28T14:00",
+      "needsReport": false,
+      "priority": "보통"
+    }
+  ],
+  "steps": [
+    {
+      "n": 1,
+      "title": "정상 업무 상태 및 일정 확인",
+      "desc": "09:00 기준. 작업자 1은 A → B → C, 작업자 2는 D → E 일정. 작업자 2는 예정 단계부터 이동시간이 5분 모자란다.",
+      "focus": "상태",
+      "before": null,
+      "after": "S0",
+      "rules": [
+        "S2",
+        "R1",
+        "R3",
+        "R4"
+      ]
+    },
+    {
+      "n": 2,
+      "title": "A현장 실제 작업개시 지연 이벤트 입력",
+      "desc": "09:25 A현장 작업 시작(예정 09:00), 09:20 B현장 업무 확인(기준 09:00), 09:30 D현장 작업 시작(정시).",
+      "focus": "이벤트",
+      "before": "S0",
+      "after": "S1",
+      "rules": [
+        "S1"
+      ]
+    },
+    {
+      "n": 3,
+      "title": "기대상태와 실제상태 편차 확인",
+      "desc": "단계별로 따로 계산한다. A현장 작업개시 25분 늦음 / B현장 업무 확인 20분 늦음 — 합산하지 않는다.",
+      "focus": "편차",
+      "before": "S0",
+      "after": "S1",
+      "rules": [
+        "S2",
+        "S3"
+      ]
+    },
+    {
+      "n": 4,
+      "title": "A현장 예상 종료시각 갱신",
+      "desc": "작업개시 지연만 예상 종료에 반영한다 (작업시간 유지 가정). 업무 확인 지연은 반영하지 않는다.",
+      "focus": "예상 종료",
+      "before": "S0",
+      "after": "S1",
+      "rules": [
+        "S4",
+        "R2",
+        "R2-2"
+      ]
+    },
+    {
+      "n": 5,
+      "title": "B·C현장 연쇄위험 재산출",
+      "desc": "A현장 예상 종료 11:25 → B현장 도착 11:55 (15분 부족) → B현장 종료 12:45 → C현장 도착 13:05 (10분 부족).",
+      "focus": "연쇄위험",
+      "before": "S0",
+      "after": "S1",
+      "rules": [
+        "R3",
+        "R4",
+        "R5"
+      ]
+    },
+    {
+      "n": 6,
+      "title": "관리자 대응 우선순위 산출",
+      "desc": "같은 지연에서 나온 B·C현장 위험은 한 항목으로 묶고, 작업자 2의 이동시간 부족과 점수로 비교한다.",
+      "focus": "우선순위",
+      "before": "S0",
+      "after": "S1",
+      "rules": [
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    {
+      "n": 7,
+      "title": "관리자 일정 조정",
+      "desc": "관리자가 1순위 B현장 시작을 12:10으로 조정한다 (작업시간 유지). 시스템은 일정을 스스로 바꾸지 않는다.",
+      "focus": "조치",
+      "before": "S1",
+      "after": "S2",
+      "rules": [
+        "R9"
+      ]
+    },
+    {
+      "n": 8,
+      "title": "위험 재판단 및 우선순위 갱신",
+      "desc": "A→B 위험은 해소된다. 그러나 B현장이 13:00에 끝나 C현장(12:55 시작)과 예정 시간이 겹치게 되어 C현장이 새 1순위(일정 중복)로 올라온다.",
+      "focus": "재판단",
+      "before": "S1",
+      "after": "S2",
+      "rules": [
+        "R4",
+        "P1",
+        "P3"
+      ]
+    },
+    {
+      "n": 9,
+      "title": "추가 조치 후 재판단",
+      "desc": "관리자가 C현장 시작을 13:25로 조정한다. 작업자 1의 위험이 모두 해소되고 작업자 2 항목만 남는다.",
+      "focus": "재판단",
+      "before": "S2",
+      "after": "S3",
+      "rules": [
+        "R4",
+        "P1"
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "S0",
+      "asOf": "2026-07-28T09:00",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "region": "충남 서천",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "region": "충남 보령",
+          "workerId": "W1",
+          "plannedStart": "11:40",
+          "plannedEnd": "12:30",
+          "travelMinutes": 30
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "C",
+          "title": "C현장",
+          "region": "충남 홍성",
+          "workerId": "W1",
+          "plannedStart": "12:55",
+          "plannedEnd": "14:00",
+          "travelMinutes": 20
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "D",
+          "title": "D현장",
+          "region": "전북 군산",
+          "workerId": "W2",
+          "plannedStart": "09:30",
+          "plannedEnd": "11:30",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "E",
+          "title": "E현장",
+          "region": "전북 익산",
+          "workerId": "W2",
+          "plannedStart": "12:00",
+          "plannedEnd": "13:00",
+          "travelMinutes": 35
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "kind": "업무 확인",
+          "siteId": "A",
+          "at": "2026-07-27T17:30",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e2",
+          "kind": "업무 확인",
+          "siteId": "D",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e3",
+          "kind": "업무 확인",
+          "siteId": "E",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "actions": [],
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "e1",
+            "kind": "업무 확인",
+            "siteId": "A",
+            "at": "2026-07-27T17:30",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e2",
+            "kind": "업무 확인",
+            "siteId": "D",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e3",
+            "kind": "업무 확인",
+            "siteId": "E",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "region": "충남 서천",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "region": "충남 보령",
+            "workerId": "W1",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "travelMinutes": 30
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "C",
+            "title": "C현장",
+            "region": "충남 홍성",
+            "workerId": "W1",
+            "plannedStart": "12:55",
+            "plannedEnd": "14:00",
+            "travelMinutes": 20
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "D",
+            "title": "D현장",
+            "region": "전북 군산",
+            "workerId": "W2",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "travelMinutes": 0
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "E",
+            "title": "E현장",
+            "region": "전북 익산",
+            "workerId": "W2",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "travelMinutes": 35
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "예정",
+            "expectedPhase": "작업 중",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T19:00",
+                "dueBasis": "업무 전달 2026-07-27 17:00 + 120분",
+                "actual": "2026-07-27T17:30",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -90,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:00",
+              "source": "예정",
+              "basis": "예정 종료 11:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "업무 전달 2026-07-28 07:00 + 120분",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T15:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "12:30",
+              "source": "예정",
+              "basis": "예정 종료 12:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "C",
+            "title": "C현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "12:55",
+            "plannedEnd": "14:00",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T12:55",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:55",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T14:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "14:00",
+              "source": "예정",
+              "basis": "예정 종료 14:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "D",
+            "title": "D현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:30",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:30",
+              "source": "예정",
+              "basis": "예정 종료 11:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "E",
+            "title": "E현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:00",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 서천",
+              "status": "예정",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:00",
+              "endSource": "예정",
+              "endBasis": "예정 종료 11:00",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 보령",
+              "status": "예정",
+              "plannedStart": "11:40",
+              "plannedEnd": "12:30",
+              "expectedStart": "11:40",
+              "expectedEnd": "12:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 12:30",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "C",
+              "title": "C현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 홍성",
+              "status": "예정",
+              "plannedStart": "12:55",
+              "plannedEnd": "14:00",
+              "expectedStart": "12:55",
+              "expectedEnd": "14:00",
+              "endSource": "예정",
+              "endBasis": "예정 종료 14:00",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "D",
+              "title": "D현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 군산",
+              "status": "예정",
+              "plannedStart": "09:30",
+              "plannedEnd": "11:30",
+              "expectedStart": "09:30",
+              "expectedEnd": "11:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 11:30",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "E",
+              "title": "E현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 익산",
+              "status": "예정",
+              "plannedStart": "12:00",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:05",
+              "expectedEnd": "13:05",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 12:05 + 예정 작업시간 60분",
+              "endDetermined": true,
+              "startDelay": 5,
+              "endDelay": 5,
+              "delayRootId": "D"
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "region": "충남 서천",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:00",
+                "endSource": "예정",
+                "endBasis": "예정 종료 11:00",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedStart": "11:40",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 40,
+              "arrival": "11:30",
+              "slack": 10,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "없음",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "A현장 예상 종료 11:00 (예정)",
+                "예상 도착 = 11:00 + 이동 30분 = 11:30",
+                "여유 = B현장 예정 시작 11:40 − 예상 도착 11:30 = 10분"
+              ],
+              "reason": "예상 도착 11:30, 후속 현장 시작까지 10분 여유가 있습니다.",
+              "actions": [],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R9"
+              ]
+            },
+            {
+              "key": "B>C",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 2,
+              "prev": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedEnd": "12:30",
+                "expectedEnd": "12:30",
+                "endSource": "예정",
+                "endBasis": "예정 종료 12:30",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "C",
+                "title": "C현장",
+                "region": "충남 홍성",
+                "plannedStart": "12:55",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 20,
+                "source": "입력값"
+              },
+              "plannedGap": 25,
+              "arrival": "12:50",
+              "slack": 5,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "주의",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "B현장 예상 종료 12:30 (예정)",
+                "예상 도착 = 12:30 + 이동 20분 = 12:50",
+                "여유 = C현장 예정 시작 12:55 − 예상 도착 12:50 = 5분"
+              ],
+              "reason": "예상 도착 12:50, 후속 현장 시작까지 5분 여유가 있습니다. 여유가 10분 미만이라 주의가 필요합니다.",
+              "actions": [
+                "선행 현장 종료 예상시각 확인"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R9"
+              ]
+            },
+            {
+              "key": "D>E",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "D",
+                "title": "D현장",
+                "region": "전북 군산",
+                "plannedEnd": "11:30",
+                "expectedEnd": "11:30",
+                "endSource": "예정",
+                "endBasis": "예정 종료 11:30",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "E",
+                "title": "E현장",
+                "region": "전북 익산",
+                "plannedStart": "12:00",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 35,
+                "source": "입력값"
+              },
+              "plannedGap": 30,
+              "arrival": "12:05",
+              "slack": -5,
+              "shortfall": 5,
+              "status": "판정",
+              "grade": "중간",
+              "cause": "이동시간 부족",
+              "staticConflict": true,
+              "downstream": [
+                "E"
+              ],
+              "formula": [
+                "D현장 예상 종료 11:30 (예정)",
+                "예상 도착 = 11:30 + 이동 35분 = 12:05",
+                "여유 = E현장 예정 시작 12:00 − 예상 도착 12:05 = -5분 → 5분 부족"
+              ],
+              "reason": "예정 종료 11:30에 이동 35분을 더하면 예정대로 진행해도 후속 현장 시작 12:00보다 늦습니다 (5분 부족).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:00",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [
+            {
+              "rank": 1,
+              "key": "link:D>E",
+              "kind": "이동시간 부족",
+              "title": "E현장 이동시간 부족",
+              "grade": "중간",
+              "maxShortfall": 5,
+              "sites": [
+                {
+                  "id": "E",
+                  "title": "E현장",
+                  "plannedStart": "12:00",
+                  "shortfall": 5,
+                  "grade": "중간"
+                }
+              ],
+              "earliestStart": "12:00",
+              "minutesUntil": 180,
+              "score": 25,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "중간",
+                  "points": 20,
+                  "reason": "등급별 기본점수 (중간 = 20점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "5분",
+                  "points": 5,
+                  "reason": "가장 큰 예상 지연 5분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "1곳",
+                  "points": 0,
+                  "reason": "영향 현장 1곳 — 추가 점수 없음"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "180분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 12:00까지 180분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "보통",
+                  "points": 0,
+                  "reason": "영향 현장에 연결된 업무 우선순위 '보통' = 0점"
+                }
+              ],
+              "basis": "이동 가능시간이 필요 이동시간보다 5분 부족합니다 (D현장 → E현장).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "linkKeys": [
+                "D>E"
+              ]
+            }
+          ],
+          "held": [],
+          "watch": [
+            "B>C"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S1",
+      "asOf": "2026-07-28T09:30",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "region": "충남 서천",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "region": "충남 보령",
+          "workerId": "W1",
+          "plannedStart": "11:40",
+          "plannedEnd": "12:30",
+          "travelMinutes": 30
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "C",
+          "title": "C현장",
+          "region": "충남 홍성",
+          "workerId": "W1",
+          "plannedStart": "12:55",
+          "plannedEnd": "14:00",
+          "travelMinutes": 20
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "D",
+          "title": "D현장",
+          "region": "전북 군산",
+          "workerId": "W2",
+          "plannedStart": "09:30",
+          "plannedEnd": "11:30",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "E",
+          "title": "E현장",
+          "region": "전북 익산",
+          "workerId": "W2",
+          "plannedStart": "12:00",
+          "plannedEnd": "13:00",
+          "travelMinutes": 35
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "kind": "업무 확인",
+          "siteId": "A",
+          "at": "2026-07-27T17:30",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e2",
+          "kind": "업무 확인",
+          "siteId": "D",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e3",
+          "kind": "업무 확인",
+          "siteId": "E",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e4",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:25",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e5",
+          "kind": "업무 확인",
+          "siteId": "B",
+          "at": "2026-07-28T09:20",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e6",
+          "kind": "작업개시",
+          "siteId": "D",
+          "at": "2026-07-28T09:30",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "actions": [],
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "e1",
+            "kind": "업무 확인",
+            "siteId": "A",
+            "at": "2026-07-27T17:30",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e4",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:25",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e5",
+            "kind": "업무 확인",
+            "siteId": "B",
+            "at": "2026-07-28T09:20",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e2",
+            "kind": "업무 확인",
+            "siteId": "D",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e6",
+            "kind": "작업개시",
+            "siteId": "D",
+            "at": "2026-07-28T09:30",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e3",
+            "kind": "업무 확인",
+            "siteId": "E",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "region": "충남 서천",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:25",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "region": "충남 보령",
+            "workerId": "W1",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "travelMinutes": 30
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "C",
+            "title": "C현장",
+            "region": "충남 홍성",
+            "workerId": "W1",
+            "plannedStart": "12:55",
+            "plannedEnd": "14:00",
+            "travelMinutes": 20
+          },
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "D",
+            "title": "D현장",
+            "region": "전북 군산",
+            "workerId": "W2",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "travelMinutes": 0,
+            "actualStart": "09:30",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "E",
+            "title": "E현장",
+            "region": "전북 익산",
+            "workerId": "W2",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "travelMinutes": 35
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T19:00",
+                "dueBasis": "업무 전달 2026-07-27 17:00 + 120분",
+                "actual": "2026-07-27T17:30",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -90,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:25",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 25,
+                "status": "지연",
+                "affectsEnd": true,
+                "meaning": "실제 작업 시작이 늦었습니다. '작업시간 유지' 가정으로 예상 종료에 반영합니다 (R2-2)."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:25",
+              "source": "작업개시 지연 추정",
+              "basis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "determined": true,
+              "delay": 25
+            },
+            "passedToEngine": [
+              "실제 시작 09:25 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "업무 전달 2026-07-28 07:00 + 120분",
+                "actual": "2026-07-28T09:20",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 20,
+                "status": "지연",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T15:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "12:30",
+              "source": "예정",
+              "basis": "예정 종료 12:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "C",
+            "title": "C현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "12:55",
+            "plannedEnd": "14:00",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T12:55",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:55",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T14:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "14:00",
+              "source": "예정",
+              "basis": "예정 종료 14:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "D",
+            "title": "D현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:30",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:30",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 0,
+                "status": "정시",
+                "affectsEnd": false,
+                "meaning": "예정 시작 이전 또는 정시에 시작했습니다. 예상 종료를 앞당기지 않습니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:30",
+              "source": "예정",
+              "basis": "예정 종료 11:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": [
+              "실제 시작 09:30 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "E",
+            "title": "E현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:30",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 서천",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:25",
+              "endSource": "작업개시 지연 추정",
+              "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "endDetermined": true,
+              "actualStart": "09:25",
+              "startDelay": 0,
+              "endDelay": 25,
+              "delayRootId": "A"
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 보령",
+              "status": "예정",
+              "plannedStart": "11:40",
+              "plannedEnd": "12:30",
+              "expectedStart": "11:55",
+              "expectedEnd": "12:45",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+              "endDetermined": true,
+              "startDelay": 15,
+              "endDelay": 15,
+              "delayRootId": "A"
+            },
+            {
+              "id": "C",
+              "title": "C현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 홍성",
+              "status": "예정",
+              "plannedStart": "12:55",
+              "plannedEnd": "14:00",
+              "expectedStart": "13:05",
+              "expectedEnd": "14:10",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 13:05 + 예정 작업시간 65분",
+              "endDetermined": true,
+              "startDelay": 10,
+              "endDelay": 10,
+              "delayRootId": "A"
+            },
+            {
+              "id": "D",
+              "title": "D현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 군산",
+              "status": "진행 중",
+              "plannedStart": "09:30",
+              "plannedEnd": "11:30",
+              "expectedStart": "09:30",
+              "expectedEnd": "11:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 11:30",
+              "endDetermined": true,
+              "actualStart": "09:30",
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "E",
+              "title": "E현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 익산",
+              "status": "예정",
+              "plannedStart": "12:00",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:05",
+              "expectedEnd": "13:05",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 12:05 + 예정 작업시간 60분",
+              "endDetermined": true,
+              "startDelay": 5,
+              "endDelay": 5,
+              "delayRootId": "D"
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "region": "충남 서천",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:25",
+                "endSource": "작업개시 지연 추정",
+                "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "endDetermined": true,
+                "delay": 25
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedStart": "11:40",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 40,
+              "arrival": "11:55",
+              "slack": -15,
+              "shortfall": 15,
+              "status": "판정",
+              "grade": "높음",
+              "cause": "선행 현장 지연",
+              "staticConflict": false,
+              "downstream": [
+                "B",
+                "C"
+              ],
+              "formula": [
+                "A현장 예상 종료 11:25 (작업개시 지연 추정)",
+                "근거: 실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
+                "예상 도착 = 11:25 + 이동 30분 = 11:55",
+                "여유 = B현장 예정 시작 11:40 − 예상 도착 11:55 = -15분 → 15분 부족"
+              ],
+              "reason": "선행 현장의 종료 지연(25분)과 현장 간 이동시간(30분)을 합산하면 후속 현장 예정 시작 11:40을 15분 초과합니다. 후속 현장은 아직 시작 전이지만 늦어질 가능성이 있습니다.",
+              "actions": [
+                "선행 현장 진행상황 확인",
+                "후속 현장 일정 조정 검토",
+                "대체 작업자 가능 여부 확인",
+                "후속 현장 고객에게 지연 가능성 안내 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R2-2",
+                "R5",
+                "R9"
+              ],
+              "rootId": "A"
+            },
+            {
+              "key": "B>C",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 2,
+              "prev": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedEnd": "12:30",
+                "expectedEnd": "12:45",
+                "endSource": "연쇄 계산",
+                "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+                "endDetermined": true,
+                "delay": 15
+              },
+              "next": {
+                "id": "C",
+                "title": "C현장",
+                "region": "충남 홍성",
+                "plannedStart": "12:55",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 20,
+                "source": "입력값"
+              },
+              "plannedGap": 25,
+              "arrival": "13:05",
+              "slack": -10,
+              "shortfall": 10,
+              "status": "판정",
+              "grade": "높음",
+              "cause": "연쇄 지연",
+              "staticConflict": false,
+              "downstream": [
+                "C"
+              ],
+              "formula": [
+                "B현장 예상 종료 12:45 (연쇄 계산)",
+                "근거: 선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+                "선행 지연 = 12:45 − 예정 종료 12:30 = 15분",
+                "예상 도착 = 12:45 + 이동 20분 = 13:05",
+                "여유 = C현장 예정 시작 12:55 − 예상 도착 13:05 = -10분 → 10분 부족"
+              ],
+              "reason": "앞선 현장의 지연이 B현장의 시작과 종료를 늦추고, 그 영향으로 후속 현장 예정 시작 12:55보다 10분 늦게 도착합니다.",
+              "actions": [
+                "선행 현장 진행상황 확인",
+                "후속 현장 일정 조정 검토",
+                "대체 작업자 가능 여부 확인",
+                "후속 현장 고객에게 지연 가능성 안내 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R9"
+              ],
+              "rootId": "A"
+            },
+            {
+              "key": "D>E",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "D",
+                "title": "D현장",
+                "region": "전북 군산",
+                "plannedEnd": "11:30",
+                "expectedEnd": "11:30",
+                "endSource": "예정",
+                "endBasis": "예정 종료 11:30",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "E",
+                "title": "E현장",
+                "region": "전북 익산",
+                "plannedStart": "12:00",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 35,
+                "source": "입력값"
+              },
+              "plannedGap": 30,
+              "arrival": "12:05",
+              "slack": -5,
+              "shortfall": 5,
+              "status": "판정",
+              "grade": "중간",
+              "cause": "이동시간 부족",
+              "staticConflict": true,
+              "downstream": [
+                "E"
+              ],
+              "formula": [
+                "D현장 예상 종료 11:30 (예정)",
+                "예상 도착 = 11:30 + 이동 35분 = 12:05",
+                "여유 = E현장 예정 시작 12:00 − 예상 도착 12:05 = -5분 → 5분 부족"
+              ],
+              "reason": "예정 종료 11:30에 이동 35분을 더하면 예정대로 진행해도 후속 현장 시작 12:00보다 늦습니다 (5분 부족).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:30",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [
+            {
+              "rank": 1,
+              "key": "root:W1|2026-07-28|A",
+              "kind": "작업지연 위험",
+              "title": "B현장 작업지연 위험",
+              "grade": "높음",
+              "maxShortfall": 15,
+              "root": {
+                "id": "A",
+                "title": "A현장"
+              },
+              "sites": [
+                {
+                  "id": "B",
+                  "title": "B현장",
+                  "plannedStart": "11:40",
+                  "shortfall": 15,
+                  "grade": "높음"
+                },
+                {
+                  "id": "C",
+                  "title": "C현장",
+                  "plannedStart": "12:55",
+                  "shortfall": 10,
+                  "grade": "높음"
+                }
+              ],
+              "earliestStart": "11:40",
+              "minutesUntil": 130,
+              "score": 75,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "높음",
+                  "points": 40,
+                  "reason": "등급별 기본점수 (높음 = 40점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "15분",
+                  "points": 15,
+                  "reason": "가장 큰 예상 지연 15분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "2곳",
+                  "points": 10,
+                  "reason": "영향 현장 2곳 — 첫 현장 외 1곳 × 10점"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "130분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 11:40까지 130분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "긴급",
+                  "points": 10,
+                  "reason": "영향 현장에 연결된 업무 우선순위 '긴급' = 10점"
+                }
+              ],
+              "basis": "선행 현장(A현장) 작업지연이 후속 일정 2곳(B현장, C현장)에 영향을 미칩니다. 가장 큰 예상 지연 15분.",
+              "actions": [
+                "선행 현장 진행상황 확인",
+                "후속 현장 일정 조정 검토",
+                "대체 작업자 가능 여부 확인",
+                "후속 현장 고객에게 지연 가능성 안내 검토"
+              ],
+              "linkKeys": [
+                "A>B",
+                "B>C"
+              ]
+            },
+            {
+              "rank": 2,
+              "key": "link:D>E",
+              "kind": "이동시간 부족",
+              "title": "E현장 이동시간 부족",
+              "grade": "중간",
+              "maxShortfall": 5,
+              "sites": [
+                {
+                  "id": "E",
+                  "title": "E현장",
+                  "plannedStart": "12:00",
+                  "shortfall": 5,
+                  "grade": "중간"
+                }
+              ],
+              "earliestStart": "12:00",
+              "minutesUntil": 150,
+              "score": 25,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "중간",
+                  "points": 20,
+                  "reason": "등급별 기본점수 (중간 = 20점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "5분",
+                  "points": 5,
+                  "reason": "가장 큰 예상 지연 5분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "1곳",
+                  "points": 0,
+                  "reason": "영향 현장 1곳 — 추가 점수 없음"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "150분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 12:00까지 150분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "보통",
+                  "points": 0,
+                  "reason": "영향 현장에 연결된 업무 우선순위 '보통' = 0점"
+                }
+              ],
+              "basis": "이동 가능시간이 필요 이동시간보다 5분 부족합니다 (D현장 → E현장).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "linkKeys": [
+                "D>E"
+              ]
+            }
+          ],
+          "held": [],
+          "watch": []
+        }
+      }
+    },
+    {
+      "id": "S2",
+      "asOf": "2026-07-28T09:35",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "region": "충남 서천",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "region": "충남 보령",
+          "workerId": "W1",
+          "plannedStart": "12:10",
+          "plannedEnd": "13:00",
+          "travelMinutes": 30
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "C",
+          "title": "C현장",
+          "region": "충남 홍성",
+          "workerId": "W1",
+          "plannedStart": "12:55",
+          "plannedEnd": "14:00",
+          "travelMinutes": 20
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "D",
+          "title": "D현장",
+          "region": "전북 군산",
+          "workerId": "W2",
+          "plannedStart": "09:30",
+          "plannedEnd": "11:30",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "E",
+          "title": "E현장",
+          "region": "전북 익산",
+          "workerId": "W2",
+          "plannedStart": "12:00",
+          "plannedEnd": "13:00",
+          "travelMinutes": 35
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "kind": "업무 확인",
+          "siteId": "A",
+          "at": "2026-07-27T17:30",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e2",
+          "kind": "업무 확인",
+          "siteId": "D",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e3",
+          "kind": "업무 확인",
+          "siteId": "E",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e4",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:25",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e5",
+          "kind": "업무 확인",
+          "siteId": "B",
+          "at": "2026-07-28T09:20",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e6",
+          "kind": "작업개시",
+          "siteId": "D",
+          "at": "2026-07-28T09:30",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "actions": [
+        "B현장 시작 11:40 → 12:10 (작업시간 50분 유지)"
+      ],
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "e1",
+            "kind": "업무 확인",
+            "siteId": "A",
+            "at": "2026-07-27T17:30",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e4",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:25",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e5",
+            "kind": "업무 확인",
+            "siteId": "B",
+            "at": "2026-07-28T09:20",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e2",
+            "kind": "업무 확인",
+            "siteId": "D",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e6",
+            "kind": "작업개시",
+            "siteId": "D",
+            "at": "2026-07-28T09:30",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e3",
+            "kind": "업무 확인",
+            "siteId": "E",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "region": "충남 서천",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:25",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "region": "충남 보령",
+            "workerId": "W1",
+            "plannedStart": "12:10",
+            "plannedEnd": "13:00",
+            "travelMinutes": 30
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "C",
+            "title": "C현장",
+            "region": "충남 홍성",
+            "workerId": "W1",
+            "plannedStart": "12:55",
+            "plannedEnd": "14:00",
+            "travelMinutes": 20
+          },
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "D",
+            "title": "D현장",
+            "region": "전북 군산",
+            "workerId": "W2",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "travelMinutes": 0,
+            "actualStart": "09:30",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "E",
+            "title": "E현장",
+            "region": "전북 익산",
+            "workerId": "W2",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "travelMinutes": 35
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T19:00",
+                "dueBasis": "업무 전달 2026-07-27 17:00 + 120분",
+                "actual": "2026-07-27T17:30",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -90,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:25",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 25,
+                "status": "지연",
+                "affectsEnd": true,
+                "meaning": "실제 작업 시작이 늦었습니다. '작업시간 유지' 가정으로 예상 종료에 반영합니다 (R2-2)."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:25",
+              "source": "작업개시 지연 추정",
+              "basis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "determined": true,
+              "delay": 25
+            },
+            "passedToEngine": [
+              "실제 시작 09:25 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "12:10",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "업무 전달 2026-07-28 07:00 + 120분",
+                "actual": "2026-07-28T09:20",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 20,
+                "status": "지연",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:10",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T15:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "C",
+            "title": "C현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "12:55",
+            "plannedEnd": "14:00",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T12:55",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:55",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T14:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "14:00",
+              "source": "예정",
+              "basis": "예정 종료 14:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "D",
+            "title": "D현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:30",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:30",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 0,
+                "status": "정시",
+                "affectsEnd": false,
+                "meaning": "예정 시작 이전 또는 정시에 시작했습니다. 예상 종료를 앞당기지 않습니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:30",
+              "source": "예정",
+              "basis": "예정 종료 11:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": [
+              "실제 시작 09:30 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "E",
+            "title": "E현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:35",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 서천",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:25",
+              "endSource": "작업개시 지연 추정",
+              "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "endDetermined": true,
+              "actualStart": "09:25",
+              "startDelay": 0,
+              "endDelay": 25,
+              "delayRootId": "A"
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 보령",
+              "status": "예정",
+              "plannedStart": "12:10",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:10",
+              "expectedEnd": "13:00",
+              "endSource": "예정",
+              "endBasis": "예정 종료 13:00",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "C",
+              "title": "C현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 홍성",
+              "status": "예정",
+              "plannedStart": "12:55",
+              "plannedEnd": "14:00",
+              "expectedStart": "13:20",
+              "expectedEnd": "14:25",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 13:20 + 예정 작업시간 65분",
+              "endDetermined": true,
+              "startDelay": 25,
+              "endDelay": 25,
+              "delayRootId": "B"
+            },
+            {
+              "id": "D",
+              "title": "D현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 군산",
+              "status": "진행 중",
+              "plannedStart": "09:30",
+              "plannedEnd": "11:30",
+              "expectedStart": "09:30",
+              "expectedEnd": "11:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 11:30",
+              "endDetermined": true,
+              "actualStart": "09:30",
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "E",
+              "title": "E현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 익산",
+              "status": "예정",
+              "plannedStart": "12:00",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:05",
+              "expectedEnd": "13:05",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 12:05 + 예정 작업시간 60분",
+              "endDetermined": true,
+              "startDelay": 5,
+              "endDelay": 5,
+              "delayRootId": "D"
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "region": "충남 서천",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:25",
+                "endSource": "작업개시 지연 추정",
+                "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "endDetermined": true,
+                "delay": 25
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedStart": "12:10",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 70,
+              "arrival": "11:55",
+              "slack": 15,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "없음",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "A현장 예상 종료 11:25 (작업개시 지연 추정)",
+                "근거: 실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
+                "예상 도착 = 11:25 + 이동 30분 = 11:55",
+                "여유 = B현장 예정 시작 12:10 − 예상 도착 11:55 = 15분"
+              ],
+              "reason": "예상 도착 11:55, 후속 현장 시작까지 15분 여유가 있습니다.",
+              "actions": [],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R2-2",
+                "R9"
+              ]
+            },
+            {
+              "key": "B>C",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 2,
+              "prev": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedEnd": "13:00",
+                "expectedEnd": "13:00",
+                "endSource": "예정",
+                "endBasis": "예정 종료 13:00",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "C",
+                "title": "C현장",
+                "region": "충남 홍성",
+                "plannedStart": "12:55",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 20,
+                "source": "입력값"
+              },
+              "plannedGap": -5,
+              "arrival": "13:20",
+              "slack": -25,
+              "shortfall": 25,
+              "status": "판정",
+              "grade": "매우 높음",
+              "cause": "시간 중복",
+              "staticConflict": true,
+              "downstream": [
+                "C"
+              ],
+              "formula": [
+                "B현장 예상 종료 13:00 (예정)",
+                "예상 도착 = 13:00 + 이동 20분 = 13:20",
+                "여유 = C현장 예정 시작 12:55 − 예상 도착 13:20 = -25분 → 25분 부족",
+                "예정 시간 겹침 = 5분 (12:55 시작 < 13:00 종료)"
+              ],
+              "reason": "두 일정의 예정 시간이 5분 겹칩니다. 같은 작업자가 같은 시간에 두 현장에 있을 수 없습니다.",
+              "actions": [
+                "중복 배정 확인",
+                "담당자 또는 시간 조정 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R6",
+                "R9"
+              ]
+            },
+            {
+              "key": "D>E",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "D",
+                "title": "D현장",
+                "region": "전북 군산",
+                "plannedEnd": "11:30",
+                "expectedEnd": "11:30",
+                "endSource": "예정",
+                "endBasis": "예정 종료 11:30",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "E",
+                "title": "E현장",
+                "region": "전북 익산",
+                "plannedStart": "12:00",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 35,
+                "source": "입력값"
+              },
+              "plannedGap": 30,
+              "arrival": "12:05",
+              "slack": -5,
+              "shortfall": 5,
+              "status": "판정",
+              "grade": "중간",
+              "cause": "이동시간 부족",
+              "staticConflict": true,
+              "downstream": [
+                "E"
+              ],
+              "formula": [
+                "D현장 예상 종료 11:30 (예정)",
+                "예상 도착 = 11:30 + 이동 35분 = 12:05",
+                "여유 = E현장 예정 시작 12:00 − 예상 도착 12:05 = -5분 → 5분 부족"
+              ],
+              "reason": "예정 종료 11:30에 이동 35분을 더하면 예정대로 진행해도 후속 현장 시작 12:00보다 늦습니다 (5분 부족).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:35",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [
+            {
+              "rank": 1,
+              "key": "link:B>C",
+              "kind": "일정 중복",
+              "title": "C현장 일정 중복",
+              "grade": "매우 높음",
+              "maxShortfall": 25,
+              "sites": [
+                {
+                  "id": "C",
+                  "title": "C현장",
+                  "plannedStart": "12:55",
+                  "shortfall": 25,
+                  "grade": "매우 높음"
+                }
+              ],
+              "earliestStart": "12:55",
+              "minutesUntil": 200,
+              "score": 85,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "매우 높음",
+                  "points": 60,
+                  "reason": "등급별 기본점수 (매우 높음 = 60점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "25분",
+                  "points": 25,
+                  "reason": "가장 큰 예상 지연 25분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "1곳",
+                  "points": 0,
+                  "reason": "영향 현장 1곳 — 추가 점수 없음"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "200분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 12:55까지 200분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "연결 업무 없음",
+                  "points": 0,
+                  "reason": "연결된 업무 정보가 없어 0점 (데이터 없음은 높게 평가하지 않음)"
+                }
+              ],
+              "basis": "B현장와 C현장의 예정 시간이 겹칩니다.",
+              "actions": [
+                "중복 배정 확인",
+                "담당자 또는 시간 조정 검토"
+              ],
+              "linkKeys": [
+                "B>C"
+              ]
+            },
+            {
+              "rank": 2,
+              "key": "link:D>E",
+              "kind": "이동시간 부족",
+              "title": "E현장 이동시간 부족",
+              "grade": "중간",
+              "maxShortfall": 5,
+              "sites": [
+                {
+                  "id": "E",
+                  "title": "E현장",
+                  "plannedStart": "12:00",
+                  "shortfall": 5,
+                  "grade": "중간"
+                }
+              ],
+              "earliestStart": "12:00",
+              "minutesUntil": 145,
+              "score": 25,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "중간",
+                  "points": 20,
+                  "reason": "등급별 기본점수 (중간 = 20점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "5분",
+                  "points": 5,
+                  "reason": "가장 큰 예상 지연 5분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "1곳",
+                  "points": 0,
+                  "reason": "영향 현장 1곳 — 추가 점수 없음"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "145분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 12:00까지 145분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "보통",
+                  "points": 0,
+                  "reason": "영향 현장에 연결된 업무 우선순위 '보통' = 0점"
+                }
+              ],
+              "basis": "이동 가능시간이 필요 이동시간보다 5분 부족합니다 (D현장 → E현장).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "linkKeys": [
+                "D>E"
+              ]
+            }
+          ],
+          "held": [],
+          "watch": []
+        }
+      }
+    },
+    {
+      "id": "S3",
+      "asOf": "2026-07-28T09:40",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "region": "충남 서천",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "region": "충남 보령",
+          "workerId": "W1",
+          "plannedStart": "12:10",
+          "plannedEnd": "13:00",
+          "travelMinutes": 30
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "C",
+          "title": "C현장",
+          "region": "충남 홍성",
+          "workerId": "W1",
+          "plannedStart": "13:25",
+          "plannedEnd": "14:30",
+          "travelMinutes": 20
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "D",
+          "title": "D현장",
+          "region": "전북 군산",
+          "workerId": "W2",
+          "plannedStart": "09:30",
+          "plannedEnd": "11:30",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "E",
+          "title": "E현장",
+          "region": "전북 익산",
+          "workerId": "W2",
+          "plannedStart": "12:00",
+          "plannedEnd": "13:00",
+          "travelMinutes": 35
+        }
+      ],
+      "events": [
+        {
+          "id": "e1",
+          "kind": "업무 확인",
+          "siteId": "A",
+          "at": "2026-07-27T17:30",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e2",
+          "kind": "업무 확인",
+          "siteId": "D",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e3",
+          "kind": "업무 확인",
+          "siteId": "E",
+          "at": "2026-07-27T16:40",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e4",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:25",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e5",
+          "kind": "업무 확인",
+          "siteId": "B",
+          "at": "2026-07-28T09:20",
+          "source": "업무 확인 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "e6",
+          "kind": "작업개시",
+          "siteId": "D",
+          "at": "2026-07-28T09:30",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "actions": [
+        "B현장 시작 11:40 → 12:10 (작업시간 50분 유지)",
+        "C현장 시작 12:55 → 13:25 (작업시간 65분 유지)"
+      ],
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "e1",
+            "kind": "업무 확인",
+            "siteId": "A",
+            "at": "2026-07-27T17:30",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e4",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:25",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e5",
+            "kind": "업무 확인",
+            "siteId": "B",
+            "at": "2026-07-28T09:20",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e2",
+            "kind": "업무 확인",
+            "siteId": "D",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e6",
+            "kind": "작업개시",
+            "siteId": "D",
+            "at": "2026-07-28T09:30",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "e3",
+            "kind": "업무 확인",
+            "siteId": "E",
+            "at": "2026-07-27T16:40",
+            "source": "업무 확인 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "region": "충남 서천",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:25",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "region": "충남 보령",
+            "workerId": "W1",
+            "plannedStart": "12:10",
+            "plannedEnd": "13:00",
+            "travelMinutes": 30
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "C",
+            "title": "C현장",
+            "region": "충남 홍성",
+            "workerId": "W1",
+            "plannedStart": "13:25",
+            "plannedEnd": "14:30",
+            "travelMinutes": 20
+          },
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "D",
+            "title": "D현장",
+            "region": "전북 군산",
+            "workerId": "W2",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "travelMinutes": 0,
+            "actualStart": "09:30",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "E",
+            "title": "E현장",
+            "region": "전북 익산",
+            "workerId": "W2",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "travelMinutes": 35
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T19:00",
+                "dueBasis": "업무 전달 2026-07-27 17:00 + 120분",
+                "actual": "2026-07-27T17:30",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -90,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:25",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 25,
+                "status": "지연",
+                "affectsEnd": true,
+                "meaning": "실제 작업 시작이 늦었습니다. '작업시간 유지' 가정으로 예상 종료에 반영합니다 (R2-2)."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:25",
+              "source": "작업개시 지연 추정",
+              "basis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "determined": true,
+              "delay": 25
+            },
+            "passedToEngine": [
+              "실제 시작 09:25 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "12:10",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "업무 전달 2026-07-28 07:00 + 120분",
+                "actual": "2026-07-28T09:20",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 20,
+                "status": "지연",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:10",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T15:00",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "C",
+            "title": "C현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "13:25",
+            "plannedEnd": "14:30",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T13:25",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T13:25",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T14:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "14:30",
+              "source": "예정",
+              "basis": "예정 종료 14:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          },
+          {
+            "siteId": "D",
+            "title": "D현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "09:30",
+            "plannedEnd": "11:30",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:30",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:30",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 0,
+                "status": "정시",
+                "affectsEnd": false,
+                "meaning": "예정 시작 이전 또는 정시에 시작했습니다. 예상 종료를 앞당기지 않습니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "업무 완료기한",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "보고 단계의 편차입니다. 예상 종료에 반영하지 않습니다."
+              }
+            ],
+            "end": {
+              "time": "11:30",
+              "source": "예정",
+              "basis": "예정 종료 11:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": [
+              "실제 시작 09:30 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "E",
+            "title": "E현장",
+            "workerId": "W2",
+            "date": "2026-07-28",
+            "plannedStart": "12:00",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 완료 · 작업 전",
+            "actualPhase": "확인 완료 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-27T18:00",
+                "dueBasis": "업무 전달 2026-07-27 16:00 + 120분",
+                "actual": "2026-07-27T16:40",
+                "source": "업무 확인 버튼",
+                "origin": "검증 시나리오",
+                "minutes": -80,
+                "status": "기한 내",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:00",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "결과보고가 필요 없는 업무",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:40",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 서천",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:25",
+              "endSource": "작업개시 지연 추정",
+              "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "endDetermined": true,
+              "actualStart": "09:25",
+              "startDelay": 0,
+              "endDelay": 25,
+              "delayRootId": "A"
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 보령",
+              "status": "예정",
+              "plannedStart": "12:10",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:10",
+              "expectedEnd": "13:00",
+              "endSource": "예정",
+              "endBasis": "예정 종료 13:00",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "C",
+              "title": "C현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "region": "충남 홍성",
+              "status": "예정",
+              "plannedStart": "13:25",
+              "plannedEnd": "14:30",
+              "expectedStart": "13:25",
+              "expectedEnd": "14:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 14:30",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "D",
+              "title": "D현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 군산",
+              "status": "진행 중",
+              "plannedStart": "09:30",
+              "plannedEnd": "11:30",
+              "expectedStart": "09:30",
+              "expectedEnd": "11:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 11:30",
+              "endDetermined": true,
+              "actualStart": "09:30",
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "E",
+              "title": "E현장",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "region": "전북 익산",
+              "status": "예정",
+              "plannedStart": "12:00",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:05",
+              "expectedEnd": "13:05",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 12:05 + 예정 작업시간 60분",
+              "endDetermined": true,
+              "startDelay": 5,
+              "endDelay": 5,
+              "delayRootId": "D"
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "region": "충남 서천",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:25",
+                "endSource": "작업개시 지연 추정",
+                "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "endDetermined": true,
+                "delay": 25
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedStart": "12:10",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 70,
+              "arrival": "11:55",
+              "slack": 15,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "없음",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "A현장 예상 종료 11:25 (작업개시 지연 추정)",
+                "근거: 실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
+                "예상 도착 = 11:25 + 이동 30분 = 11:55",
+                "여유 = B현장 예정 시작 12:10 − 예상 도착 11:55 = 15분"
+              ],
+              "reason": "예상 도착 11:55, 후속 현장 시작까지 15분 여유가 있습니다.",
+              "actions": [],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R2-2",
+                "R9"
+              ]
+            },
+            {
+              "key": "B>C",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 2,
+              "prev": {
+                "id": "B",
+                "title": "B현장",
+                "region": "충남 보령",
+                "plannedEnd": "13:00",
+                "expectedEnd": "13:00",
+                "endSource": "예정",
+                "endBasis": "예정 종료 13:00",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "C",
+                "title": "C현장",
+                "region": "충남 홍성",
+                "plannedStart": "13:25",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 20,
+                "source": "입력값"
+              },
+              "plannedGap": 25,
+              "arrival": "13:20",
+              "slack": 5,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "주의",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "B현장 예상 종료 13:00 (예정)",
+                "예상 도착 = 13:00 + 이동 20분 = 13:20",
+                "여유 = C현장 예정 시작 13:25 − 예상 도착 13:20 = 5분"
+              ],
+              "reason": "예상 도착 13:20, 후속 현장 시작까지 5분 여유가 있습니다. 여유가 10분 미만이라 주의가 필요합니다.",
+              "actions": [
+                "선행 현장 종료 예상시각 확인"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R9"
+              ]
+            },
+            {
+              "key": "D>E",
+              "workerId": "W2",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "D",
+                "title": "D현장",
+                "region": "전북 군산",
+                "plannedEnd": "11:30",
+                "expectedEnd": "11:30",
+                "endSource": "예정",
+                "endBasis": "예정 종료 11:30",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "E",
+                "title": "E현장",
+                "region": "전북 익산",
+                "plannedStart": "12:00",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 35,
+                "source": "입력값"
+              },
+              "plannedGap": 30,
+              "arrival": "12:05",
+              "slack": -5,
+              "shortfall": 5,
+              "status": "판정",
+              "grade": "중간",
+              "cause": "이동시간 부족",
+              "staticConflict": true,
+              "downstream": [
+                "E"
+              ],
+              "formula": [
+                "D현장 예상 종료 11:30 (예정)",
+                "예상 도착 = 11:30 + 이동 35분 = 12:05",
+                "여유 = E현장 예정 시작 12:00 − 예상 도착 12:05 = -5분 → 5분 부족"
+              ],
+              "reason": "예정 종료 11:30에 이동 35분을 더하면 예정대로 진행해도 후속 현장 시작 12:00보다 늦습니다 (5분 부족).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R5",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:40",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [
+            {
+              "rank": 1,
+              "key": "link:D>E",
+              "kind": "이동시간 부족",
+              "title": "E현장 이동시간 부족",
+              "grade": "중간",
+              "maxShortfall": 5,
+              "sites": [
+                {
+                  "id": "E",
+                  "title": "E현장",
+                  "plannedStart": "12:00",
+                  "shortfall": 5,
+                  "grade": "중간"
+                }
+              ],
+              "earliestStart": "12:00",
+              "minutesUntil": 140,
+              "score": 25,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "중간",
+                  "points": 20,
+                  "reason": "등급별 기본점수 (중간 = 20점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "5분",
+                  "points": 5,
+                  "reason": "가장 큰 예상 지연 5분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "1곳",
+                  "points": 0,
+                  "reason": "영향 현장 1곳 — 추가 점수 없음"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "140분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 12:00까지 140분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "보통",
+                  "points": 0,
+                  "reason": "영향 현장에 연결된 업무 우선순위 '보통' = 0점"
+                }
+              ],
+              "basis": "이동 가능시간이 필요 이동시간보다 5분 부족합니다 (D현장 → E현장).",
+              "actions": [
+                "일정 시간 또는 이동시간 재확인",
+                "후속 현장 일정 조정 검토"
+              ],
+              "linkKeys": [
+                "D>E"
+              ]
+            }
+          ],
+          "held": [],
+          "watch": [
+            "B>C"
+          ]
+        }
+      }
+    }
+  ],
+  "abCases": [
+    {
+      "id": "1",
+      "label": "정상 — A현장 정시 시작",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "workerId": "W1",
+          "plannedStart": "11:40",
+          "plannedEnd": "12:30",
+          "travelMinutes": 30
+        }
+      ],
+      "events": [
+        {
+          "id": "a1",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:00",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "asOf": "2026-07-28T09:05",
+      "expect": {
+        "aEnd": "11:00",
+        "aEndSource": "예정",
+        "arrival": "11:30",
+        "slack": 10,
+        "grade": "없음"
+      },
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "a1",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:00",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:00",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "travelMinutes": 30
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": 5,
+                "status": "미발생 · 기한 경과",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:00",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 0,
+                "status": "정시",
+                "affectsEnd": false,
+                "meaning": "예정 시작 이전 또는 정시에 시작했습니다. 예상 종료를 앞당기지 않습니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "11:00",
+              "source": "예정",
+              "basis": "예정 종료 11:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": [
+              "실제 시작 09:00 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "12:30",
+              "source": "예정",
+              "basis": "예정 종료 12:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:05",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:00",
+              "endSource": "예정",
+              "endBasis": "예정 종료 11:00",
+              "endDetermined": true,
+              "actualStart": "09:00",
+              "startDelay": 0,
+              "endDelay": 0
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "예정",
+              "plannedStart": "11:40",
+              "plannedEnd": "12:30",
+              "expectedStart": "11:40",
+              "expectedEnd": "12:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 12:30",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:00",
+                "endSource": "예정",
+                "endBasis": "예정 종료 11:00",
+                "endDetermined": true,
+                "delay": 0
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "plannedStart": "11:40",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 40,
+              "arrival": "11:30",
+              "slack": 10,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "없음",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "A현장 예상 종료 11:00 (예정)",
+                "예상 도착 = 11:00 + 이동 30분 = 11:30",
+                "여유 = B현장 예정 시작 11:40 − 예상 도착 11:30 = 10분"
+              ],
+              "reason": "예상 도착 11:30, 후속 현장 시작까지 10분 여유가 있습니다.",
+              "actions": [],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:05",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [],
+          "held": [],
+          "watch": []
+        }
+      }
+    },
+    {
+      "id": "2",
+      "label": "작업개시 지연 — A현장 09:25 시작",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "workerId": "W1",
+          "plannedStart": "11:40",
+          "plannedEnd": "12:30",
+          "travelMinutes": 30
+        }
+      ],
+      "events": [
+        {
+          "id": "a1",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:25",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "asOf": "2026-07-28T09:30",
+      "expect": {
+        "aEnd": "11:25",
+        "aEndSource": "작업개시 지연 추정",
+        "arrival": "11:55",
+        "slack": -15,
+        "grade": "높음"
+      },
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "a1",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:25",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:25",
+            "actualStartSource": "작업 시작 버튼"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "travelMinutes": 30
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": 30,
+                "status": "미발생 · 기한 경과",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:25",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 25,
+                "status": "지연",
+                "affectsEnd": true,
+                "meaning": "실제 작업 시작이 늦었습니다. '작업시간 유지' 가정으로 예상 종료에 반영합니다 (R2-2)."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "11:25",
+              "source": "작업개시 지연 추정",
+              "basis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "determined": true,
+              "delay": 25
+            },
+            "passedToEngine": [
+              "실제 시작 09:25 (작업 시작 버튼)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "12:30",
+              "source": "예정",
+              "basis": "예정 종료 12:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:30",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:25",
+              "endSource": "작업개시 지연 추정",
+              "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+              "endDetermined": true,
+              "actualStart": "09:25",
+              "startDelay": 0,
+              "endDelay": 25,
+              "delayRootId": "A"
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "예정",
+              "plannedStart": "11:40",
+              "plannedEnd": "12:30",
+              "expectedStart": "11:55",
+              "expectedEnd": "12:45",
+              "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+              "endDetermined": true,
+              "startDelay": 15,
+              "endDelay": 15,
+              "delayRootId": "A"
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:25",
+                "endSource": "작업개시 지연 추정",
+                "endBasis": "실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "endDetermined": true,
+                "delay": 25
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "plannedStart": "11:40",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 40,
+              "arrival": "11:55",
+              "slack": -15,
+              "shortfall": 15,
+              "status": "판정",
+              "grade": "높음",
+              "cause": "선행 현장 지연",
+              "staticConflict": false,
+              "downstream": [
+                "B"
+              ],
+              "formula": [
+                "A현장 예상 종료 11:25 (작업개시 지연 추정)",
+                "근거: 실제 시작 09:25 (25분 늦음) + 예정 작업시간 120분 — 가정: 늦게 시작해도 작업시간 유지",
+                "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
+                "예상 도착 = 11:25 + 이동 30분 = 11:55",
+                "여유 = B현장 예정 시작 11:40 − 예상 도착 11:55 = -15분 → 15분 부족"
+              ],
+              "reason": "선행 현장의 종료 지연(25분)과 현장 간 이동시간(30분)을 합산하면 후속 현장 예정 시작 11:40을 15분 초과합니다. 후속 현장은 아직 시작 전이지만 늦어질 가능성이 있습니다.",
+              "actions": [
+                "선행 현장 진행상황 확인",
+                "후속 현장 일정 조정 검토",
+                "대체 작업자 가능 여부 확인",
+                "후속 현장 고객에게 지연 가능성 안내 검토"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R2-2",
+                "R5",
+                "R9"
+              ],
+              "rootId": "A"
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T09:30",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [
+            {
+              "rank": 1,
+              "key": "root:W1|2026-07-28|A",
+              "kind": "작업지연 위험",
+              "title": "B현장 작업지연 위험",
+              "grade": "높음",
+              "maxShortfall": 15,
+              "root": {
+                "id": "A",
+                "title": "A현장"
+              },
+              "sites": [
+                {
+                  "id": "B",
+                  "title": "B현장",
+                  "plannedStart": "11:40",
+                  "shortfall": 15,
+                  "grade": "높음"
+                }
+              ],
+              "earliestStart": "11:40",
+              "minutesUntil": 130,
+              "score": 55,
+              "breakdown": [
+                {
+                  "factor": "위험등급",
+                  "value": "높음",
+                  "points": 40,
+                  "reason": "등급별 기본점수 (높음 = 40점)"
+                },
+                {
+                  "factor": "예상 지연",
+                  "value": "15분",
+                  "points": 15,
+                  "reason": "가장 큰 예상 지연 15분 × 1점"
+                },
+                {
+                  "factor": "후속 현장 영향",
+                  "value": "1곳",
+                  "points": 0,
+                  "reason": "영향 현장 1곳 — 추가 점수 없음"
+                },
+                {
+                  "factor": "대응 시한",
+                  "value": "130분 남음",
+                  "points": 0,
+                  "reason": "가장 이른 영향 현장 시작 11:40까지 130분 — 시한 점수 없음"
+                },
+                {
+                  "factor": "업무 중요도",
+                  "value": "연결 업무 없음",
+                  "points": 0,
+                  "reason": "연결된 업무 정보가 없어 0점 (데이터 없음은 높게 평가하지 않음)"
+                }
+              ],
+              "basis": "선행 현장(A현장) 작업지연이 후속 일정 1곳(B현장)에 영향을 미칩니다. 가장 큰 예상 지연 15분.",
+              "actions": [
+                "선행 현장 진행상황 확인",
+                "후속 현장 일정 조정 검토",
+                "대체 작업자 가능 여부 확인",
+                "후속 현장 고객에게 지연 가능성 안내 검토"
+              ],
+              "linkKeys": [
+                "A>B"
+              ]
+            }
+          ],
+          "held": [],
+          "watch": []
+        }
+      }
+    },
+    {
+      "id": "3",
+      "label": "현장 보고로 수정 — 예상 종료 11:10",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "workerId": "W1",
+          "plannedStart": "11:40",
+          "plannedEnd": "12:30",
+          "travelMinutes": 30
+        }
+      ],
+      "events": [
+        {
+          "id": "a1",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:25",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "a2",
+          "kind": "예상 종료 보고",
+          "siteId": "A",
+          "at": "2026-07-28T10:00",
+          "value": "11:10",
+          "source": "현장 보고",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "asOf": "2026-07-28T10:00",
+      "expect": {
+        "aEnd": "11:10",
+        "aEndSource": "현장 보고",
+        "arrival": "11:40",
+        "slack": 0,
+        "grade": "주의"
+      },
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "a2",
+            "kind": "예상 종료 보고",
+            "siteId": "A",
+            "at": "2026-07-28T10:00",
+            "value": "11:10",
+            "source": "현장 보고",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "a1",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:25",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:25",
+            "actualStartSource": "작업 시작 버튼",
+            "expectedEnd": "11:10",
+            "expectedEndSource": "현장 보고"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "travelMinutes": 30
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": 60,
+                "status": "미발생 · 기한 경과",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:25",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 25,
+                "status": "지연",
+                "affectsEnd": true,
+                "meaning": "실제 작업 시작이 늦었습니다. '작업시간 유지' 가정으로 예상 종료에 반영합니다 (R2-2)."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "11:10",
+              "source": "현장 보고",
+              "basis": "현장 보고 예상 종료 11:10",
+              "determined": true,
+              "delay": 10
+            },
+            "passedToEngine": [
+              "실제 시작 09:25 (작업 시작 버튼)",
+              "예상 종료 11:10 (현장 보고)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "11:40",
+            "plannedEnd": "12:30",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T11:40",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T12:30",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "12:30",
+              "source": "예정",
+              "basis": "예정 종료 12:30",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T10:00",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:10",
+              "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:10",
+              "endDetermined": true,
+              "actualStart": "09:25",
+              "startDelay": 0,
+              "endDelay": 10,
+              "delayRootId": "A"
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "예정",
+              "plannedStart": "11:40",
+              "plannedEnd": "12:30",
+              "expectedStart": "11:40",
+              "expectedEnd": "12:30",
+              "endSource": "예정",
+              "endBasis": "예정 종료 12:30",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:10",
+                "endSource": "현장 보고",
+                "endBasis": "현장 보고 예상 종료 11:10",
+                "endDetermined": true,
+                "delay": 10
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "plannedStart": "11:40",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 40,
+              "arrival": "11:40",
+              "slack": 0,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "주의",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "A현장 예상 종료 11:10 (현장 보고)",
+                "근거: 현장 보고 예상 종료 11:10",
+                "선행 지연 = 11:10 − 예정 종료 11:00 = 10분",
+                "예상 도착 = 11:10 + 이동 30분 = 11:40",
+                "여유 = B현장 예정 시작 11:40 − 예상 도착 11:40 = 0분"
+              ],
+              "reason": "예상 도착 11:40, 후속 현장 시작까지 0분 여유가 있습니다. 여유가 10분 미만이라 주의가 필요합니다.",
+              "actions": [
+                "선행 현장 종료 예상시각 확인"
+              ],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T10:00",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [],
+          "held": [],
+          "watch": [
+            "A>B"
+          ]
+        }
+      }
+    },
+    {
+      "id": "4",
+      "label": "관리자 일정 조정 — B현장 12:10 시작",
+      "planned": [
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "A",
+          "title": "A현장",
+          "workerId": "W1",
+          "plannedStart": "09:00",
+          "plannedEnd": "11:00",
+          "travelMinutes": 0
+        },
+        {
+          "date": "2026-07-28",
+          "status": "예정",
+          "travelSource": "입력값",
+          "id": "B",
+          "title": "B현장",
+          "workerId": "W1",
+          "plannedStart": "12:10",
+          "plannedEnd": "13:00",
+          "travelMinutes": 30
+        }
+      ],
+      "events": [
+        {
+          "id": "a1",
+          "kind": "작업개시",
+          "siteId": "A",
+          "at": "2026-07-28T09:25",
+          "source": "작업 시작 버튼",
+          "origin": "검증 시나리오"
+        },
+        {
+          "id": "a2",
+          "kind": "예상 종료 보고",
+          "siteId": "A",
+          "at": "2026-07-28T10:00",
+          "value": "11:10",
+          "source": "현장 보고",
+          "origin": "검증 시나리오"
+        }
+      ],
+      "asOf": "2026-07-28T10:05",
+      "expect": {
+        "aEnd": "11:10",
+        "aEndSource": "현장 보고",
+        "arrival": "11:40",
+        "slack": 30,
+        "grade": "없음"
+      },
+      "result": {
+        "stateVersion": "state-deviation/1.0.0",
+        "accepted": [
+          {
+            "id": "a2",
+            "kind": "예상 종료 보고",
+            "siteId": "A",
+            "at": "2026-07-28T10:00",
+            "value": "11:10",
+            "source": "현장 보고",
+            "origin": "검증 시나리오"
+          },
+          {
+            "id": "a1",
+            "kind": "작업개시",
+            "siteId": "A",
+            "at": "2026-07-28T09:25",
+            "source": "작업 시작 버튼",
+            "origin": "검증 시나리오"
+          }
+        ],
+        "eventIssues": [],
+        "sites": [
+          {
+            "date": "2026-07-28",
+            "status": "진행 중",
+            "travelSource": "입력값",
+            "id": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "travelMinutes": 0,
+            "actualStart": "09:25",
+            "actualStartSource": "작업 시작 버튼",
+            "expectedEnd": "11:10",
+            "expectedEndSource": "현장 보고"
+          },
+          {
+            "date": "2026-07-28",
+            "status": "예정",
+            "travelSource": "입력값",
+            "id": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "plannedStart": "12:10",
+            "plannedEnd": "13:00",
+            "travelMinutes": 30
+          }
+        ],
+        "deviations": [
+          {
+            "siteId": "A",
+            "title": "A현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "09:00",
+            "plannedEnd": "11:00",
+            "status": "진행 중",
+            "expectedPhase": "작업 중",
+            "actualPhase": "작업 중",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": 65,
+                "status": "미발생 · 기한 경과",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T09:00",
+                "dueBasis": "예정 시작",
+                "actual": "2026-07-28T09:25",
+                "source": "작업 시작 버튼",
+                "origin": "검증 시나리오",
+                "minutes": 25,
+                "status": "지연",
+                "affectsEnd": true,
+                "meaning": "실제 작업 시작이 늦었습니다. '작업시간 유지' 가정으로 예상 종료에 반영합니다 (R2-2)."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T11:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "11:10",
+              "source": "현장 보고",
+              "basis": "현장 보고 예상 종료 11:10",
+              "determined": true,
+              "delay": 10
+            },
+            "passedToEngine": [
+              "실제 시작 09:25 (작업 시작 버튼)",
+              "예상 종료 11:10 (현장 보고)"
+            ]
+          },
+          {
+            "siteId": "B",
+            "title": "B현장",
+            "workerId": "W1",
+            "date": "2026-07-28",
+            "plannedStart": "12:10",
+            "plannedEnd": "13:00",
+            "status": "예정",
+            "expectedPhase": "확인 대기",
+            "actualPhase": "미확인 · 작업 전",
+            "stages": [
+              {
+                "stage": "업무 확인",
+                "due": "2026-07-28T12:10",
+                "dueBasis": "연결 업무가 없어 예정 시작 기준",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "확인 단계의 편차입니다. 실제 작업 시작과는 별개라 예상 종료에 반영하지 않습니다."
+              },
+              {
+                "stage": "작업개시",
+                "due": "2026-07-28T12:10",
+                "dueBasis": "예정 시작",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 예정 시작 전입니다."
+              },
+              {
+                "stage": "작업종료",
+                "due": "2026-07-28T13:00",
+                "dueBasis": "예정 종료",
+                "actual": null,
+                "minutes": null,
+                "status": "기한 전",
+                "affectsEnd": false,
+                "meaning": "아직 종료 기준 전입니다."
+              },
+              {
+                "stage": "결과보고",
+                "due": null,
+                "dueBasis": "연결 업무 없음",
+                "actual": null,
+                "minutes": null,
+                "status": "해당 없음",
+                "affectsEnd": false,
+                "meaning": "결과보고 기준이 없습니다."
+              }
+            ],
+            "end": {
+              "time": "13:00",
+              "source": "예정",
+              "basis": "예정 종료 13:00",
+              "determined": true,
+              "delay": 0
+            },
+            "passedToEngine": []
+          }
+        ],
+        "risk": {
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T10:05",
+          "sites": [
+            {
+              "id": "A",
+              "title": "A현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "진행 중",
+              "plannedStart": "09:00",
+              "plannedEnd": "11:00",
+              "expectedStart": "09:00",
+              "expectedEnd": "11:10",
+              "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:10",
+              "endDetermined": true,
+              "actualStart": "09:25",
+              "startDelay": 0,
+              "endDelay": 10,
+              "delayRootId": "A"
+            },
+            {
+              "id": "B",
+              "title": "B현장",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "status": "예정",
+              "plannedStart": "12:10",
+              "plannedEnd": "13:00",
+              "expectedStart": "12:10",
+              "expectedEnd": "13:00",
+              "endSource": "예정",
+              "endBasis": "예정 종료 13:00",
+              "endDetermined": true,
+              "startDelay": 0,
+              "endDelay": 0
+            }
+          ],
+          "links": [
+            {
+              "key": "A>B",
+              "workerId": "W1",
+              "date": "2026-07-28",
+              "order": 1,
+              "prev": {
+                "id": "A",
+                "title": "A현장",
+                "plannedEnd": "11:00",
+                "expectedEnd": "11:10",
+                "endSource": "현장 보고",
+                "endBasis": "현장 보고 예상 종료 11:10",
+                "endDetermined": true,
+                "delay": 10
+              },
+              "next": {
+                "id": "B",
+                "title": "B현장",
+                "plannedStart": "12:10",
+                "status": "예정"
+              },
+              "travel": {
+                "minutes": 30,
+                "source": "입력값"
+              },
+              "plannedGap": 70,
+              "arrival": "11:40",
+              "slack": 30,
+              "shortfall": 0,
+              "status": "판정",
+              "grade": "없음",
+              "cause": "정상",
+              "staticConflict": false,
+              "downstream": [],
+              "formula": [
+                "A현장 예상 종료 11:10 (현장 보고)",
+                "근거: 현장 보고 예상 종료 11:10",
+                "선행 지연 = 11:10 − 예정 종료 11:00 = 10분",
+                "예상 도착 = 11:10 + 이동 30분 = 11:40",
+                "여유 = B현장 예정 시작 12:10 − 예상 도착 11:40 = 30분"
+              ],
+              "reason": "예상 도착 11:40, 후속 현장 시작까지 30분 여유가 있습니다.",
+              "actions": [],
+              "rules": [
+                "R1",
+                "R2",
+                "R3",
+                "R4",
+                "R9"
+              ]
+            }
+          ],
+          "issues": [],
+          "excluded": []
+        },
+        "priority": {
+          "version": "response-priority/1.0.0",
+          "ruleVersion": "chain-risk/1.1.0",
+          "asOf": "2026-07-28T10:05",
+          "config": {
+            "gradePoints": {
+              "중간": 20,
+              "높음": 40,
+              "매우 높음": 60
+            },
+            "perShortfallMin": 1,
+            "shortfallCapMin": 60,
+            "perExtraSite": 10,
+            "urgency": [
+              {
+                "withinMin": 30,
+                "points": 15
+              },
+              {
+                "withinMin": 60,
+                "points": 10
+              },
+              {
+                "withinMin": 120,
+                "points": 5
+              }
+            ],
+            "taskPriorityPoints": {
+              "긴급": 10,
+              "보통": 0,
+              "낮음": 0
+            }
+          },
+          "items": [],
+          "held": [],
+          "watch": []
+        }
+      }
+    }
+  ]
+}

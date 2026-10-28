@@ -1,0 +1,124 @@
+{
+  "note": "검증용 가상 시나리오에서 같은 조건으로 세 방식을 비교한 결과입니다. 기존 코드 대비 기능검증이며 외부 제품 비교가 아닙니다.",
+  "methods": {
+    "baseline": "기존 정적 충돌 검사 findConflicts (예정값만)",
+    "noEvents": "연쇄위험 엔진 — 실제 상태이벤트 미반영 (예정값 + 연쇄 전파)",
+    "withEvents": "상태이벤트 → 편차 → 예상 종료 → 연쇄위험 (이번 고도화)"
+  },
+  "ruleVersion": "chain-risk/1.1.0",
+  "rows": [
+    {
+      "state": "S0",
+      "asOf": "2026-07-28T09:00",
+      "baseline": [
+        "D>E"
+      ],
+      "noEvents": [
+        "D>E"
+      ],
+      "withEvents": [
+        "D>E"
+      ],
+      "priority": [
+        "1. E현장 이동시간 부족 (25점)"
+      ]
+    },
+    {
+      "state": "S1",
+      "asOf": "2026-07-28T09:30",
+      "baseline": [
+        "D>E"
+      ],
+      "noEvents": [
+        "D>E"
+      ],
+      "withEvents": [
+        "A>B",
+        "B>C",
+        "D>E"
+      ],
+      "priority": [
+        "1. B현장 작업지연 위험 (75점)",
+        "2. E현장 이동시간 부족 (25점)"
+      ]
+    },
+    {
+      "state": "S2",
+      "asOf": "2026-07-28T09:35",
+      "baseline": [
+        "B>C",
+        "D>E"
+      ],
+      "noEvents": [
+        "B>C",
+        "D>E"
+      ],
+      "withEvents": [
+        "B>C",
+        "D>E"
+      ],
+      "priority": [
+        "1. C현장 일정 중복 (85점)",
+        "2. E현장 이동시간 부족 (25점)"
+      ]
+    },
+    {
+      "state": "S3",
+      "asOf": "2026-07-28T09:40",
+      "baseline": [
+        "D>E"
+      ],
+      "noEvents": [
+        "D>E"
+      ],
+      "withEvents": [
+        "D>E"
+      ],
+      "priority": [
+        "1. E현장 이동시간 부족 (25점)"
+      ]
+    }
+  ],
+  "abCases": [
+    {
+      "id": "1",
+      "label": "정상 — A현장 정시 시작",
+      "asOf": "2026-07-28T09:05",
+      "baseline": [],
+      "noEvents": [],
+      "withEvents": [],
+      "priority": []
+    },
+    {
+      "id": "2",
+      "label": "작업개시 지연 — A현장 09:25 시작",
+      "asOf": "2026-07-28T09:30",
+      "baseline": [],
+      "noEvents": [],
+      "withEvents": [
+        "A>B"
+      ],
+      "priority": [
+        "1. B현장 작업지연 위험 (65점)"
+      ]
+    },
+    {
+      "id": "3",
+      "label": "현장 보고로 수정 — 예상 종료 11:10",
+      "asOf": "2026-07-28T10:00",
+      "baseline": [],
+      "noEvents": [],
+      "withEvents": [],
+      "priority": []
+    },
+    {
+      "id": "4",
+      "label": "관리자 일정 조정 — B현장 12:10 시작",
+      "asOf": "2026-07-28T10:05",
+      "baseline": [],
+      "noEvents": [],
+      "withEvents": [],
+      "priority": []
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "note": "기존 코드(findConflicts) 대비 기능검증 결과입니다. 외부 상용 제품과의 비교가 아닙니다. 입력은 검증용 가상 시나리오입니다.",
-  "ruleVersion": "chain-risk/1.0.0",
+  "ruleVersion": "chain-risk/1.1.0",
   "asOf": "2026-07-28T10:40",
   "rows": [
     {

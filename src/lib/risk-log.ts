@@ -4,12 +4,21 @@
  * 현재 MVP는 브라우저 메모리 기반 데모라서 이 기록은 '데모 세션 내 기록'이다.
  * 서버 감사로그가 아니며, 새로고침하면 사라진다. 시각은 데모 기준시각(NOW)이다.
  */
-import { NOW } from "./company";
-import { chainRiskAll } from "./ops-calc";
+import { NOW, NOW_DATE } from "./company";
+import { chainRiskAll, opsPriority } from "./ops-calc";
 import { diffRisk, type LinkChange, type RiskDiff } from "./risk-engine";
-import type { ScheduleItem } from "./ops-types";
+import { diffPriority, type PriorityChange, type PriorityResult } from "./priority-engine";
+import type { ScheduleItem, Task } from "./ops-types";
 
-export type RiskEventKind = "예상 종료 입력" | "예상 종료 삭제" | "일정 시간 변경" | "담당자 변경" | "일정 상태 변경" | "일정 추가";
+export type RiskEventKind =
+  | "예상 종료 입력"
+  | "예상 종료 삭제"
+  | "작업개시 기록"
+  | "작업종료 반영"
+  | "일정 시간 변경"
+  | "담당자 변경"
+  | "일정 상태 변경"
+  | "일정 추가";
 
 export interface RiskEvent {
   kind: RiskEventKind;
@@ -47,7 +56,23 @@ export interface RiskLogEntry {
   after: RiskLinkSnapshot[];
   /** 예상 시작·종료가 바뀐 일정 (영향을 받은 후속 일정 포함) */
   affectedSites: RiskDiff["affectedSites"];
+  /** 관리자 대응 우선순위 — 변경 전후 (해당 일정 날짜 기준) */
+  priorityBefore: PrioritySnapshot[];
+  priorityAfter: PrioritySnapshot[];
+  priorityChanges: PriorityChange[];
 }
+
+export interface PrioritySnapshot {
+  rank: number;
+  key: string;
+  title: string;
+  grade: string;
+  score: number;
+  maxShortfall: number;
+}
+
+const snapPriority = (p: PriorityResult): PrioritySnapshot[] =>
+  p.items.map((i) => ({ rank: i.rank, key: i.key, title: i.title, grade: i.grade, score: i.score, maxShortfall: i.maxShortfall }));
 
 export const RISK_FIELDS: (keyof ScheduleItem)[] = [
   "start",
@@ -57,12 +82,19 @@ export const RISK_FIELDS: (keyof ScheduleItem)[] = [
   "status",
   "expectedEnd",
   "expectedEndSource",
+  "actualStart",
   "actualEnd",
   "travelMinutes",
 ];
 
 /** 변경 전후 일정 목록으로 판단 이력 한 건을 만든다 (순수 함수) */
-export function buildRiskLogEntry(seq: number, event: RiskEvent, before: ScheduleItem[], after: ScheduleItem[]): RiskLogEntry {
+export function buildRiskLogEntry(
+  seq: number,
+  event: RiskEvent,
+  before: ScheduleItem[],
+  after: ScheduleItem[],
+  tasks: Task[] = [],
+): RiskLogEntry {
   const rb = chainRiskAll(before);
   const ra = chainRiskAll(after);
   const diff = diffRisk(rb, ra);
@@ -79,6 +111,9 @@ export function buildRiskLogEntry(seq: number, event: RiskEvent, before: Schedul
         arrival: l.arrival,
         cause: l.cause,
       }));
+  const date = after.find((s) => s.id === event.scheduleId)?.date ?? before.find((s) => s.id === event.scheduleId)?.date ?? NOW_DATE;
+  const pb = opsPriority(before, tasks, date);
+  const pa = opsPriority(after, tasks, date);
   return {
     seq,
     demoAt: NOW,
@@ -89,5 +124,8 @@ export function buildRiskLogEntry(seq: number, event: RiskEvent, before: Schedul
     before: snap(rb),
     after: snap(ra),
     affectedSites: diff.affectedSites,
+    priorityBefore: snapPriority(pb),
+    priorityAfter: snapPriority(pa),
+    priorityChanges: diffPriority(pb, pa),
   };
 }

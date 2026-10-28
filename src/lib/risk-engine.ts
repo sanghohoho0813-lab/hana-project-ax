@@ -10,7 +10,7 @@
  * - 이 파일은 다른 모듈을 가져오지 않는다 (독립 테스트용).
  */
 
-export const RISK_RULE_VERSION = "chain-risk/1.0.0";
+export const RISK_RULE_VERSION = "chain-risk/1.1.0";
 
 /** 등급 기준 (분) */
 export const THRESHOLDS = {
@@ -31,6 +31,7 @@ export type ReportedEndSource = "현장 보고" | "관리자 입력";
 export type EndSource =
   | "실제 종료"
   | ReportedEndSource
+  | "작업개시 지연 추정"
   | "추정 규칙"
   | "연쇄 계산"
   | "예정";
@@ -48,6 +49,10 @@ export interface SiteInput {
   plannedEnd: string;
   status: SiteStatus;
   region?: string;
+  /** 실제 작업 시작 시각 HH:MM (작업 시작 기록이 있을 때만) */
+  actualStart?: string;
+  /** 실제 시작 기록의 출처 (예: 작업 시작 버튼, 현장 보고, 관리자 입력) */
+  actualStartSource?: string;
   /** 실제 종료 시각 (완료 보고) */
   actualEnd?: string;
   /** 예상 종료 시각 (현장 보고 또는 관리자 입력) */
@@ -61,8 +66,13 @@ export interface SiteInput {
 }
 
 export interface EvaluateOptions {
-  /** 기준시각 YYYY-MM-DDTHH:MM — '진행 중인데 예정 종료가 지난' 일정의 추정에만 쓴다 */
+  /** 기준시각 YYYY-MM-DDTHH:MM — '진행 중인데 예정 종료가 지난' 일정의 추정, '시작 기록 없음' 판단에만 쓴다 */
   asOf?: string;
+  /**
+   * 명시적 가정 — 늦게 시작해도 예정 작업시간이 그대로 걸린다고 본다 (R2-2).
+   * 기본값 false: 작업개시가 늦어도 종료 영향을 단정하지 않고 '예상 종료 미확정'으로 표시한다.
+   */
+  assumeDurationKept?: boolean;
 }
 
 /* ── 출력 ─────────────────────────────────────────── */
@@ -108,6 +118,12 @@ export interface ProjectedSite {
   /** 연쇄 영향을 반영한 예상 종료 */
   expectedEnd: string;
   endSource: EndSource;
+  /** 예상 종료를 정한 근거 문장 */
+  endBasis: string;
+  /** false 면 '예상 종료 미확정' — 확인된 편차가 있지만 종료 영향을 계산할 근거가 없다 */
+  endDetermined: boolean;
+  /** 실제 시작 기록 HH:MM (있을 때만) */
+  actualStart?: string;
   /** 예상 시작 − 예정 시작 (분) */
   startDelay: number;
   /** 예상 종료 − 예정 종료 (분) */
@@ -130,6 +146,8 @@ export interface RiskLink {
     plannedEnd: string;
     expectedEnd: string;
     endSource: EndSource;
+    endBasis: string;
+    endDetermined: boolean;
     /** 선행 현장 지연 (분) */
     delay: number;
   };
@@ -183,12 +201,22 @@ export const RISK_RULES = [
   {
     id: "R2",
     name: "종료시각 결정",
-    desc: "선행 현장의 종료시각은 실제 종료 > 예상 종료(현장 보고·관리자 입력) > 추정 규칙 > 예정 종료 순으로 쓰고, 출처를 함께 남긴다.",
+    desc: "선행 현장의 종료시각은 실제 종료 > 예상 종료(현장 보고·관리자 입력) > 추정 규칙(R2-1·R2-2 중 늦은 값) > 예정 종료 순으로 쓰고, 출처와 근거를 함께 남긴다.",
   },
   {
     id: "R2-1",
     name: "추정 규칙",
     desc: "진행 중인데 기준시각이 예정 종료를 지났고 종료·예상 보고가 없으면, 종료시각을 최소 기준시각으로 본다.",
+  },
+  {
+    id: "R2-2",
+    name: "작업개시 지연 추정",
+    desc: "실제 시작이 예정보다 늦고 '작업시간 유지' 가정을 명시한 경우에만, 예상 종료 = 실제 시작 + 예정 작업시간. 일찍 시작해도 종료를 앞당기지 않는다.",
+  },
+  {
+    id: "R2-3",
+    name: "예상 종료 미확정",
+    desc: "시작이 늦었는데 가정이 없거나, 예정 시작이 지났는데 시작 기록이 없으면 예상 종료를 확정하지 않는다. 예정 종료로 계산하되 실제 지연은 더 클 수 있음을 표시하고 종료 예상시각 확인을 권한다.",
   },
   { id: "R3", name: "예상 도착", desc: "예상 도착 = 선행 예상 종료 + 이동 필요시간." },
   {
@@ -275,6 +303,8 @@ interface Valid {
   /** R2 로 정한 자기 종료시각 (연쇄 전) */
   ownEnd: number;
   ownSource: EndSource;
+  ownBasis: string;
+  ownDetermined: boolean;
 }
 
 interface Breaker {
@@ -286,37 +316,91 @@ interface Breaker {
 
 const groupKey = (workerId: string, date: string) => `${workerId}|${date}`;
 
-/** 자기 종료시각 결정 (R2, R2-1) */
-function ownEndOf(s: SiteInput, ps: number, pe: number, asOf: { date: string; min: number } | null, issues: DataIssue[]) {
+export interface OwnEnd {
+  end: number;
+  source: EndSource;
+  basis: string;
+  determined: boolean;
+}
+
+/** 기준시각 문자열 → { 날짜, 분 } */
+export function parseAsOf(v?: string): { date: string; min: number } | null {
+  if (!v) return null;
+  const [d, t] = v.split("T");
+  const min = parseHHMM(t);
+  return isValidDate(d) && min !== null ? { date: d, min } : null;
+}
+
+/**
+ * 한 일정의 자기 종료시각 결정 (R2, R2-1, R2-2, R2-3) — 연쇄 전파 전 값.
+ * 작업상태 편차 분석(state-events.ts)도 이 함수를 그대로 써서 엔진과 결과가 갈라지지 않게 한다.
+ */
+export function resolveOwnEnd(
+  s: SiteInput,
+  ps: number,
+  pe: number,
+  asOf: { date: string; min: number } | null,
+  assume: boolean,
+  issues: DataIssue[] = [],
+): OwnEnd {
   if (s.status === "완료" && s.actualEnd !== undefined) {
     const a = parseHHMM(s.actualEnd);
-    if (a !== null && a > ps) return { end: a, source: "실제 종료" as EndSource };
+    if (a !== null && a > ps) return { end: a, source: "실제 종료", basis: `실제 종료 ${fmtHHMM(a)}`, determined: true };
     issues.push({ siteId: s.id, kind: "예상 종료 오류", detail: `실제 종료 '${s.actualEnd}'를 쓸 수 없어 예정 종료로 계산했습니다.` });
   }
   if (s.expectedEnd !== undefined && s.expectedEnd !== "") {
     const e = parseHHMM(s.expectedEnd);
-    if (e !== null && e > ps) return { end: e, source: (s.expectedEndSource ?? "관리자 입력") as EndSource };
+    const src = (s.expectedEndSource ?? "관리자 입력") as ReportedEndSource;
+    if (e !== null && e > ps) return { end: e, source: src, basis: `${src} 예상 종료 ${fmtHHMM(e)}`, determined: true };
     issues.push({
       siteId: s.id,
       kind: "예상 종료 오류",
       detail: `예상 종료 '${s.expectedEnd}'가 형식에 맞지 않거나 시작보다 빨라 사용하지 않았습니다.`,
     });
   }
-  if (s.status === "진행 중" && asOf && asOf.date === s.date && asOf.min > pe) {
-    return { end: asOf.min, source: "추정 규칙" as EndSource };
+  let as: number | null = null;
+  if (s.actualStart !== undefined && s.actualStart !== "") {
+    as = parseHHMM(s.actualStart);
+    if (as === null) issues.push({ siteId: s.id, kind: "시각 형식 오류", detail: `실제 시작 '${s.actualStart}'를 읽을 수 없어 시작 기록 없이 계산했습니다.` });
   }
-  return { end: pe, source: "예정" as EndSource };
+  const late = as !== null && as > ps ? as - ps : 0;
+  const cands: OwnEnd[] = [];
+  if (late > 0 && assume) {
+    cands.push({
+      end: as! + (pe - ps),
+      source: "작업개시 지연 추정",
+      basis: `실제 시작 ${fmtHHMM(as!)} (${late}분 늦음) + 예정 작업시간 ${pe - ps}분 — 가정: 늦게 시작해도 작업시간 유지`,
+      determined: true,
+    });
+  }
+  if (s.status === "진행 중" && asOf && asOf.date === s.date && asOf.min > pe) {
+    cands.push({ end: asOf.min, source: "추정 규칙", basis: `진행 중 · 기준시각 ${fmtHHMM(asOf.min)}까지 종료 보고 없음 → 최소 ${fmtHHMM(asOf.min)}`, determined: true });
+  }
+  if (cands.length > 0) return cands.reduce((m, c) => (c.end > m.end ? c : m));
+  if (late > 0) {
+    return {
+      end: pe,
+      source: "예정",
+      basis: `실제 시작 ${fmtHHMM(as!)}로 ${late}분 늦었으나 작업시간 가정이 없어 종료 영향을 계산하지 않음 → 예상 종료 미확정 (예정 종료 기준)`,
+      determined: false,
+    };
+  }
+  if (s.status === "예정" && as === null && asOf && asOf.date === s.date && asOf.min > ps) {
+    return {
+      end: pe,
+      source: "예정",
+      basis: `예정 시작 ${fmtHHMM(ps)}가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)`,
+      determined: false,
+    };
+  }
+  return { end: pe, source: "예정", basis: `예정 종료 ${fmtHHMM(pe)}`, determined: true };
 }
 
 export function evaluateChainRisk(inputs: SiteInput[], opts: EvaluateOptions = {}): RiskResult {
   const issues: DataIssue[] = [];
   const excluded: RiskResult["excluded"] = [];
-  const asOf = (() => {
-    if (!opts.asOf) return null;
-    const [d, t] = opts.asOf.split("T");
-    const min = parseHHMM(t);
-    return isValidDate(d) && min !== null ? { date: d, min } : null;
-  })();
+  const asOf = parseAsOf(opts.asOf);
+  const assume = opts.assumeDurationKept === true;
 
   // 1) 중복 제거 — 같은 id 는 처음 것만 쓴다
   const seen = new Set<string>();
@@ -340,7 +424,10 @@ export function evaluateChainRisk(inputs: SiteInput[], opts: EvaluateOptions = {
     breakers.set(k, [...(breakers.get(k) ?? []), { id: s.id, at: parseHHMM(s.plannedStart), why }]);
   };
 
-  for (const s of unique) {
+  for (const raw of unique) {
+    // 시작 기록이 있는데 상태가 '예정'이면 이미 시작한 것으로 본다
+    const s: SiteInput =
+      raw.status === "예정" && parseHHMM(raw.actualStart) !== null ? { ...raw, status: "진행 중" } : raw;
     if (s.status === "취소") {
       excluded.push({ id: s.id, reason: "취소" });
       addBreaker(s, "취소");
@@ -374,9 +461,12 @@ export function evaluateChainRisk(inputs: SiteInput[], opts: EvaluateOptions = {
       addBreaker(s, "데이터 오류");
       continue;
     }
-    const own = ownEndOf(s, ps, pe, asOf, issues);
+    const own = resolveOwnEnd(s, ps, pe, asOf, assume, issues);
     const k = groupKey(s.workerId, s.date);
-    groups.set(k, [...(groups.get(k) ?? []), { s, ps, pe, ownEnd: own.end, ownSource: own.source }]);
+    groups.set(k, [
+      ...(groups.get(k) ?? []),
+      { s, ps, pe, ownEnd: own.end, ownSource: own.source, ownBasis: own.basis, ownDetermined: own.determined },
+    ]);
   }
 
   const sites: ProjectedSite[] = [];
@@ -403,6 +493,7 @@ export function evaluateChainRisk(inputs: SiteInput[], opts: EvaluateOptions = {
       let expStart = cur.ps;
       let expEnd = cur.ownEnd;
       let endSource: EndSource = cur.ownSource;
+      let endBasis = cur.ownBasis;
       let rootId: string | undefined;
 
       if (i > 0) {
@@ -419,6 +510,7 @@ export function evaluateChainRisk(inputs: SiteInput[], opts: EvaluateOptions = {
           if (expStart + dur > expEnd) {
             expEnd = expStart + dur;
             endSource = "연쇄 계산";
+            endBasis = `선행 현장 지연으로 예상 시작 ${fmtHHMM(expStart)} + 예정 작업시간 ${dur}분`;
           }
         }
       }
@@ -437,6 +529,9 @@ export function evaluateChainRisk(inputs: SiteInput[], opts: EvaluateOptions = {
         expectedStart: fmtHHMM(expStart),
         expectedEnd: fmtHHMM(expEnd),
         endSource,
+        endBasis,
+        endDetermined: cur.ownDetermined,
+        actualStart: parseHHMM(s.actualStart) !== null ? s.actualStart : undefined,
         startDelay: expStart - cur.ps,
         endDelay: expEnd - cur.pe,
         delayRootId: expEnd > cur.pe || expStart > cur.ps ? rootId : undefined,
@@ -489,6 +584,8 @@ function buildLink(a: {
       plannedEnd: fmtHHMM(prevV.pe),
       expectedEnd: fmtHHMM(prevEndMin),
       endSource: prevP.endSource,
+      endBasis: prevP.endBasis,
+      endDetermined: prevP.endDetermined,
       delay: prevDelay,
     },
     next: { id: next.id, title: next.title, region: next.region, plannedStart: fmtHHMM(cur.ps), status: next.status },
@@ -565,6 +662,8 @@ function buildLink(a: {
 
   const rules = [...base.rules, "R3", "R4"];
   if (prevP.endSource === "추정 규칙") rules.push("R2-1");
+  if (prevP.endSource === "작업개시 지연 추정") rules.push("R2-2");
+  if (!prevP.endDetermined) rules.push("R2-3");
   if (prevP.endSource === "연쇄 계산" || shortfall > 0) rules.push("R5");
   if (overlap) rules.push("R6");
   rules.push("R9");
@@ -572,6 +671,7 @@ function buildLink(a: {
   const prevEndLabel = fmtHHMM(prevEndMin);
   const formula: string[] = [];
   formula.push(`${prevV.s.title} 예상 종료 ${prevEndLabel} (${prevP.endSource})`);
+  if (prevP.endSource !== "예정" || !prevP.endDetermined) formula.push(`근거: ${prevP.endBasis}`);
   if (prevDelay !== 0) formula.push(`선행 지연 = ${prevEndLabel} − 예정 종료 ${fmtHHMM(prevV.pe)} = ${prevDelay}분`);
   formula.push(`예상 도착 = ${prevEndLabel} + 이동 ${travel}분 = ${fmtHHMM(arrival)}`);
   formula.push(
@@ -580,7 +680,7 @@ function buildLink(a: {
   );
   if (overlap) formula.push(`예정 시간 겹침 = ${-plannedGap}분 (${fmtHHMM(cur.ps)} 시작 < ${fmtHHMM(prevV.pe)} 종료)`);
 
-  const reason =
+  const reasonCore =
     cause === "시간 중복"
       ? `두 일정의 예정 시간이 ${-plannedGap}분 겹칩니다. 같은 작업자가 같은 시간에 두 현장에 있을 수 없습니다.`
       : cause === "정상"
@@ -592,9 +692,13 @@ function buildLink(a: {
           : cause === "연쇄 지연"
             ? `앞선 현장의 지연이 ${prevV.s.title}의 시작과 종료를 늦추고, 그 영향으로 후속 현장 예정 시작 ${fmtHHMM(cur.ps)}보다 ${shortfall}분 늦게 도착합니다.`
             : `선행 현장의 종료 지연(${prevDelay}분)과 현장 간 이동시간(${travel}분)을 합산하면 후속 현장 예정 시작 ${fmtHHMM(cur.ps)}을 ${shortfall}분 초과합니다. 후속 현장은 아직 시작 전이지만 늦어질 가능성이 있습니다.`;
+  const reason = prevP.endDetermined
+    ? reasonCore
+    : `${reasonCore} 단, 선행 현장 예상 종료가 확정되지 않아 예정 종료 기준으로 계산했습니다 — 실제 지연은 더 클 수 있습니다.`;
 
   const actions: string[] = [];
   if (prevP.endSource === "추정 규칙" && grade !== "없음") actions.push("현장에 종료 예상시각 보고 요청");
+  if (!prevP.endDetermined) actions.push("선행 현장 종료 예상시각 확인");
   if (cause === "시간 중복") actions.push("중복 배정 확인", "담당자 또는 시간 조정 검토");
   else if (grade === "주의") actions.push("선행 현장 종료 예상시각 확인");
   else if (gradeRank(grade) >= GRADE_RANK["중간"]) {
@@ -613,7 +717,7 @@ function buildLink(a: {
     cause,
     formula,
     reason,
-    actions,
+    actions: [...new Set(actions)],
     rules,
   };
 }

@@ -1,6 +1,6 @@
 {
   "note": "검증용 가상 시나리오의 입력값과 엔진 판단 결과입니다. 실제 운영데이터가 아닙니다.",
-  "ruleVersion": "chain-risk/1.0.0",
+  "ruleVersion": "chain-risk/1.1.0",
   "rules": [
     {
       "id": "R1",
@@ -10,12 +10,22 @@
     {
       "id": "R2",
       "name": "종료시각 결정",
-      "desc": "선행 현장의 종료시각은 실제 종료 > 예상 종료(현장 보고·관리자 입력) > 추정 규칙 > 예정 종료 순으로 쓰고, 출처를 함께 남긴다."
+      "desc": "선행 현장의 종료시각은 실제 종료 > 예상 종료(현장 보고·관리자 입력) > 추정 규칙(R2-1·R2-2 중 늦은 값) > 예정 종료 순으로 쓰고, 출처와 근거를 함께 남긴다."
     },
     {
       "id": "R2-1",
       "name": "추정 규칙",
       "desc": "진행 중인데 기준시각이 예정 종료를 지났고 종료·예상 보고가 없으면, 종료시각을 최소 기준시각으로 본다."
+    },
+    {
+      "id": "R2-2",
+      "name": "작업개시 지연 추정",
+      "desc": "실제 시작이 예정보다 늦고 '작업시간 유지' 가정을 명시한 경우에만, 예상 종료 = 실제 시작 + 예정 작업시간. 일찍 시작해도 종료를 앞당기지 않는다."
+    },
+    {
+      "id": "R2-3",
+      "name": "예상 종료 미확정",
+      "desc": "시작이 늦었는데 가정이 없거나, 예정 시작이 지났는데 시작 기록이 없으면 예상 종료를 확정하지 않는다. 예정 종료로 계산하되 실제 지연은 더 클 수 있음을 표시하고 종료 예상시각 확인을 권한다."
     },
     {
       "id": "R3",
@@ -102,7 +112,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -117,6 +127,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 11:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           },
@@ -132,6 +144,8 @@
             "expectedStart": "11:40",
             "expectedEnd": "12:30",
             "endSource": "예정",
+            "endBasis": "예정 종료 12:30",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -149,6 +163,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:00",
               "endSource": "예정",
+              "endBasis": "예정 종료 11:00",
+              "endDetermined": true,
               "delay": 0
             },
             "next": {
@@ -235,7 +251,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -250,6 +266,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -266,6 +284,8 @@
             "expectedStart": "11:55",
             "expectedEnd": "12:45",
             "endSource": "연쇄 계산",
+            "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+            "endDetermined": true,
             "startDelay": 15,
             "endDelay": 15,
             "delayRootId": "A"
@@ -284,6 +304,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:25",
               "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:25",
+              "endDetermined": true,
               "delay": 25
             },
             "next": {
@@ -310,6 +332,7 @@
             ],
             "formula": [
               "A현장 예상 종료 11:25 (현장 보고)",
+              "근거: 현장 보고 예상 종료 11:25",
               "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
               "예상 도착 = 11:25 + 이동 30분 = 11:55",
               "여유 = B현장 예정 시작 11:40 − 예상 도착 11:55 = -15분 → 15분 부족"
@@ -380,7 +403,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -395,6 +418,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -411,6 +436,8 @@
             "expectedStart": "12:10",
             "expectedEnd": "13:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 13:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -428,6 +455,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:25",
               "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:25",
+              "endDetermined": true,
               "delay": 25
             },
             "next": {
@@ -452,6 +481,7 @@
             "downstream": [],
             "formula": [
               "A현장 예상 종료 11:25 (현장 보고)",
+              "근거: 현장 보고 예상 종료 11:25",
               "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
               "예상 도착 = 11:25 + 이동 30분 = 11:55",
               "여유 = B현장 예정 시작 12:10 − 예상 도착 11:55 = 15분"
@@ -533,7 +563,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -548,6 +578,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -564,6 +596,8 @@
             "expectedStart": "11:55",
             "expectedEnd": "12:45",
             "endSource": "연쇄 계산",
+            "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+            "endDetermined": true,
             "startDelay": 15,
             "endDelay": 15,
             "delayRootId": "A"
@@ -580,6 +614,8 @@
             "expectedStart": "13:05",
             "expectedEnd": "14:10",
             "endSource": "연쇄 계산",
+            "endBasis": "선행 현장 지연으로 예상 시작 13:05 + 예정 작업시간 65분",
+            "endDetermined": true,
             "startDelay": 10,
             "endDelay": 10,
             "delayRootId": "A"
@@ -598,6 +634,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:25",
               "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:25",
+              "endDetermined": true,
               "delay": 25
             },
             "next": {
@@ -625,6 +663,7 @@
             ],
             "formula": [
               "A현장 예상 종료 11:25 (현장 보고)",
+              "근거: 현장 보고 예상 종료 11:25",
               "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
               "예상 도착 = 11:25 + 이동 30분 = 11:55",
               "여유 = B현장 예정 시작 11:40 − 예상 도착 11:55 = -15분 → 15분 부족"
@@ -658,6 +697,8 @@
               "plannedEnd": "12:30",
               "expectedEnd": "12:45",
               "endSource": "연쇄 계산",
+              "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+              "endDetermined": true,
               "delay": 15
             },
             "next": {
@@ -684,6 +725,7 @@
             ],
             "formula": [
               "B현장 예상 종료 12:45 (연쇄 계산)",
+              "근거: 선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
               "선행 지연 = 12:45 − 예정 종료 12:30 = 15분",
               "예상 도착 = 12:45 + 이동 20분 = 13:05",
               "여유 = C현장 예정 시작 12:55 − 예상 도착 13:05 = -10분 → 10분 부족"
@@ -747,7 +789,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -762,6 +804,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -778,6 +822,8 @@
             "expectedStart": "11:40",
             "expectedEnd": "12:30",
             "endSource": "예정",
+            "endBasis": "예정 종료 12:30",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -846,7 +892,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -861,6 +907,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -877,6 +925,8 @@
             "expectedStart": "12:55",
             "expectedEnd": "14:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 14:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -894,6 +944,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:25",
               "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:25",
+              "endDetermined": true,
               "delay": 25
             },
             "next": {
@@ -988,7 +1040,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -1003,6 +1055,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -1019,6 +1073,8 @@
             "expectedStart": "11:40",
             "expectedEnd": "12:30",
             "endSource": "예정",
+            "endBasis": "예정 종료 12:30",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -1036,6 +1092,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:25",
               "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:25",
+              "endDetermined": true,
               "delay": 25
             },
             "next": {
@@ -1138,7 +1196,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -1153,6 +1211,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 11:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           },
@@ -1168,6 +1228,8 @@
             "expectedStart": "12:55",
             "expectedEnd": "14:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 14:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -1185,6 +1247,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:00",
               "endSource": "예정",
+              "endBasis": "예정 종료 11:00",
+              "endDetermined": true,
               "delay": 0
             },
             "next": {
@@ -1293,7 +1357,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -1308,6 +1372,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 11:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           },
@@ -1323,6 +1389,8 @@
             "expectedStart": "12:55",
             "expectedEnd": "14:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 14:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -1340,6 +1408,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:00",
               "endSource": "예정",
+              "endBasis": "예정 종료 11:00",
+              "endDetermined": true,
               "delay": 0
             },
             "next": {
@@ -1436,7 +1506,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -1451,6 +1521,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:00",
             "endSource": "예정",
+            "endBasis": "예정 종료 11:00",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 0
           }
@@ -1532,7 +1604,7 @@
         }
       ],
       "result": {
-        "ruleVersion": "chain-risk/1.0.0",
+        "ruleVersion": "chain-risk/1.1.0",
         "asOf": "2026-07-28T10:40",
         "sites": [
           {
@@ -1547,6 +1619,8 @@
             "expectedStart": "09:00",
             "expectedEnd": "11:25",
             "endSource": "현장 보고",
+            "endBasis": "현장 보고 예상 종료 11:25",
+            "endDetermined": true,
             "startDelay": 0,
             "endDelay": 25,
             "delayRootId": "A"
@@ -1563,6 +1637,8 @@
             "expectedStart": "11:55",
             "expectedEnd": "12:45",
             "endSource": "연쇄 계산",
+            "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 50분",
+            "endDetermined": true,
             "startDelay": 15,
             "endDelay": 15,
             "delayRootId": "A"
@@ -1581,6 +1657,8 @@
               "plannedEnd": "11:00",
               "expectedEnd": "11:25",
               "endSource": "현장 보고",
+              "endBasis": "현장 보고 예상 종료 11:25",
+              "endDetermined": true,
               "delay": 25
             },
             "next": {
@@ -1607,6 +1685,7 @@
             ],
             "formula": [
               "A현장 예상 종료 11:25 (현장 보고)",
+              "근거: 현장 보고 예상 종료 11:25",
               "선행 지연 = 11:25 − 예정 종료 11:00 = 25분",
               "예상 도착 = 11:25 + 이동 30분 = 11:55",
               "여유 = B현장 예정 시작 11:40 − 예상 도착 11:55 = -15분 → 15분 부족"

@@ -17,7 +17,7 @@ import {
 import { useApp } from "@/lib/store";
 import { NOW_LABEL } from "@/lib/company";
 import { fullName } from "@/lib/team";
-import { chainRisk, chainRiskAll } from "@/lib/ops-calc";
+import { chainRisk, chainRiskAll, opsPipeline, opsPriority } from "@/lib/ops-calc";
 import {
   RISK_RULE_VERSION,
   RISK_RULES,
@@ -27,6 +27,7 @@ import {
 } from "@/lib/risk-engine";
 import type { ScheduleItem } from "@/lib/ops-types";
 import { Badge, GhostButton, Modal, PrimaryButton, Segment, inputClass, type Tone } from "@/components/ui";
+import { PriorityAndDeviation } from "@/components/OpsFlowPanels";
 
 /* ── 공통 ─────────────────────────────────────────── */
 
@@ -205,10 +206,12 @@ export function RiskLinkCard({
 /* ── 일정 화면용: 오늘 연쇄위험 판단 ────────────────── */
 
 export function ChainRiskPanel({ list }: { list: ScheduleItem[] }) {
-  const { permission, schedules } = useApp();
+  const { permission, schedules, tasks, reports } = useApp();
   const [estimate, setEstimate] = useState<ScheduleItem | null>(null);
   const [showOk, setShowOk] = useState(false);
   const r = chainRisk(list);
+  const flow = opsPipeline(list, tasks, reports);
+  const priority = opsPriority(list, tasks);
   const titleOf = (id: string) => schedules.find((s) => s.id === id)?.title ?? id;
 
   const main = r.links.filter((l) => l.status === "판단 보류" || (l.status === "판정" && gradeRank(l.grade) >= 1));
@@ -219,17 +222,30 @@ export function ChainRiskPanel({ list }: { list: ScheduleItem[] }) {
     <section data-tour="chainrisk" className="space-y-3">
       <div className="flex flex-col gap-1">
         <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[25.5px] font-bold">
-          <Route size={26} className="text-primary" /> 연쇄위험 판단 근거
+          <Route size={26} className="text-primary" /> 위험 판단과 대응 우선순위
           <span className="text-[19px] font-semibold text-ink-3">
             위험 {risky}건 · 연결 {r.links.length}건 확인
           </span>
         </h3>
-        <p className="text-[16.5px] text-ink-3">규칙 기반 판단 (AI 예측 아님) · 기준 {NOW_LABEL} · {RISK_RULE_VERSION}</p>
+        <p className="text-[16.5px] text-ink-3">
+          규칙 기반 판단 (AI 예측 아님) · 데모 기준시각 {NOW_LABEL} · {RISK_RULE_VERSION} · {flow.stateVersion}
+        </p>
       </div>
       <p className="text-[18.5px] leading-relaxed text-ink-2">
-        같은 직원의 앞뒤 일정을 이어서, 선행 현장의 예상 종료와 이동시간으로 후속 현장 도착을 미리 계산합니다. 진행 중인 현장의 예상 종료를 입력하면 바로 다시
-        판단합니다.
+        실제 작업 기록(확인·시작·보고)을 예정과 비교하고, 선행 현장의 예상 종료와 이동시간으로 후속 현장 도착을 미리 계산해, 무엇부터 확인할지 순서를 정합니다. 시작
+        시각이나 예상 종료를 입력하거나 일정을 조정하면 바로 다시 판단합니다.
       </p>
+
+      <PriorityAndDeviation
+        list={list}
+        deviations={flow.deviations}
+        priority={priority}
+        onEstimate={permission.assignTask ? (id) => setEstimate(schedules.find((s) => s.id === id) ?? null) : undefined}
+      />
+
+      <h4 className="flex items-center gap-2 pt-1 text-[22px] font-bold">
+        <Calculator size={23} className="text-primary" /> 연결별 판단 근거
+      </h4>
 
       {main.length === 0 ? (
         <p className="card px-5 py-5 text-[19px] text-ink-3">주의가 필요한 연결이 없습니다.</p>
@@ -458,9 +474,22 @@ export function RiskLogPanel() {
                     })}
                   </ul>
                 )}
+                {e.priorityChanges.length > 0 && (
+                  <div className="mt-1.5 rounded-xl bg-[#f7f8fa] px-3 py-2">
+                    <p className="text-[16px] font-bold text-ink-2">우선순위 변화</p>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {e.priorityChanges.map((c) => (
+                        <li key={c.key} className="text-[16.5px] text-ink-2">
+                          <Badge tone={c.kind === "신규" || c.kind === "상승" ? "danger" : c.kind === "해소" ? "success" : "neutral"}>{c.kind}</Badge>{" "}
+                          {c.title}: {c.before ? `${c.before}순위(${c.beforeScore}점)` : "목록 없음"} → {c.after ? `${c.after}순위(${c.afterScore}점)` : "목록에서 빠짐"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {e.affectedSites.length > 0 && (
                   <p className="mt-1 text-[16.5px] text-ink-3">
-                    예상 시간이 바뀐 일정:{" "}
+                    영향받은 일정(예상 시간 변경):{" "}
                     {e.affectedSites
                       .map((x) => `${schedules.find((s) => s.id === x.id)?.title ?? x.id} ${x.before ? `${x.before.start}~${x.before.end}` : "-"} → ${x.after ? `${x.after.start}~${x.after.end}` : "-"}`)
                       .join(" · ")}

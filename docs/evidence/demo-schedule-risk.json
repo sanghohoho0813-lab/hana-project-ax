@@ -8,7 +8,7 @@
     }
   ],
   "engine": {
-    "ruleVersion": "chain-risk/1.0.0",
+    "ruleVersion": "chain-risk/1.1.0",
     "asOf": "2026-07-28T10:40",
     "sites": [
       {
@@ -23,6 +23,8 @@
         "expectedStart": "14:00",
         "expectedEnd": "15:00",
         "endSource": "예정",
+        "endBasis": "예정 종료 15:00",
+        "endDetermined": true,
         "startDelay": 0,
         "endDelay": 0
       },
@@ -38,6 +40,8 @@
         "expectedStart": "10:00",
         "expectedEnd": "11:00",
         "endSource": "예정",
+        "endBasis": "예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
+        "endDetermined": false,
         "startDelay": 0,
         "endDelay": 0
       },
@@ -53,6 +57,8 @@
         "expectedStart": "11:55",
         "expectedEnd": "13:25",
         "endSource": "연쇄 계산",
+        "endBasis": "선행 현장 지연으로 예상 시작 11:55 + 예정 작업시간 90분",
+        "endDetermined": true,
         "startDelay": 25,
         "endDelay": 25,
         "delayRootId": "s1"
@@ -69,6 +75,8 @@
         "expectedStart": "09:00",
         "expectedEnd": "12:00",
         "endSource": "예정",
+        "endBasis": "예정 종료 12:00",
+        "endDetermined": true,
         "startDelay": 0,
         "endDelay": 0
       },
@@ -84,6 +92,8 @@
         "expectedStart": "15:00",
         "expectedEnd": "16:30",
         "endSource": "예정",
+        "endBasis": "예정 종료 16:30",
+        "endDetermined": true,
         "startDelay": 0,
         "endDelay": 0
       },
@@ -99,6 +109,8 @@
         "expectedStart": "09:30",
         "expectedEnd": "10:40",
         "endSource": "추정 규칙",
+        "endBasis": "진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
+        "endDetermined": true,
         "startDelay": 0,
         "endDelay": 10,
         "delayRootId": "s5"
@@ -115,6 +127,8 @@
         "expectedStart": "13:30",
         "expectedEnd": "15:00",
         "endSource": "예정",
+        "endBasis": "예정 종료 15:00",
+        "endDetermined": true,
         "startDelay": 0,
         "endDelay": 0
       }
@@ -132,6 +146,8 @@
           "plannedEnd": "11:00",
           "expectedEnd": "11:00",
           "endSource": "예정",
+          "endBasis": "예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
+          "endDetermined": false,
           "delay": 0
         },
         "next": {
@@ -158,11 +174,13 @@
         ],
         "formula": [
           "서천 장항산단 통신상태 점검 예상 종료 11:00 (예정)",
+          "근거: 예정 시작 10:00가 지났으나 작업 시작 기록 없음 → 예상 종료 미확정 (예정 종료 기준)",
           "예상 도착 = 11:00 + 이동 55분 = 11:55",
           "여유 = 보령 공공시설 준공사진 촬영 예정 시작 11:30 − 예상 도착 11:55 = -25분 → 25분 부족"
         ],
-        "reason": "예정 종료 11:00에 이동 55분을 더하면 예정대로 진행해도 후속 현장 시작 11:30보다 늦습니다 (25분 부족).",
+        "reason": "예정 종료 11:00에 이동 55분을 더하면 예정대로 진행해도 후속 현장 시작 11:30보다 늦습니다 (25분 부족). 단, 선행 현장 예상 종료가 확정되지 않아 예정 종료 기준으로 계산했습니다 — 실제 지연은 더 클 수 있습니다.",
         "actions": [
+          "선행 현장 종료 예상시각 확인",
           "일정 시간 또는 이동시간 재확인",
           "후속 현장 일정 조정 검토",
           "대체 작업자 가능 여부 확인",
@@ -173,6 +191,7 @@
           "R2",
           "R3",
           "R4",
+          "R2-3",
           "R5",
           "R9"
         ]
@@ -189,6 +208,8 @@
           "plannedEnd": "12:00",
           "expectedEnd": "12:00",
           "endSource": "예정",
+          "endBasis": "예정 종료 12:00",
+          "endDetermined": true,
           "delay": 0
         },
         "next": {
@@ -238,6 +259,8 @@
           "plannedEnd": "10:30",
           "expectedEnd": "10:40",
           "endSource": "추정 규칙",
+          "endBasis": "진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
+          "endDetermined": true,
           "delay": 10
         },
         "next": {
@@ -262,6 +285,7 @@
         "downstream": [],
         "formula": [
           "서천 자재 입고 입회 예상 종료 10:40 (추정 규칙)",
+          "근거: 진행 중 · 기준시각 10:40까지 종료 보고 없음 → 최소 10:40",
           "선행 지연 = 10:40 − 예정 종료 10:30 = 10분",
           "예상 도착 = 10:40 + 이동 80분 = 12:00",
           "여유 = 익산 물류창고 사양 협의 예정 시작 13:30 − 예상 도착 12:00 = 90분"
