@@ -11,7 +11,10 @@ npm install
 npm run dev      # 개발 서버 (http://localhost:3000)
 npm run build    # 프로덕션 빌드
 npm run start    # 프로덕션 서버
+npm test         # 연쇄위험 판단엔진 자동 테스트 (vitest)
 ```
+
+연쇄위험 판단엔진 기술검증 자료: `docs/TECHNICAL_EVIDENCE.md`, `docs/RISK_ENGINE_TEST_REPORT.md`, `docs/PATENT_IMPLEMENTATION_MAPPING.md`
 
 로그인·백엔드 없이 로컬 샘플 데이터로 바로 실행됩니다. (데모 기준일: 2026년 7월)
 
