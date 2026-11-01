@@ -1,0 +1,862 @@
+{
+ "version": "trial-answer-key-computed/1.0.0",
+ "by": "trial/tools/answer_key.py (독립 구현)",
+ "scenarios": {
+  "R1": {
+   "links": [
+    {
+     "key": "R1-1>R1-2",
+     "arrival": "10:50",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "R1-2>R1-3",
+     "arrival": "12:40",
+     "slack": 20,
+     "grade": "없음"
+    }
+   ],
+   "affected": {
+    "R1-2": 10
+   },
+   "after": {
+    "links": [
+     {
+      "key": "R1-1>R1-2",
+      "arrival": "10:50",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "R1-2>R1-3",
+      "arrival": "12:45",
+      "slack": 15,
+      "grade": "없음"
+     }
+    ],
+    "affected": {},
+    "resolved": [
+     "R1-1>R1-2"
+    ],
+    "new": [],
+    "remaining": []
+   }
+  },
+  "R2": {
+   "links": [
+    {
+     "key": "R2-1>R2-2",
+     "arrival": "11:50",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "R2-2>R2-3",
+     "arrival": "13:20",
+     "slack": 10,
+     "grade": "없음"
+    }
+   ],
+   "affected": {
+    "R2-2": 10
+   },
+   "after": {
+    "links": [
+     {
+      "key": "R2-1>R2-2",
+      "arrival": "11:50",
+      "slack": 10,
+      "grade": "없음"
+     },
+     {
+      "key": "R2-2>R2-3",
+      "arrival": "13:30",
+      "slack": 0,
+      "grade": "주의"
+     }
+    ],
+    "affected": {},
+    "resolved": [
+     "R2-1>R2-2"
+    ],
+    "new": [],
+    "remaining": []
+   }
+  },
+  "A1": {
+   "links": [
+    {
+     "key": "A1-1>A1-2",
+     "arrival": "12:15",
+     "slack": -15,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "A1-2>A1-3",
+     "arrival": "14:15",
+     "slack": 15,
+     "grade": "없음"
+    },
+    {
+     "key": "A1-4>A1-5",
+     "arrival": "11:55",
+     "slack": 5,
+     "grade": "주의"
+    },
+    {
+     "key": "A1-5>A1-6",
+     "arrival": "13:20",
+     "slack": 10,
+     "grade": "없음"
+    }
+   ],
+   "affected": {
+    "A1-2": 15
+   },
+   "after": {
+    "links": [
+     {
+      "key": "A1-1>A1-2",
+      "arrival": "12:15",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "A1-2>A1-3",
+      "arrival": "14:20",
+      "slack": 10,
+      "grade": "없음"
+     },
+     {
+      "key": "A1-4>A1-5",
+      "arrival": "11:55",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "A1-5>A1-6",
+      "arrival": "13:20",
+      "slack": 10,
+      "grade": "없음"
+     }
+    ],
+    "affected": {},
+    "resolved": [
+     "A1-1>A1-2"
+    ],
+    "new": [],
+    "remaining": []
+   }
+  },
+  "A2": {
+   "links": [
+    {
+     "key": "A2-1>A2-2",
+     "arrival": "11:25",
+     "slack": -15,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "A2-2>A2-3",
+     "arrival": "13:05",
+     "slack": -5,
+     "grade": "중간",
+     "cause": "연쇄 지연",
+     "planOnly": false
+    },
+    {
+     "key": "A2-4>A2-5",
+     "arrival": "11:30",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "이동시간 부족",
+     "planOnly": true
+    },
+    {
+     "key": "A2-5>A2-6",
+     "arrival": "13:05",
+     "slack": 25,
+     "grade": "없음"
+    }
+   ],
+   "affected": {
+    "A2-2": 15,
+    "A2-3": 5,
+    "A2-5": 10
+   },
+   "after": {
+    "links": [
+     {
+      "key": "A2-1>A2-2",
+      "arrival": "11:25",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "A2-2>A2-3",
+      "arrival": "13:10",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     },
+     {
+      "key": "A2-4>A2-5",
+      "arrival": "11:30",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     },
+     {
+      "key": "A2-5>A2-6",
+      "arrival": "13:05",
+      "slack": 25,
+      "grade": "없음"
+     }
+    ],
+    "affected": {
+     "A2-3": 10,
+     "A2-5": 10
+    },
+    "resolved": [
+     "A2-1>A2-2"
+    ],
+    "new": [],
+    "remaining": [
+     "A2-2>A2-3",
+     "A2-4>A2-5"
+    ]
+   }
+  },
+  "A3": {
+   "links": [
+    {
+     "key": "A3-1>A3-2",
+     "arrival": "11:35",
+     "slack": 25,
+     "grade": "없음"
+    },
+    {
+     "key": "A3-2>A3-3",
+     "arrival": "13:20",
+     "slack": 10,
+     "grade": "없음"
+    },
+    {
+     "key": "A3-4>A3-5",
+     "arrival": "12:00",
+     "slack": 60,
+     "grade": "없음"
+    },
+    {
+     "key": "A3-5>A3-6",
+     "arrival": "14:45",
+     "slack": -45,
+     "grade": "매우 높음",
+     "cause": "시간 중복",
+     "planOnly": true
+    }
+   ],
+   "affected": {
+    "A3-6": 45
+   },
+   "after": {
+    "links": [
+     {
+      "key": "A3-1>A3-2",
+      "arrival": "11:35",
+      "slack": 25,
+      "grade": "없음"
+     },
+     {
+      "key": "A3-2>A3-3",
+      "arrival": "13:20",
+      "slack": 10,
+      "grade": "없음"
+     },
+     {
+      "key": "A3-4>A3-5",
+      "arrival": "12:00",
+      "slack": 30,
+      "grade": "없음"
+     },
+     {
+      "key": "A3-5>A3-6",
+      "arrival": "14:15",
+      "slack": -15,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     }
+    ],
+    "affected": {
+     "A3-6": 15
+    },
+    "resolved": [],
+    "new": [],
+    "remaining": [
+     "A3-5>A3-6"
+    ]
+   }
+  },
+  "A4": {
+   "links": [
+    {
+     "key": "A4-1>A4-2",
+     "arrival": "12:40",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "A4-2>A4-3",
+     "arrival": "14:40",
+     "slack": 0,
+     "grade": "주의"
+    },
+    {
+     "key": "A4-4>A4-5",
+     "arrival": null,
+     "slack": null,
+     "grade": "해당 없음"
+    },
+    {
+     "key": "A4-5>A4-6",
+     "arrival": "12:40",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    }
+   ],
+   "affected": {
+    "A4-2": 10,
+    "A4-6": 10
+   },
+   "after": {
+    "links": [
+     {
+      "key": "A4-1>A4-2",
+      "arrival": "12:40",
+      "slack": 10,
+      "grade": "없음"
+     },
+     {
+      "key": "A4-2>A4-3",
+      "arrival": "14:50",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     },
+     {
+      "key": "A4-4>A4-5",
+      "arrival": null,
+      "slack": null,
+      "grade": "해당 없음"
+     },
+     {
+      "key": "A4-5>A4-6",
+      "arrival": "12:40",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "선행 현장 지연",
+      "planOnly": false
+     }
+    ],
+    "affected": {
+     "A4-3": 10,
+     "A4-6": 10
+    },
+    "resolved": [
+     "A4-1>A4-2"
+    ],
+    "new": [
+     "A4-2>A4-3"
+    ],
+    "remaining": [
+     "A4-5>A4-6"
+    ]
+   }
+  },
+  "A5": {
+   "links": [
+    {
+     "key": "A5-1>A5-2",
+     "arrival": "11:00",
+     "slack": -15,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "A5-2>A5-3",
+     "arrival": "13:00",
+     "slack": 0,
+     "grade": "주의"
+    },
+    {
+     "key": "A5-4>A5-5",
+     "arrival": "12:50",
+     "slack": -30,
+     "grade": "매우 높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "A5-5>A5-6",
+     "arrival": "14:25",
+     "slack": -5,
+     "grade": "중간",
+     "cause": "연쇄 지연",
+     "planOnly": false
+    }
+   ],
+   "affected": {
+    "A5-2": 15,
+    "A5-5": 30,
+    "A5-6": 5
+   },
+   "after": {
+    "links": [
+     {
+      "key": "A5-1>A5-2",
+      "arrival": "11:00",
+      "slack": -15,
+      "grade": "높음",
+      "cause": "선행 현장 지연",
+      "planOnly": false
+     },
+     {
+      "key": "A5-2>A5-3",
+      "arrival": "13:00",
+      "slack": 0,
+      "grade": "주의"
+     },
+     {
+      "key": "A5-4>A5-5",
+      "arrival": "12:50",
+      "slack": 0,
+      "grade": "주의"
+     },
+     {
+      "key": "A5-5>A5-6",
+      "arrival": "14:25",
+      "slack": -5,
+      "grade": "중간",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     }
+    ],
+    "affected": {
+     "A5-2": 15,
+     "A5-6": 5
+    },
+    "resolved": [
+     "A5-4>A5-5"
+    ],
+    "new": [],
+    "remaining": [
+     "A5-1>A5-2",
+     "A5-5>A5-6"
+    ]
+   }
+  },
+  "B1": {
+   "links": [
+    {
+     "key": "B1-1>B1-2",
+     "arrival": "12:35",
+     "slack": 5,
+     "grade": "주의"
+    },
+    {
+     "key": "B1-2>B1-3",
+     "arrival": "14:00",
+     "slack": 10,
+     "grade": "없음"
+    },
+    {
+     "key": "B1-4>B1-5",
+     "arrival": "13:00",
+     "slack": -20,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B1-5>B1-6",
+     "arrival": "15:00",
+     "slack": 10,
+     "grade": "없음"
+    }
+   ],
+   "affected": {
+    "B1-5": 20
+   },
+   "after": {
+    "links": [
+     {
+      "key": "B1-1>B1-2",
+      "arrival": "12:35",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "B1-2>B1-3",
+      "arrival": "14:00",
+      "slack": 10,
+      "grade": "없음"
+     },
+     {
+      "key": "B1-4>B1-5",
+      "arrival": "13:00",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "B1-5>B1-6",
+      "arrival": "15:05",
+      "slack": 5,
+      "grade": "주의"
+     }
+    ],
+    "affected": {},
+    "resolved": [
+     "B1-4>B1-5"
+    ],
+    "new": [],
+    "remaining": []
+   }
+  },
+  "B2": {
+   "links": [
+    {
+     "key": "B2-1>B2-2",
+     "arrival": "12:15",
+     "slack": -15,
+     "grade": "높음",
+     "cause": "이동시간 부족",
+     "planOnly": true
+    },
+    {
+     "key": "B2-2>B2-3",
+     "arrival": "13:50",
+     "slack": 20,
+     "grade": "없음"
+    },
+    {
+     "key": "B2-4>B2-5",
+     "arrival": "12:10",
+     "slack": -20,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B2-5>B2-6",
+     "arrival": "13:45",
+     "slack": -5,
+     "grade": "중간",
+     "cause": "연쇄 지연",
+     "planOnly": false
+    }
+   ],
+   "affected": {
+    "B2-2": 15,
+    "B2-5": 20,
+    "B2-6": 5
+   },
+   "after": {
+    "links": [
+     {
+      "key": "B2-1>B2-2",
+      "arrival": "12:15",
+      "slack": -15,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     },
+     {
+      "key": "B2-2>B2-3",
+      "arrival": "13:50",
+      "slack": 20,
+      "grade": "없음"
+     },
+     {
+      "key": "B2-4>B2-5",
+      "arrival": "12:10",
+      "slack": 5,
+      "grade": "주의"
+     },
+     {
+      "key": "B2-5>B2-6",
+      "arrival": "13:50",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     }
+    ],
+    "affected": {
+     "B2-2": 15,
+     "B2-6": 10
+    },
+    "resolved": [
+     "B2-4>B2-5"
+    ],
+    "new": [],
+    "remaining": [
+     "B2-1>B2-2",
+     "B2-5>B2-6"
+    ]
+   }
+  },
+  "B3": {
+   "links": [
+    {
+     "key": "B3-1>B3-2",
+     "arrival": "12:40",
+     "slack": 60,
+     "grade": "없음"
+    },
+    {
+     "key": "B3-2>B3-3",
+     "arrival": "15:30",
+     "slack": -60,
+     "grade": "매우 높음",
+     "cause": "시간 중복",
+     "planOnly": true
+    },
+    {
+     "key": "B3-4>B3-5",
+     "arrival": "12:15",
+     "slack": 25,
+     "grade": "없음"
+    },
+    {
+     "key": "B3-5>B3-6",
+     "arrival": "14:00",
+     "slack": 10,
+     "grade": "없음"
+    }
+   ],
+   "affected": {
+    "B3-3": 60
+   },
+   "after": {
+    "links": [
+     {
+      "key": "B3-1>B3-2",
+      "arrival": "12:40",
+      "slack": 20,
+      "grade": "없음"
+     },
+     {
+      "key": "B3-2>B3-3",
+      "arrival": "14:50",
+      "slack": -20,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     },
+     {
+      "key": "B3-4>B3-5",
+      "arrival": "12:15",
+      "slack": 25,
+      "grade": "없음"
+     },
+     {
+      "key": "B3-5>B3-6",
+      "arrival": "14:00",
+      "slack": 10,
+      "grade": "없음"
+     }
+    ],
+    "affected": {
+     "B3-3": 20
+    },
+    "resolved": [],
+    "new": [],
+    "remaining": [
+     "B3-2>B3-3"
+    ]
+   }
+  },
+  "B4": {
+   "links": [
+    {
+     "key": "B4-1>B4-2",
+     "arrival": null,
+     "slack": null,
+     "grade": "해당 없음"
+    },
+    {
+     "key": "B4-2>B4-3",
+     "arrival": "13:30",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B4-4>B4-5",
+     "arrival": "13:25",
+     "slack": -15,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B4-5>B4-6",
+     "arrival": "15:25",
+     "slack": 0,
+     "grade": "주의"
+    }
+   ],
+   "affected": {
+    "B4-3": 10,
+    "B4-5": 15
+   },
+   "after": {
+    "links": [
+     {
+      "key": "B4-1>B4-2",
+      "arrival": null,
+      "slack": null,
+      "grade": "해당 없음"
+     },
+     {
+      "key": "B4-2>B4-3",
+      "arrival": "13:30",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "선행 현장 지연",
+      "planOnly": false
+     },
+     {
+      "key": "B4-4>B4-5",
+      "arrival": "13:25",
+      "slack": 10,
+      "grade": "없음"
+     },
+     {
+      "key": "B4-5>B4-6",
+      "arrival": "15:35",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     }
+    ],
+    "affected": {
+     "B4-3": 10,
+     "B4-6": 10
+    },
+    "resolved": [
+     "B4-4>B4-5"
+    ],
+    "new": [
+     "B4-5>B4-6"
+    ],
+    "remaining": [
+     "B4-2>B4-3"
+    ]
+   }
+  },
+  "B5": {
+   "links": [
+    {
+     "key": "B5-1>B5-2",
+     "arrival": "13:45",
+     "slack": -35,
+     "grade": "매우 높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B5-2>B5-3",
+     "arrival": "15:15",
+     "slack": -5,
+     "grade": "중간",
+     "cause": "연쇄 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B5-4>B5-5",
+     "arrival": "11:30",
+     "slack": -10,
+     "grade": "높음",
+     "cause": "선행 현장 지연",
+     "planOnly": false
+    },
+    {
+     "key": "B5-5>B5-6",
+     "arrival": "13:40",
+     "slack": 0,
+     "grade": "주의"
+    }
+   ],
+   "affected": {
+    "B5-2": 35,
+    "B5-3": 5,
+    "B5-5": 10
+   },
+   "after": {
+    "links": [
+     {
+      "key": "B5-1>B5-2",
+      "arrival": "13:45",
+      "slack": 0,
+      "grade": "주의"
+     },
+     {
+      "key": "B5-2>B5-3",
+      "arrival": "15:15",
+      "slack": -5,
+      "grade": "중간",
+      "cause": "이동시간 부족",
+      "planOnly": true
+     },
+     {
+      "key": "B5-4>B5-5",
+      "arrival": "11:30",
+      "slack": -10,
+      "grade": "높음",
+      "cause": "선행 현장 지연",
+      "planOnly": false
+     },
+     {
+      "key": "B5-5>B5-6",
+      "arrival": "13:40",
+      "slack": 0,
+      "grade": "주의"
+     }
+    ],
+    "affected": {
+     "B5-3": 5,
+     "B5-5": 10
+    },
+    "resolved": [
+     "B5-1>B5-2"
+    ],
+    "new": [],
+    "remaining": [
+     "B5-2>B5-3",
+     "B5-4>B5-5"
+    ]
+   }
+  }
+ }
+}

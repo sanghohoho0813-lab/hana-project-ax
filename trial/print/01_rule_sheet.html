@@ -1,0 +1,58 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>판단 기준표</title><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><style>
+@page { size: A4; margin: 13mm 13mm 14mm; }
+* { box-sizing: border-box; }
+body { font-family: 'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; color: #191f28; font-size: 11.5pt; line-height: 1.45; margin: 0; }
+.page { page-break-after: always; }
+.page:last-child { page-break-after: auto; }
+h1 { font-size: 18pt; margin: 0 0 2mm; }
+h2 { font-size: 13pt; margin: 4mm 0 2mm; }
+.sub { color: #6b7684; font-size: 9.5pt; }
+.tag { display: inline-block; border: 1.2pt solid #191f28; border-radius: 3mm; padding: 0.5mm 3mm; font-weight: 800; font-size: 10.5pt; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 0.8pt solid #9aa3ad; padding: 1.6mm 2mm; text-align: left; vertical-align: top; }
+th { background: #f2f4f6; font-size: 10pt; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.box { border: 1pt solid #9aa3ad; border-radius: 2mm; padding: 2.5mm 3.5mm; margin: 2.5mm 0; }
+.grid { height: 70mm; border: 1pt dashed #9aa3ad; border-radius: 2mm; background-image: linear-gradient(#eef0f2 0.5pt, transparent 0.5pt), linear-gradient(90deg, #eef0f2 0.5pt, transparent 0.5pt); background-size: 5mm 5mm; }
+.blank td { height: 9mm; }
+.row { display: flex; gap: 4mm; }
+.row > * { flex: 1; }
+.card { border: 1.4pt dashed #191f28; border-radius: 3mm; padding: 5mm; height: 60mm; margin-bottom: 6mm; }
+.card .big { font-size: 15pt; line-height: 1.5; margin-top: 3mm; }
+.warn { border: 1.4pt solid #dc2626; color: #b91c1c; font-weight: 800; padding: 2mm 3mm; border-radius: 2mm; }
+ol, ul { margin: 1mm 0 1mm 5mm; padding-left: 3mm; }
+li { margin: 0.6mm 0; }
+.risk { color: #b91c1c; font-weight: 800; }
+.foot { margin-top: 3mm; color: #6b7684; font-size: 8.5pt; }
+</style></head><body><div class="page">
+<h1>판단 기준표 <span class="tag">수기 · AX 공통</span></h1>
+<p class="sub">두 방식 모두 이 기준으로 답을 적습니다. 수기 방식은 계산기·연필을 쓸 수 있습니다. AX 방식은 화면의 판단 결과를 보고 적습니다.</p>
+<h2>무엇을 찾나요</h2>
+<p>같은 작업자가 앞 현장을 마치고 다음 현장에 <b>예정 시작 시각까지 도착하지 못하는 연결</b>(= 위험)과, 그 때문에 <b>시작이 늦어지는 현장</b>을 찾습니다.</p>
+<h2>판단 순서</h2>
+<ol>
+<li>같은 작업자의 하루 일정을 시작 시각 순서로 이어 봅니다. 앞 현장 → 다음 현장이 <b>연결</b> 1건입니다.</li>
+<li>앞 현장이 끝나는 시각(예상 종료)은 다음 순서로 정합니다.
+ <ul>
+ <li>① 완료 보고가 있으면 → 실제 종료 시각</li>
+ <li>② 현장에서 예상 종료를 보고했으면 → 그 시각</li>
+ <li>③ 작업을 늦게 시작했으면 → 실제 시작 + 예정 작업시간 (작업시간은 그대로 걸린다고 봅니다)</li>
+ <li>④ 작업 중인데 기준시각이 이미 예정 종료를 지났고 보고가 없으면 → 적어도 기준시각까지 걸린다고 봅니다 (③④가 함께면 더 늦은 시각)</li>
+ <li>⑤ 위에 해당하지 않으면 → 예정 종료</li>
+ </ul></li>
+<li><b>예상 도착</b> = 앞 현장 예상 종료 + 직전 현장에서 이동 시간</li>
+<li><b>여유</b> = 다음 현장 예정 시작 − 예상 도착. 여유가 0분보다 작으면 <span class="risk">위험</span>이고, 모자란 분이 <b>예상 부족(분)</b>입니다. 여유 0~9분은 '주의'로, 위험으로 적지 않습니다.</li>
+<li>두 현장의 예정 시간이 겹쳐도 <span class="risk">위험</span>(시간 중복)입니다. 부족분은 3·4번으로 계산합니다.</li>
+<li><b>연쇄</b>: 다음 현장에 늦게 도착하면 그 현장의 시작은 도착 시각으로 늦어지고, 끝나는 시각도 작업시간만큼 뒤로 밀립니다. 밀린 종료 시각으로 그다음 연결을 계산합니다.</li>
+<li>이미 시작했거나 끝난 현장은 '다음 현장'으로 판단하지 않습니다.</li>
+<li>등급(참고, 답안에 쓰지 않아도 됨): 부족 1~9분 중간 · 10~29분 높음 · 30분 이상 매우 높음.</li>
+</ol>
+<h2>답안지에 적는 것</h2>
+<div class="box">
+<b>1부 (위험 인지)</b> — 위험 연결(앞 현장 → 다음 현장, 예상 부족 분)과 시작이 늦어지는 현장(현장, 늦어지는 분). 다 적으면 "1부 끝"이라고 말하고 답안지를 내려놓습니다.<br>
+<b>2부 (조치 후 재판단)</b> — 진행요원이 주는 <b>조치 카드</b>대로 시작 시각을 바꾼 뒤의 위험 연결과, 조치로 <b>없어진 위험</b>을 적습니다. 새로 생긴 위험에는 '새로 생김'에 표시합니다. 다 적으면 "2부 끝"이라고 말합니다.<br>
+조치는 <b>시작 시각만 바꾸고 작업시간은 그대로</b>입니다 (끝나는 시각도 같은 만큼 바뀝니다).
+</div>
+<p class="sub">시간 제한: 1부 10분 · 2부 5분. 시간이 다 되면 그때까지 적은 것으로 채점합니다. 현장 이름으로 적습니다 (예: 천안 → 아산, 15).</p>
+<p class="foot">비교시험용 가상 시나리오 · 실제 운영데이터 아님</p>
+</div></body></html>

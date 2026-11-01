@@ -1,0 +1,147 @@
+{
+  "version": "trial-scenarios/1.0.0",
+  "note": "벤처기업확인 이의신청용 소규모 전후 비교시험 — 가상 시나리오(실제 운영데이터 아님). 이 파일에는 입력값만 있고 정답은 없다. 정답은 answer-key.json (참가자 비공개).",
+  "workers": { "w1": "작업자 1", "w2": "작업자 2" },
+  "scenarios": [
+    {
+      "id": "R1", "set": "연습", "pair": 0, "date": "2026-07-10", "asOf": "09:30",
+      "sites": [
+        { "id": "R1-1", "region": "서천", "title": "서천 · 통신실 랜 공사", "workerId": "w1", "plannedStart": "09:00", "plannedEnd": "10:00", "status": "진행 중", "actualStart": "09:00", "expectedEnd": "10:20" },
+        { "id": "R1-2", "region": "보령", "title": "보령 · 무선AP 설치", "workerId": "w1", "plannedStart": "10:40", "plannedEnd": "12:00", "status": "예정", "travelMinutes": 30 },
+        { "id": "R1-3", "region": "홍성", "title": "홍성 · CCTV 점검", "workerId": "w1", "plannedStart": "13:00", "plannedEnd": "14:00", "status": "예정", "travelMinutes": 30 }
+      ],
+      "action": { "siteId": "R1-2", "newStart": "10:55" }
+    },
+    {
+      "id": "R2", "set": "연습", "pair": 0, "date": "2026-07-10", "asOf": "10:00",
+      "sites": [
+        { "id": "R2-1", "region": "대전", "title": "대전 · 방송설비 점검", "workerId": "w1", "plannedStart": "09:00", "plannedEnd": "11:00", "status": "진행 중", "actualStart": "09:20" },
+        { "id": "R2-2", "region": "세종", "title": "세종 · 출입통제 설치", "workerId": "w1", "plannedStart": "11:40", "plannedEnd": "12:40", "status": "예정", "travelMinutes": 30 },
+        { "id": "R2-3", "region": "공주", "title": "공주 · 광케이블 접속", "workerId": "w1", "plannedStart": "13:30", "plannedEnd": "15:00", "status": "예정", "travelMinutes": 30 }
+      ],
+      "action": { "siteId": "R2-2", "newStart": "12:00" }
+    },
+
+    {
+      "id": "A1", "set": "A", "pair": 1, "date": "2026-07-14", "asOf": "09:50",
+      "sites": [
+        { "id": "A1-1", "region": "천안", "title": "천안 · 초교 CCTV 점검", "workerId": "w1", "plannedStart": "09:00", "plannedEnd": "11:00", "status": "진행 중", "actualStart": "09:00", "expectedEnd": "11:35" },
+        { "id": "A1-2", "region": "아산", "title": "아산 · 물류센터 무선AP 설치", "workerId": "w1", "plannedStart": "12:00", "plannedEnd": "13:30", "status": "예정", "travelMinutes": 40 },
+        { "id": "A1-3", "region": "당진", "title": "당진 · 공장 광케이블 접속", "workerId": "w1", "plannedStart": "14:30", "plannedEnd": "16:00", "status": "예정", "travelMinutes": 30 },
+        { "id": "A1-4", "region": "서산", "title": "서산 · 아파트 통신실 랜 공사", "workerId": "w2", "plannedStart": "09:30", "plannedEnd": "11:30", "status": "진행 중", "actualStart": "09:30" },
+        { "id": "A1-5", "region": "홍성", "title": "홍성 · 군청 방송설비 점검", "workerId": "w2", "plannedStart": "12:00", "plannedEnd": "13:00", "status": "예정", "travelMinutes": 25 },
+        { "id": "A1-6", "region": "보령", "title": "보령 · 공공시설 출입통제 설치", "workerId": "w2", "plannedStart": "13:30", "plannedEnd": "15:00", "status": "예정", "travelMinutes": 20 }
+      ],
+      "action": { "siteId": "A1-2", "newStart": "12:20" }
+    },
+    {
+      "id": "A2", "set": "A", "pair": 2, "date": "2026-07-14", "asOf": "09:10",
+      "sites": [
+        { "id": "A2-1", "region": "공주", "title": "공주 · 도서관 와이파이 점검", "workerId": "w1", "plannedStart": "08:30", "plannedEnd": "10:30", "status": "진행 중", "actualStart": "08:55" },
+        { "id": "A2-2", "region": "세종", "title": "세종 · 청사 네트워크 장비 교체", "workerId": "w1", "plannedStart": "11:10", "plannedEnd": "12:30", "status": "예정", "travelMinutes": 30 },
+        { "id": "A2-3", "region": "논산", "title": "논산 · 학교 CCTV 증설", "workerId": "w1", "plannedStart": "13:00", "plannedEnd": "14:30", "status": "예정", "travelMinutes": 20 },
+        { "id": "A2-4", "region": "계룡", "title": "계룡 · 체육관 방송설비 설치", "workerId": "w2", "plannedStart": "08:30", "plannedEnd": "11:00", "status": "진행 중", "actualStart": "08:30" },
+        { "id": "A2-5", "region": "부여", "title": "부여 · 박물관 출입통제 점검", "workerId": "w2", "plannedStart": "11:20", "plannedEnd": "12:30", "status": "예정", "travelMinutes": 30 },
+        { "id": "A2-6", "region": "청양", "title": "청양 · 면사무소 랜 공사", "workerId": "w2", "plannedStart": "13:30", "plannedEnd": "15:00", "status": "예정", "travelMinutes": 25 }
+      ],
+      "action": { "siteId": "A2-2", "newStart": "11:30" }
+    },
+    {
+      "id": "A3", "set": "A", "pair": 3, "date": "2026-07-14", "asOf": "10:00",
+      "sites": [
+        { "id": "A3-1", "region": "태안", "title": "태안 · 리조트 무선AP 교체", "workerId": "w1", "plannedStart": "09:00", "plannedEnd": "10:30", "status": "진행 중", "actualStart": "09:00", "expectedEnd": "10:50" },
+        { "id": "A3-2", "region": "서산", "title": "서산 · 공장 CCTV 점검", "workerId": "w1", "plannedStart": "12:00", "plannedEnd": "13:00", "status": "예정", "travelMinutes": 45 },
+        { "id": "A3-3", "region": "당진", "title": "당진 · 항만 광케이블 접속", "workerId": "w1", "plannedStart": "13:30", "plannedEnd": "15:00", "status": "예정", "travelMinutes": 20 },
+        { "id": "A3-4", "region": "예산", "title": "예산 · 학교 방송설비 점검", "workerId": "w2", "plannedStart": "09:30", "plannedEnd": "11:30", "status": "진행 중", "actualStart": "09:30" },
+        { "id": "A3-5", "region": "홍성", "title": "홍성 · 병원 통신실 랜 공사", "workerId": "w2", "plannedStart": "13:00", "plannedEnd": "14:30", "status": "예정", "travelMinutes": 30 },
+        { "id": "A3-6", "region": "청양", "title": "청양 · 보건소 출입통제 설치", "workerId": "w2", "plannedStart": "14:00", "plannedEnd": "15:30", "status": "예정", "travelMinutes": 15 }
+      ],
+      "action": { "siteId": "A3-5", "newStart": "12:30" }
+    },
+    {
+      "id": "A4", "set": "A", "pair": 4, "date": "2026-07-14", "asOf": "11:50",
+      "sites": [
+        { "id": "A4-1", "region": "천안", "title": "천안 · 대학교 네트워크 장비 교체", "workerId": "w1", "plannedStart": "09:00", "plannedEnd": "11:30", "status": "진행 중", "actualStart": "09:00" },
+        { "id": "A4-2", "region": "평택", "title": "평택 · 물류센터 CCTV 증설", "workerId": "w1", "plannedStart": "12:30", "plannedEnd": "14:00", "status": "예정", "travelMinutes": 50 },
+        { "id": "A4-3", "region": "안성", "title": "안성 · 농협 방송설비 점검", "workerId": "w1", "plannedStart": "14:40", "plannedEnd": "16:00", "status": "예정", "travelMinutes": 30 },
+        { "id": "A4-4", "region": "아산", "title": "아산 · 공장 와이파이 점검", "workerId": "w2", "plannedStart": "08:30", "plannedEnd": "10:30", "status": "완료", "actualStart": "08:30", "actualEnd": "10:20" },
+        { "id": "A4-5", "region": "배방", "title": "배방 · 아파트 통신실 점검", "workerId": "w2", "plannedStart": "11:00", "plannedEnd": "12:00", "status": "진행 중", "actualStart": "11:15", "travelMinutes": 20 },
+        { "id": "A4-6", "region": "탕정", "title": "탕정 · 산업단지 출입통제 설치", "workerId": "w2", "plannedStart": "12:30", "plannedEnd": "13:30", "status": "예정", "travelMinutes": 25 }
+      ],
+      "action": { "siteId": "A4-2", "newStart": "12:50" }
+    },
+    {
+      "id": "A5", "set": "A", "pair": 5, "date": "2026-07-14", "asOf": "10:30",
+      "sites": [
+        { "id": "A5-1", "region": "세종", "title": "세종 · 학교 무선AP 설치", "workerId": "w1", "plannedStart": "08:00", "plannedEnd": "10:00", "status": "완료", "actualStart": "08:00", "actualEnd": "10:25" },
+        { "id": "A5-2", "region": "대전", "title": "대전 · 연구소 네트워크 장비 교체", "workerId": "w1", "plannedStart": "10:45", "plannedEnd": "12:15", "status": "예정", "travelMinutes": 35 },
+        { "id": "A5-3", "region": "옥천", "title": "옥천 · 군청 CCTV 점검", "workerId": "w1", "plannedStart": "13:00", "plannedEnd": "14:30", "status": "예정", "travelMinutes": 30 },
+        { "id": "A5-4", "region": "공주", "title": "공주 · 병원 방송설비 교체", "workerId": "w2", "plannedStart": "08:30", "plannedEnd": "11:30", "status": "진행 중", "actualStart": "08:30", "expectedEnd": "12:10" },
+        { "id": "A5-5", "region": "논산", "title": "논산 · 훈련소 출입통제 점검", "workerId": "w2", "plannedStart": "12:20", "plannedEnd": "13:30", "status": "예정", "travelMinutes": 40 },
+        { "id": "A5-6", "region": "계룡", "title": "계룡 · 시청 랜 공사", "workerId": "w2", "plannedStart": "14:20", "plannedEnd": "15:30", "status": "예정", "travelMinutes": 25 }
+      ],
+      "action": { "siteId": "A5-5", "newStart": "12:50" }
+    },
+
+    {
+      "id": "B1", "set": "B", "pair": 1, "date": "2026-07-16", "asOf": "10:30",
+      "sites": [
+        { "id": "B1-1", "region": "공주", "title": "공주 · 시청 CCTV 점검", "workerId": "w1", "plannedStart": "10:10", "plannedEnd": "12:10", "status": "진행 중", "actualStart": "10:10" },
+        { "id": "B1-2", "region": "부여", "title": "부여 · 군청 방송설비 점검", "workerId": "w1", "plannedStart": "12:40", "plannedEnd": "13:40", "status": "예정", "travelMinutes": 25 },
+        { "id": "B1-3", "region": "서천", "title": "서천 · 항만 출입통제 설치", "workerId": "w1", "plannedStart": "14:10", "plannedEnd": "15:40", "status": "예정", "travelMinutes": 20 },
+        { "id": "B1-4", "region": "논산", "title": "논산 · 학교 통신실 랜 공사", "workerId": "w2", "plannedStart": "09:40", "plannedEnd": "11:40", "status": "진행 중", "actualStart": "09:40", "expectedEnd": "12:20" },
+        { "id": "B1-5", "region": "계룡", "title": "계룡 · 체육관 무선AP 설치", "workerId": "w2", "plannedStart": "12:40", "plannedEnd": "14:10", "status": "예정", "travelMinutes": 40 },
+        { "id": "B1-6", "region": "대전", "title": "대전 · 공장 광케이블 접속", "workerId": "w2", "plannedStart": "15:10", "plannedEnd": "16:40", "status": "예정", "travelMinutes": 30 }
+      ],
+      "action": { "siteId": "B1-5", "newStart": "13:05" }
+    },
+    {
+      "id": "B2", "set": "B", "pair": 2, "date": "2026-07-16", "asOf": "09:50",
+      "sites": [
+        { "id": "B2-1", "region": "천안", "title": "천안 · 터미널 방송설비 설치", "workerId": "w1", "plannedStart": "09:10", "plannedEnd": "11:40", "status": "진행 중", "actualStart": "09:10" },
+        { "id": "B2-2", "region": "아산", "title": "아산 · 병원 출입통제 점검", "workerId": "w1", "plannedStart": "12:00", "plannedEnd": "13:10", "status": "예정", "travelMinutes": 35 },
+        { "id": "B2-3", "region": "예산", "title": "예산 · 군청 랜 공사", "workerId": "w1", "plannedStart": "14:10", "plannedEnd": "15:40", "status": "예정", "travelMinutes": 25 },
+        { "id": "B2-4", "region": "홍성", "title": "홍성 · 도서관 와이파이 점검", "workerId": "w2", "plannedStart": "09:10", "plannedEnd": "11:10", "status": "진행 중", "actualStart": "09:40" },
+        { "id": "B2-5", "region": "보령", "title": "보령 · 청사 네트워크 장비 교체", "workerId": "w2", "plannedStart": "11:50", "plannedEnd": "13:10", "status": "예정", "travelMinutes": 30 },
+        { "id": "B2-6", "region": "서천", "title": "서천 · 학교 CCTV 증설", "workerId": "w2", "plannedStart": "13:40", "plannedEnd": "15:10", "status": "예정", "travelMinutes": 15 }
+      ],
+      "action": { "siteId": "B2-5", "newStart": "12:15" }
+    },
+    {
+      "id": "B3", "set": "B", "pair": 3, "date": "2026-07-16", "asOf": "10:40",
+      "sites": [
+        { "id": "B3-1", "region": "대전", "title": "대전 · 병원 통신실 랜 공사", "workerId": "w1", "plannedStart": "10:10", "plannedEnd": "12:10", "status": "진행 중", "actualStart": "10:10" },
+        { "id": "B3-2", "region": "세종", "title": "세종 · 보건소 출입통제 설치", "workerId": "w1", "plannedStart": "13:40", "plannedEnd": "15:10", "status": "예정", "travelMinutes": 30 },
+        { "id": "B3-3", "region": "공주", "title": "공주 · 학교 방송설비 점검", "workerId": "w1", "plannedStart": "14:30", "plannedEnd": "16:00", "status": "예정", "travelMinutes": 20 },
+        { "id": "B3-4", "region": "청주", "title": "청주 · 리조트 무선AP 교체", "workerId": "w2", "plannedStart": "09:40", "plannedEnd": "11:10", "status": "진행 중", "actualStart": "09:40", "expectedEnd": "11:35" },
+        { "id": "B3-5", "region": "오송", "title": "오송 · 공장 CCTV 점검", "workerId": "w2", "plannedStart": "12:40", "plannedEnd": "13:40", "status": "예정", "travelMinutes": 40 },
+        { "id": "B3-6", "region": "조치원", "title": "조치원 · 역사 광케이블 접속", "workerId": "w2", "plannedStart": "14:10", "plannedEnd": "15:40", "status": "예정", "travelMinutes": 20 }
+      ],
+      "action": { "siteId": "B3-2", "newStart": "13:00" }
+    },
+    {
+      "id": "B4", "set": "B", "pair": 4, "date": "2026-07-16", "asOf": "12:30",
+      "sites": [
+        { "id": "B4-1", "region": "서산", "title": "서산 · 공장 와이파이 점검", "workerId": "w1", "plannedStart": "09:10", "plannedEnd": "11:10", "status": "완료", "actualStart": "09:10", "actualEnd": "11:00" },
+        { "id": "B4-2", "region": "해미", "title": "해미 · 아파트 통신실 점검", "workerId": "w1", "plannedStart": "11:40", "plannedEnd": "12:40", "status": "진행 중", "actualStart": "12:05", "travelMinutes": 20 },
+        { "id": "B4-3", "region": "태안", "title": "태안 · 산업단지 출입통제 설치", "workerId": "w1", "plannedStart": "13:20", "plannedEnd": "14:20", "status": "예정", "travelMinutes": 25 },
+        { "id": "B4-4", "region": "당진", "title": "당진 · 대학교 네트워크 장비 교체", "workerId": "w2", "plannedStart": "09:40", "plannedEnd": "12:10", "status": "진행 중", "actualStart": "09:40" },
+        { "id": "B4-5", "region": "송악", "title": "송악 · 물류센터 CCTV 증설", "workerId": "w2", "plannedStart": "13:10", "plannedEnd": "14:40", "status": "예정", "travelMinutes": 55 },
+        { "id": "B4-6", "region": "합덕", "title": "합덕 · 농협 방송설비 점검", "workerId": "w2", "plannedStart": "15:25", "plannedEnd": "16:45", "status": "예정", "travelMinutes": 30 }
+      ],
+      "action": { "siteId": "B4-5", "newStart": "13:35" }
+    },
+    {
+      "id": "B5", "set": "B", "pair": 5, "date": "2026-07-16", "asOf": "11:10",
+      "sites": [
+        { "id": "B5-1", "region": "천안", "title": "천안 · 병원 방송설비 교체", "workerId": "w1", "plannedStart": "09:10", "plannedEnd": "12:10", "status": "진행 중", "actualStart": "09:10", "expectedEnd": "13:05" },
+        { "id": "B5-2", "region": "아산", "title": "아산 · 훈련원 출입통제 점검", "workerId": "w1", "plannedStart": "13:10", "plannedEnd": "14:20", "status": "예정", "travelMinutes": 40 },
+        { "id": "B5-3", "region": "배방", "title": "배방 · 주민센터 랜 공사", "workerId": "w1", "plannedStart": "15:10", "plannedEnd": "16:20", "status": "예정", "travelMinutes": 20 },
+        { "id": "B5-4", "region": "공주", "title": "공주 · 학교 무선AP 설치", "workerId": "w2", "plannedStart": "08:40", "plannedEnd": "10:40", "status": "완료", "actualStart": "08:40", "actualEnd": "11:00" },
+        { "id": "B5-5", "region": "세종", "title": "세종 · 연구소 네트워크 장비 교체", "workerId": "w2", "plannedStart": "11:20", "plannedEnd": "12:50", "status": "예정", "travelMinutes": 30 },
+        { "id": "B5-6", "region": "대전", "title": "대전 · 구청 CCTV 점검", "workerId": "w2", "plannedStart": "13:40", "plannedEnd": "15:10", "status": "예정", "travelMinutes": 40 }
+      ],
+      "action": { "siteId": "B5-2", "newStart": "13:45" }
+    }
+  ]
+}
