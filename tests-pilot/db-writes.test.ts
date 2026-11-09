@@ -68,7 +68,9 @@ describe.skipIf(!DB_TEST)("쓰기 순서 보장 · 계정 이력", () => {
     );
     expect(rs.map((r) => r.error)).toEqual(Array(6).fill(null));
     expect(new Set(rs.map((r) => r.data.schedule_id)).size).toBe(1);
-    expect(psql(`select count(*) from schedules where site_name = '동시 등록' and work_date = '${D}';`)).toBe("1");
+    expect(psql(`select count(*) from schedule_revisions where op_id = '${id}';`)).toBe("1");
+    expect(psql(`select count(*) from schedules where id = '${rs[0].data.schedule_id}';`)).toBe("1");
+    expect(psql(`select count(*) from schedules where site_name = '동시 등록' and assignee_id = '${f1.id}';`)).toBe("1");
   });
 
   it("기록 함수는 한 번에 하나씩 처리된다 — 다른 트랜잭션이 잠금을 쥐고 있으면 끝날 때까지 기다린다", async () => {

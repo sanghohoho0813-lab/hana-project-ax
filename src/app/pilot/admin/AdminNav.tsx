@@ -4,12 +4,13 @@ import { kindParam } from "@/lib/pilot/board";
 
 const TABS = [
   { key: "board", href: "/pilot/admin", label: "일정판" },
+  { key: "records", href: "/pilot/admin/records", label: "기록·판단 이력" },
   { key: "staff", href: "/pilot/admin/staff", label: "계정" },
 ] as const;
 
 export function AdminNav({ current }: { current: (typeof TABS)[number]["key"] }) {
   return (
-    <nav aria-label="관리자 메뉴" className="flex flex-wrap gap-1.5">
+    <nav aria-label="관리자 메뉴" className="flex flex-wrap gap-1.5 print:hidden">
       {TABS.map((t) => (
         <Link
           key={t.key}
@@ -34,7 +35,7 @@ const shift = (date: string, days: number) => {
 export function DayBar({ path, date, kind, today }: { path: string; date: string; kind: DataKind; today: string }) {
   const q = (d: string, k: DataKind) => `${path}?date=${d}&kind=${kindParam(k)}`;
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 print:hidden">
       <div role="group" aria-label="데이터 구분" className="inline-flex rounded-xl bg-[#e8ebee] p-1">
         {(["실제 업무", "검증 시나리오"] as const).map((k) => (
           <Link

@@ -280,6 +280,83 @@ export function travelBasisStale(s: ScheduleRow, schedules: ScheduleRow[]): bool
   return (predecessorOf(s, schedules)?.id ?? null) !== s.travel_from_id;
 }
 
+/**
+ * 이 일정의 이동 기준을 흔드는 취소 일정 — 엔진 R7(판단 보류) 원인과 같은 조건.
+ * ① 직전 유효 일정과 이 일정 사이(예정 시작 기준)에 취소된 일정이 있거나 ② 이동 출발 현장이 취소된 일정.
+ * 관리자에게 이동 출발지·이동시간 재확인을 안내하는 데만 쓰며, 판단 결과를 바꾸지 않는다.
+ */
+export function cancelledBetween(s: ScheduleRow, schedules: ScheduleRow[]): ScheduleRow[] {
+  if (s.status !== "예정") return [];
+  const prev = predecessorOf(s, schedules);
+  const same = (o: ScheduleRow) => o.assignee_id === s.assignee_id && o.work_date === s.work_date && o.data_kind === s.data_kind && o.id !== s.id;
+  return schedules.filter(
+    (o) =>
+      same(o) &&
+      o.status === "취소" &&
+      ((!!prev && o.planned_start > prev.planned_start && o.planned_start < s.planned_start) || o.id === s.travel_from_id),
+  );
+}
+
+/** 취소한 일정 바로 뒤의 같은 직원 예정 일정 — 취소 직후 재확인 안내 대상 */
+export function followingOf(cancelled: ScheduleRow, schedules: ScheduleRow[]): ScheduleRow | undefined {
+  return schedules
+    .filter(
+      (o) =>
+        o.assignee_id === cancelled.assignee_id &&
+        o.work_date === cancelled.work_date &&
+        o.data_kind === cancelled.data_kind &&
+        o.status === "예정" &&
+        o.id !== cancelled.id &&
+        o.planned_start > cancelled.planned_start,
+    )
+    .sort((a, b) => (a.planned_start < b.planned_start ? -1 : a.planned_start > b.planned_start ? 1 : a.id < b.id ? -1 : 1))[0];
+}
+
+/* ── 저장된 판단 재계산 확인 ─────────────────────────── */
+
+/** 키 순서를 정렬한 JSON — DB(jsonb)는 키 순서를 바꾸므로 비교 전에 맞춘다. undefined 는 JSON 처럼 뺀다 */
+export function canonical(x: unknown): string {
+  if (x === null || typeof x !== "object") return JSON.stringify(x) ?? "null";
+  if (Array.isArray(x)) return `[${x.map((v) => (v === undefined ? "null" : canonical(v))).join(",")}]`;
+  const o = x as Record<string, unknown>;
+  return `{${Object.keys(o)
+    .filter((k) => o[k] !== undefined)
+    .sort()
+    .map((k) => `${JSON.stringify(k)}:${canonical(o[k])}`)
+    .join(",")}}`;
+}
+
+export interface RecomputeCheck {
+  /** 기록 당시 규칙 버전과 지금 버전이 같아 다시 계산해 비교했는지 */
+  checked: boolean;
+  before: boolean;
+  after: boolean;
+  reason: string;
+}
+
+/** 저장된 판단 입력으로 지금 엔진을 다시 돌려 저장된 결과와 같은지 확인한다 */
+export function recheckJudgment(row: {
+  rule_version: string;
+  state_version: string;
+  priority_version: string;
+  input_before: PipelineInput;
+  input_after: PipelineInput;
+  result_before: unknown;
+  result_after: unknown;
+}): RecomputeCheck {
+  if (row.rule_version !== VERSIONS.rule || row.state_version !== VERSIONS.state || row.priority_version !== VERSIONS.priority) {
+    return { checked: false, before: false, after: false, reason: `기록 당시 규칙 버전(${row.rule_version} · ${row.state_version} · ${row.priority_version})이 지금과 달라 비교하지 않았습니다.` };
+  }
+  const before = canonical(evaluate(row.input_before)) === canonical(row.result_before);
+  const after = canonical(evaluate(row.input_after)) === canonical(row.result_after);
+  return {
+    checked: true,
+    before,
+    after,
+    reason: before && after ? "저장된 입력으로 다시 계산한 결과가 저장된 판단 전·후 결과와 같습니다." : "다시 계산한 결과가 저장된 결과와 다릅니다 — 확인이 필요합니다.",
+  };
+}
+
 /* ── 현장 화면용 상태 ───────────────────────────────── */
 
 export interface ScheduleProgress {

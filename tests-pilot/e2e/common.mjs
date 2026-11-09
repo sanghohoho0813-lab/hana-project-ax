@@ -141,3 +141,54 @@ export async function adminApiSession(email, secret) {
 
 /** 한국 날짜 + n일 */
 export const kstDate = (n = 0) => new Date(Date.now() + 9 * 3600_000 + n * 86400_000).toISOString().slice(0, 10);
+
+/** 휴대폰 화면 (390×844 · 터치) */
+export async function mobilePage(bro) {
+  const ctx = await bro.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await ctx.route(/jsdelivr/, (r) => r.abort());
+  const p = await ctx.newPage();
+  p.errs = [];
+  p.on("pageerror", (e) => p.errs.push(e.message));
+  return p;
+}
+
+/** 한국 시각 HH:MM (지금 + n분) */
+export const kstHHMM = (plusMin = 0) => new Date(Date.now() + 9 * 3600_000 + plusMin * 60_000).toISOString().slice(11, 16);
+export const kstHour = () => new Date(Date.now() + 9 * 3600_000).getUTCHours();
+
+/** 관리자 일정판에서 일정 등록 (화면 그대로) */
+export async function createSchedule(p, { who, site, start, end, travel = "", prio = "보통" }) {
+  const form = () => p.locator('form:has(button:has-text("일정 등록"))').first();
+  if ((await form().count()) === 0) await p.click('button:has-text("일정 등록")');
+  const f = form();
+  await f.locator("select[name=assignee_id]").selectOption({ label: who });
+  await f.locator("input[name=site_name]").fill(site);
+  await f.locator("input[name=planned_start]").fill(start);
+  await f.locator("input[name=planned_end]").fill(end);
+  await f.locator("input[name=travel_minutes]").fill(travel);
+  await f.locator("select[name=priority]").selectOption(prio);
+  await f.locator('button:has-text("일정 등록")').click();
+  const msg = f.locator("[role=status], [role=alert]");
+  await msg.waitFor();
+  const t = (await msg.innerText()).replace(/\s+/g, " ");
+  if (!t.includes("일정을 등록했습니다")) throw new Error(`일정 등록 실패: ${t}`);
+  await p.locator(`tr:has-text("${site}")`).first().waitFor();
+  return t;
+}
+
+/** 관리자 계정 화면에서 활성화 */
+export async function activate(p, email, name) {
+  await p.goto(APP + "/pilot/admin/staff");
+  const row = p.locator(`form:has-text("${email}")`);
+  await row.locator("input[name=display_name]").fill(name);
+  await row.locator("input[name=active]").check();
+  await row.locator('button:has-text("저장")').click();
+  await row.locator("text=계정을 바꿨습니다.").waitFor();
+}
+
+export async function loginAs(p, email, password = PASSWORD) {
+  await p.goto(APP + "/pilot/login");
+  await p.fill("input[name=email]", email);
+  await p.fill("input[name=password]", password);
+  await p.click('button:has-text("로그인")');
+}

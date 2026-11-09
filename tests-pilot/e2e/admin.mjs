@@ -100,6 +100,12 @@ await rowB2.locator('button:has-text("취소")').click();
 await p.locator('form:has(button:has-text("일정 취소")) input[name=reason]').fill("고객 요청");
 await p.click('button:has-text("일정 취소")');
 await p.locator("text=일정을 취소했습니다").waitFor();
+const cancelMsg = (await p.locator('[role=status]:has-text("일정을 취소했습니다")').innerText()).replace(/\s+/g, " ");
+check(cancelMsg.includes("후속 현장 C현장의 실제 이동 출발지와 이동시간을 다시 확인해 주세요") && cancelMsg.includes("판단 보류"), "취소 직후 후속 현장 이동 출발지·이동시간 재확인 안내 (R7 유지)", cancelMsg);
+check(
+  (await p.locator("text=이동 기준 재확인 필요 1건").count()) === 1 && (await p.locator("tr:has-text('C현장') >> text=취소된 일정(B2현장) — 이동 출발지·이동시간 재확인 필요").count()) === 1,
+  "일정판: '이동 기준 재확인 필요' 요약과 C현장 행 표시",
+);
 check(q(`select status || ':' || version from schedules where site_name = 'B2현장' and work_date = '${D}';`) === "취소:2" && (await p.locator("tr:has-text('B2현장') >> text=취소됨").count()) === 1, "B2현장 취소 (수정본 2 · 화면 '취소됨')");
 check(q(`select count(*) from schedule_revisions r join schedules s on s.id = r.schedule_id where s.site_name = 'B2현장' and s.work_date = '${D}';`) === "2", "취소도 수정본으로 남음 (등록·취소 2건)");
 check((await p.locator("text=사이 일정(B2현장 취소)").count()) >= 1 && (await p.locator("text=/[0-9a-f]{8}-[0-9a-f]{4}-/").count()) === 0, "취소 일정 사이 연결은 판단 보류(R7) · 화면에는 일정 번호 대신 현장 이름");

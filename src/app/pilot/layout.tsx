@@ -15,7 +15,7 @@ export default async function PilotLayout({ children }: { children: React.ReactN
   const who = s && s !== "unconfigured" ? s : null;
   return (
     <div className="min-h-screen bg-bg">
-      <header className="sticky top-0 z-20 border-b border-line bg-white">
+      <header className="sticky top-0 z-20 border-b border-line bg-white print:static">
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center justify-between gap-2 px-4 py-2.5">
           <Link href="/pilot" className="flex items-center gap-2">
             <span className="rounded-lg bg-primary px-2 py-0.5 text-[16px] font-extrabold text-white">실증</span>
@@ -28,7 +28,7 @@ export default async function PilotLayout({ children }: { children: React.ReactN
                 <span className="font-semibold text-ink-2">
                   {who.profile?.display_name ?? who.email} · {who.profile?.role === "admin" ? "관리자" : "현장 직원"}
                 </span>
-                <form action={signOutAction}>
+                <form action={signOutAction} className="print:hidden">
                   <button className="rounded-lg bg-[#f2f4f6] px-2.5 py-1 font-semibold text-ink-2 hover:bg-[#e8ebee]">로그아웃</button>
                 </form>
               </>

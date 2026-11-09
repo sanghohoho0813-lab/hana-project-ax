@@ -47,7 +47,7 @@ export function JudgmentNow({
           </span>
         </h2>
         <p className="text-[16px] text-ink-3">
-          규칙 기반 판단 (AI 예측 아님) · 기준시각 {asOfLabel} (지금) · {RISK_RULE_VERSION} · {result.stateVersion} · 점수는 관리자 판단을 돕는 순서이며 사고 확률이 아닙니다
+          규칙 기반 판단 (AI 예측 아님) · 기준시각 {asOfLabel} · {RISK_RULE_VERSION} · {result.stateVersion} · 점수는 관리자 판단을 돕는 순서이며 사고 확률이 아닙니다
         </p>
       </div>
 

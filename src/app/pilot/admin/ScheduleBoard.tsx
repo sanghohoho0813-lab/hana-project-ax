@@ -15,6 +15,8 @@ export interface BoardRow {
   travelFromTitle: string | null;
   /** 이동시간을 넣은 뒤 순서가 바뀌어 출발 현장이 지금 직전 일정과 다름 */
   stale: boolean;
+  /** 이동 기준을 흔드는 취소 일정(현장 이름) — 엔진 R7 판단 보류 원인 */
+  cancelledBefore: string[];
   events: number;
 }
 
@@ -155,6 +157,7 @@ export function ScheduleBoard({ date, kind, staff, names, rows, pending }: Props
     if (r) setLast(r);
   };
 
+  const recheck = rows.filter((r) => r.cancelledBefore.length > 0 || r.stale);
   const workers = [...new Set([...staff.map((p) => p.id), ...rows.map((r) => r.s.assignee_id)])].filter((id) => rows.some((r) => r.s.assignee_id === id));
 
   return (
@@ -179,6 +182,21 @@ export function ScheduleBoard({ date, kind, staff, names, rows, pending }: Props
         </div>
       </div>
       <Feedback result={last} />
+      {recheck.length > 0 && (
+        <div className="rounded-2xl border border-warning/40 bg-warning-bg/50 px-4 py-3 text-[17px]">
+          <p className="font-bold text-warning">이동 기준 재확인 필요 {recheck.length}건</p>
+          <ul className="mt-0.5 text-ink-2">
+            {recheck.map((r) => (
+              <li key={r.s.id}>
+                · {names[r.s.assignee_id] ?? ""} {r.s.site_name}:{" "}
+                {r.cancelledBefore.length > 0
+                  ? `앞 일정(${r.cancelledBefore.join(", ")}) 취소 — 실제 이동 출발지와 이동시간을 확인해 주세요. 현재 규칙(R7)에서는 이 연결을 판단 보류로 둡니다.`
+                  : "이동시간을 넣은 뒤 직전 일정이 바뀌었습니다 — 이동시간을 다시 저장해 주세요."}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {adding && (
         <div className="card p-5">
@@ -262,7 +280,13 @@ function Row({
               {s.travel_minutes}분<span className="block text-[15px] text-ink-3">{r.travelFromTitle ? `${r.travelFromTitle}에서` : "출발 현장 없음"}</span>
             </>
           )}
-          {r.stale && <span className="mt-0.5 block text-[15px] font-bold text-warning no-underline">직전 일정이 바뀜 — 이동시간을 다시 저장해 주세요</span>}
+          {r.cancelledBefore.length > 0 ? (
+            <span className="mt-0.5 block text-[15px] font-bold text-warning no-underline">
+              취소된 일정({r.cancelledBefore.join(", ")}) — 이동 출발지·이동시간 재확인 필요 · 이 연결은 판단 보류(R7)
+            </span>
+          ) : (
+            r.stale && <span className="mt-0.5 block text-[15px] font-bold text-warning no-underline">직전 일정이 바뀜 — 이동시간을 다시 저장해 주세요</span>
+          )}
         </td>
         <td className="py-2 pr-3">
           <Badge tone={PRIORITY_TONE[s.priority]}>{s.priority}</Badge>

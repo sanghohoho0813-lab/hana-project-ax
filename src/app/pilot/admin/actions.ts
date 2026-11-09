@@ -5,7 +5,7 @@ import { getPilotSession, type PilotSession } from "@/lib/pilot/session";
 import { processPending, runJudgment, type JudgeResult } from "@/lib/pilot/judge";
 import { friendlyError, isFinalError } from "@/lib/pilot/errors";
 import { UUID_RE } from "@/lib/pilot/op-id";
-import { DATA_KINDS, type DataKind, type JudgmentSummary } from "@/lib/pilot/core";
+import { DATA_KINDS, followingOf, type DataKind, type JudgmentSummary, type ScheduleRow } from "@/lib/pilot/core";
 
 /**
  * 관리자 서버 함수 — 로그인한 관리자 세션으로 DB 함수를 부른다 (권한은 DB 가 다시 검사).
@@ -105,7 +105,21 @@ export async function cancelScheduleAction(fd: FormData): Promise<OpResult> {
   if (error) return fail(error.message);
   const r = data as { job_id: string | null; duplicated: boolean };
   const judge = await afterWrite(s, r.job_id);
-  return { ok: true, duplicated: r.duplicated, message: r.duplicated ? "이미 취소된 요청입니다." : "일정을 취소했습니다 (기록은 지워지지 않습니다).", judge };
+  // 취소한 일정 뒤 현장의 이동 기준 재확인 안내 (R7 — 일정은 시스템이 고치지 않는다)
+  let follow = "";
+  const { data: c } = await s.sb.from("schedules").select("*").eq("id", scheduleId).maybeSingle();
+  if (c) {
+    const { data: same } = await s.sb
+      .from("schedules")
+      .select("*")
+      .eq("work_date", c.work_date)
+      .eq("data_kind", c.data_kind)
+      .eq("assignee_id", c.assignee_id);
+    const next = followingOf(c as ScheduleRow, (same ?? []) as ScheduleRow[]);
+    if (next)
+      follow = ` 후속 현장 ${next.site_name}의 실제 이동 출발지와 이동시간을 다시 확인해 주세요 — 현재 규칙(R7)에서는 이 연결을 판단 보류로 둡니다.`;
+  }
+  return { ok: true, duplicated: r.duplicated, message: (r.duplicated ? "이미 취소된 요청입니다." : "일정을 취소했습니다 (기록은 지워지지 않습니다).") + follow, judge };
 }
 
 /** 기록되지 않고 남은 판단을 다시 계산해 기록 */

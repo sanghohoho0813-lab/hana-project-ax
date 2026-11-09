@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/pilot/session";
 import { loadDay, loadStaff, parseDay, pendingJobs } from "@/lib/pilot/board";
-import { judgeAt, progressOf, travelBasisStale } from "@/lib/pilot/core";
+import { cancelledBetween, judgeAt, progressOf, travelBasisStale } from "@/lib/pilot/core";
 import { kst, kstLabel } from "@/lib/pilot/time";
 import { AdminNav, DayBar, KindBanner } from "./AdminNav";
 import { ScheduleBoard, type BoardRow } from "./ScheduleBoard";
@@ -23,6 +23,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       phase: progressOf(x, day.events).phase,
       travelFromTitle: x.travel_from_id ? (titles[x.travel_from_id] ?? null) : null,
       stale: travelBasisStale(x, day.schedules),
+      cancelledBefore: cancelledBetween(x, day.schedules).map((c) => c.site_name),
       events: day.events.filter((e) => e.schedule_id === x.id).length,
     }));
   const fieldStaff = staff.filter((p) => p.role === "field" && p.active).map((p) => ({ id: p.id, name: p.display_name }));
@@ -36,7 +37,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <DayBar path="/pilot/admin" date={date} kind={kind} today={kst(now).date} />
       <KindBanner kind={kind} />
       <ScheduleBoard date={date} kind={kind} staff={fieldStaff} names={names} rows={rows} pending={pending} />
-      <JudgmentNow result={result} names={names} titles={titles} asOfLabel={kstLabel(now)} deviationsOpen={day.events.length > 0} />
+      <JudgmentNow result={result} names={names} titles={titles} asOfLabel={`${kstLabel(now)} (지금)`} deviationsOpen={day.events.length > 0} />
     </div>
   );
 }
