@@ -500,6 +500,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { scale, setScale } = useFontScale();
 
   const isStore = pathname.startsWith("/store");
+  // 실증(/pilot)은 데모 셸·데모 역할 전환을 쓰지 않는다 — 자체 화면 틀과 실제 로그인으로 동작
+  const isPilot = pathname === "/pilot" || pathname.startsWith("/pilot/");
   const me = memberById(currentUserId)!;
 
   // 브라우저 탭에 현재 화면 이름을 띄운다 — 데모 중 여러 탭을 오갈 때 구분된다
@@ -515,6 +517,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [pathname, isStore]);
 
   useEffect(() => {
+    if (isPilot) return;
     const title = screenLabel
       ? `${screenLabel} · ${COMPANY.product.name}`
       : COMPANY.product.name;
@@ -526,13 +529,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       }, ms),
     );
     return () => timers.forEach(clearTimeout);
-  }, [screenLabel]);
+  }, [screenLabel, isPilot]);
   const alerts = buildAlerts(tasks, schedules);
   const myAlerts = permission.seeAllMembers
     ? alerts
     : alerts.filter((a) => a.memberId === currentUserId);
 
   if (isStore) return <StoreShell>{children}</StoreShell>;
+  if (isPilot) return <>{children}</>;
 
   const meta =
     PAGE_META[pathname] ??

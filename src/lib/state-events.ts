@@ -38,7 +38,7 @@ export const STATE_RULES = [
 ] as const;
 
 export type EventKind = "업무 확인" | "작업개시" | "작업종료" | "완료보고" | "예상 종료 보고";
-export type EventOrigin = "데모 데이터" | "데모 세션 입력" | "검증 시나리오";
+export type EventOrigin = "데모 데이터" | "데모 세션 입력" | "검증 시나리오" | "실증 기록";
 
 export interface StateEvent {
   id: string;
