@@ -126,7 +126,8 @@ export function toStateEvent(e: EventRow): StateEvent {
     id: e.id,
     kind: e.kind as EventKind,
     siteId: e.schedule_id,
-    at: kst(e.occurred_at).minute,
+    // 실제 발생시각을 모르면 비워 둔다 — 엔진은 '이벤트 시각 누락'으로 표시하고 판단에 쓰지 않는다 (시각을 만들어 넣지 않음)
+    at: e.occurred_at ? kst(e.occurred_at).minute : undefined,
     source: sourceLabel(e),
     origin: e.data_kind === "실제 업무" ? "실증 기록" : "검증 시나리오",
   };

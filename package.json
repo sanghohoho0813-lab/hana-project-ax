@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:pilot": "vitest run --config tests-pilot/vitest.config.ts",
     "test:pilot:db": "vitest run --config tests-pilot/vitest.db.config.ts",
-    "test:pilot:e2e": "node tests-pilot/e2e/auth.mjs && node tests-pilot/e2e/reset.mjs && node tests-pilot/e2e/admin.mjs && node tests-pilot/e2e/field.mjs"
+    "test:pilot:e2e": "node tests-pilot/e2e/auth.mjs && node tests-pilot/e2e/reset.mjs && node tests-pilot/e2e/admin.mjs && node tests-pilot/e2e/field.mjs",
+    "test:lab:e2e": "node tests-pilot/e2e/lab.mjs && node tests-pilot/e2e/demo-smoke.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

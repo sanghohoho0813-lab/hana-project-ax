@@ -43,6 +43,7 @@ import { GuideOverlay, useGuide } from "@/components/GuideOverlay";
 import { DemoPanel } from "@/components/DemoPanel";
 import { FontScalePicker, useFontScale } from "@/components/FontScale";
 import { StoreShell } from "@/components/store/StoreShell";
+import { LabShell, LAB_LINKS, isLabRoute } from "@/components/lab/LabShell";
 
 interface NavItem {
   href: string;
@@ -64,7 +65,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "업무",
     hue: 214,
     items: [
-      { href: "/", label: "오늘의 업무", icon: LayoutDashboard },
+      { href: "/today", label: "오늘의 업무", icon: LayoutDashboard },
       { href: "/tasks", label: "업무지시", icon: ListChecks },
       { href: "/schedule", label: "통합일정", icon: CalendarDays },
       { href: "/reports", label: "업무보고", icon: FileBarChart },
@@ -122,8 +123,11 @@ function toneOf(hue: number, i: number) {
   };
 }
 
+/** 데모 권한표는 옛 홈을 "/" 로 적어 두었다 — 옛 홈은 /today 로 옮겼으므로 같은 권한으로 본다 */
+const permKey = (href: string) => (href === "/today" ? "/" : href);
+
 const PAGE_META: Record<string, { title: string; crumb: string }> = {
-  "/": { title: "오늘의 업무", crumb: "업무" },
+  "/today": { title: "오늘의 업무", crumb: "기타 · 기존 기능" },
   "/brief": { title: "관리자 브리핑", crumb: "업무" },
   "/tasks": { title: "업무지시", crumb: "업무" },
   "/schedule": { title: "통합일정", crumb: "업무" },
@@ -162,6 +166,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   } = useApp();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [switcher, setSwitcher] = useState(false);
+  // 기존 기능은 접어 둔다 — 기존 화면에 있을 때만 처음부터 펼친다
+  const [legacyOpen, setLegacyOpen] = useState(() => !isLabRoute(pathname));
 
   const me = memberById(currentUserId)!;
   const kpi = opsKpi(tasks, schedules);
@@ -169,7 +175,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   const counts: Record<string, number> = permission.managerHome
     ? {
-        "/": kpi.unacked + kpi.overdue,
+        "/today": kpi.unacked + kpi.overdue,
         "/tasks": kpi.unacked,
         "/schedule": kpi.conflicts,
         "/reports": reports.filter((r) => r.reviewStatus === "검토 대기")
@@ -177,13 +183,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         "/approvals": approvals.filter((a) => a.status === "대기").length,
       }
     : {
-        "/": mine.filter((t) => t.status === "지시됨").length,
+        "/today": mine.filter((t) => t.status === "지시됨").length,
         "/tasks": mine.filter((t) => t.status === "지시됨").length,
       };
 
   const groups = NAV_GROUPS.map((g) => ({
     ...g,
-    items: g.items.filter((i) => permission.routes.includes(i.href)),
+    items: g.items.filter((i) => permission.routes.includes(permKey(i.href))),
   })).filter((g) => g.items.length > 0);
 
   return (
@@ -201,13 +207,46 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             {COMPANY.product.name}
           </span>
           <span className="block truncate text-[16.5px] text-white/45">
-            업무지시 · 확인 · 보고 관리
+            복수 현장 위험관리 · 실증
           </span>
         </span>
       </Link>
 
       <nav className="flex-1 space-y-3 overflow-y-auto px-3 pb-3">
-        {/* 영상 바로가기 — 가장 먼저 눈에 띄게 */}
+        {/* 실증 — 기본 메뉴 (이번 실증에 쓰는 화면만) */}
+        <ul className="space-y-1" aria-label="실증 메뉴">
+          {LAB_LINKS.map((item) => {
+            const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[21px] font-bold transition-colors ${
+                    active ? "bg-primary text-white" : "text-white/85 hover:bg-white/8 hover:text-white"
+                  }`}
+                >
+                  <item.icon size={23} strokeWidth={2.3} />
+                  <span className="flex-1 truncate">{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+
+        <button
+          onClick={() => setLegacyOpen((v) => !v)}
+          aria-expanded={legacyOpen}
+          className="flex w-full items-center justify-between rounded-xl border border-white/10 px-3 py-2 text-[17.5px] font-bold text-white/55 transition-colors hover:text-white/85"
+        >
+          기타 · 기존 기능
+          <ChevronDown size={19} className={`transition-transform ${legacyOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        {legacyOpen && (
+        <>
+        {/* 영상 바로가기 */}
         <div className="rounded-2xl border border-[#f0a3aa]/25 bg-gradient-to-br from-[#e0525e]/22 via-[#e0525e]/8 to-transparent p-1.5">
           <p className="flex items-center gap-1.5 px-2.5 pt-1.5 pb-1 text-[15.5px] font-extrabold tracking-wide text-[#f6b6bc]">
             <PlayCircle size={17} /> 실사 시연 · 영상
@@ -314,26 +353,29 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </div>
           );
         })}
+
+        <div>
+          <p className="mb-1.5 px-3 text-[16.5px] font-bold tracking-wide text-white/35">
+            외부 고객용
+          </p>
+          <Link
+            href="/store"
+            onClick={onNavigate}
+            className="flex items-center gap-2.5 rounded-xl border border-dashed border-white/20 px-3 py-2 text-[20.2px] font-semibold text-white/70 transition-colors hover:border-white/35 hover:bg-white/8 hover:text-white"
+          >
+            <Storefront size={24} />
+            <span className="flex-1 truncate">서비스몰</span>
+          </Link>
+        </div>
+        </>
+        )}
       </nav>
 
-      <div className="shrink-0 px-3 pb-3">
-        <p className="mb-1.5 px-3 text-[16.5px] font-bold tracking-wide text-white/35">
-          외부 고객용
-        </p>
-        <Link
-          href="/store"
-          onClick={onNavigate}
-          className="flex items-center gap-2.5 rounded-xl border border-dashed border-white/20 px-3 py-2 text-[20.2px] font-semibold text-white/70 transition-colors hover:border-white/35 hover:bg-white/8 hover:text-white"
-        >
-          <Storefront size={24} />
-          <span className="flex-1 truncate">서비스몰</span>
-        </Link>
-      </div>
-
+      {legacyOpen && (
       <div className="relative shrink-0 border-t border-white/8 px-4 py-3">
         <p className="mb-2 flex items-center gap-1.5 px-1 text-[17.2px] font-semibold text-white/45">
           <span className="h-[0.45rem] w-[0.45rem] rounded-full bg-success" />
-          {COMPANY.main.base} 본사 · 샘플 데이터
+          기존 기능용 데모 사용자 · 샘플 데이터
         </p>
         <button
           onClick={() => setSwitcher((v) => !v)}
@@ -403,6 +445,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -507,7 +550,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // 브라우저 탭에 현재 화면 이름을 띄운다 — 데모 중 여러 탭을 오갈 때 구분된다
   const screenLabel = useMemo(() => {
     if (isStore) return "서비스 안내";
-    if (pathname === "/") return "오늘";
+    if (pathname === "/today") return "오늘";
     const base = pathname.startsWith("/projects/") ? "/projects" : pathname;
     for (const g of NAV_GROUPS) {
       const hit = g.items.find((i) => i.href === base);
@@ -537,6 +580,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   if (isStore) return <StoreShell>{children}</StoreShell>;
   if (isPilot) return <>{children}</>;
+  // 실증 화면(홈·현장 실증·비교시험·기록) — 데모 권한·데모 역할 전환을 쓰지 않는 간소한 틀 + PC/Mobile/PC+Mobile 보기
+  if (isLabRoute(pathname)) return <LabShell sidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}>{children}</LabShell>;
 
   const meta =
     PAGE_META[pathname] ??
@@ -546,7 +591,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   // 권한 밖 화면은 URL로 직접 들어와도 열리지 않는다
   const baseRoute = pathname.startsWith("/projects/") ? "/projects" : pathname;
-  const allowed = baseRoute === "/" || permission.routes.includes(baseRoute);
+  const allowed = baseRoute === "/today" || permission.routes.includes(permKey(baseRoute));
 
   return (
     <div className="flex min-h-screen">
@@ -670,7 +715,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                           setMenu(false);
                           setDemoStep(0);
                           setDemoMode(!demoMode);
-                          if (!demoMode) router.push("/");
+                          if (!demoMode) router.push("/today");
                         }}
                         className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[20.2px] font-semibold text-ink-2 transition-colors hover:bg-[#f7f8fa]"
                       >
@@ -740,7 +785,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 있습니다.
               </p>
               <Link
-                href="/"
+                href="/today"
                 className="mt-5 inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-primary px-6 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark"
               >
                 오늘의 업무로 돌아가기
@@ -756,12 +801,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           <div className="grid grid-cols-5">
             {[
-              { href: "/", label: "오늘", icon: LayoutDashboard },
+              { href: "/today", label: "오늘", icon: LayoutDashboard },
               { href: "/tasks", label: "업무", icon: ListChecks },
               { href: "/schedule", label: "일정", icon: CalendarDays },
               { href: "/reports", label: "보고", icon: FileBarChart },
             ]
-              .filter((i) => permission.routes.includes(i.href))
+              .filter((i) => permission.routes.includes(permKey(i.href)))
               .map((i) => {
                 const active =
                   i.href === "/"
@@ -815,7 +860,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => {
               resetDemo();
               setResetOpen(false);
-              router.push("/");
+              router.push("/today");
             }}
           >
             초기화하기

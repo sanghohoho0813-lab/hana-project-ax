@@ -40,7 +40,7 @@ export function useGuide() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (window.location.pathname !== "/") return;
+    if (window.location.pathname !== "/today") return;
     if (window.localStorage.getItem(STORAGE_KEY) === "1") return;
     if (window.sessionStorage.getItem(SESSION_KEY) === "1") return;
     const t = setTimeout(() => setOpen(true), 700);
