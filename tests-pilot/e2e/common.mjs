@@ -100,5 +100,44 @@ export async function waitPath(p, suffix, ms = 20000) {
 }
 /** 화면 사진은 PILOT_E2E_OUT 이 있을 때만 남긴다 */
 export async function shot(p, name) {
-  if (process.env.PILOT_E2E_OUT) await p.screenshot({ path: `${process.env.PILOT_E2E_OUT}/${name}.png` });
+  if (process.env.PILOT_E2E_OUT) await p.screenshot({ path: `${process.env.PILOT_E2E_OUT}/${name}.png`, fullPage: true });
 }
+
+/** 다음 30초 구간까지 기다린다 — 같은 인증 코드를 두 번 쓰지 않게 */
+export async function nextTotpWindow() {
+  const ms = 30000 - (Date.now() % 30000) + 1000;
+  await sleep(ms);
+}
+
+/** 관리자 발급 → 최초 관리자 지정 → 화면 로그인 → 2단계 인증 등록까지 */
+export async function adminLogin(bro, name = "김관리") {
+  const email = uniq("admin");
+  await adminApi.auth.admin.createUser({ email, password: PASSWORD, email_confirm: true });
+  psql(`select pilot_private.bootstrap_admin('${email}', '${name}');`);
+  const p = await page(bro);
+  await p.goto(APP + "/pilot/login");
+  await p.fill("input[name=email]", email);
+  await p.fill("input[name=password]", PASSWORD);
+  await p.click('button:has-text("로그인")');
+  await waitPath(p, "/pilot/account/mfa");
+  await p.click('button:has-text("2단계 인증 등록 시작")');
+  await p.waitForSelector('img[alt="2단계 인증 등록 QR 코드"]');
+  const secret = (await p.locator("text=설정 키:").innerText()).replace("설정 키:", "").trim();
+  await p.fill("input[name=code]", totp(secret));
+  await p.click('button:has-text("확인")');
+  await waitPath(p, "/pilot/admin");
+  return { p, email, secret };
+}
+
+/** 관리자 API 세션(aal2) — 화면을 거치지 않는 요청을 흉내 낼 때 */
+export async function adminApiSession(email, secret) {
+  const c = await userClient(email);
+  const { data } = await c.auth.mfa.listFactors();
+  await nextTotpWindow();
+  const { error } = await c.auth.mfa.challengeAndVerify({ factorId: data.totp[0].id, code: totp(secret) });
+  if (error) throw error;
+  return c;
+}
+
+/** 한국 날짜 + n일 */
+export const kstDate = (n = 0) => new Date(Date.now() + 9 * 3600_000 + n * 86400_000).toISOString().slice(0, 10);

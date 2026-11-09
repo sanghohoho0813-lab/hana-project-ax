@@ -251,6 +251,35 @@ export function computeJudgment(
   };
 }
 
+/** 기준시각의 현재 판단 (화면 표시용 — 기록되는 판단은 computeJudgment) */
+export function judgeAt(schedules: ScheduleRow[], events: EventRow[], asOf: string): PipelineResult {
+  return evaluate(buildPipelineInput(schedules, events, asOf));
+}
+
+/**
+ * 지금 이 일정의 직전 일정 — DB(save_schedule)가 이동 출발 현장을 정하는 규칙과 같다.
+ * 같은 작업자·날짜·데이터 구분의 '예정' 일정 중 예정 시작이 더 이른 마지막 일정.
+ */
+export function predecessorOf(s: ScheduleRow, schedules: ScheduleRow[]): ScheduleRow | undefined {
+  return schedules
+    .filter(
+      (o) =>
+        o.assignee_id === s.assignee_id &&
+        o.work_date === s.work_date &&
+        o.data_kind === s.data_kind &&
+        o.status === "예정" &&
+        o.id !== s.id &&
+        o.planned_start < s.planned_start,
+    )
+    .sort((a, b) => (a.planned_start === b.planned_start ? (a.id < b.id ? 1 : -1) : a.planned_start < b.planned_start ? 1 : -1))[0];
+}
+
+/** 이동시간을 넣은 뒤 일정 순서가 바뀌어, 이동 출발 현장이 지금 직전 일정과 다른지 */
+export function travelBasisStale(s: ScheduleRow, schedules: ScheduleRow[]): boolean {
+  if (s.status !== "예정" || s.travel_minutes === null) return false;
+  return (predecessorOf(s, schedules)?.id ?? null) !== s.travel_from_id;
+}
+
 /* ── 현장 화면용 상태 ───────────────────────────────── */
 
 export interface ScheduleProgress {

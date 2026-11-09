@@ -10,6 +10,9 @@ import { FLOW_CONTEXTS, FLOW_STATES, runFlow, EVENTS_STEP2 } from "@/lib/state-s
 import type { StateEvent } from "@/lib/state-events";
 import {
   PILOT_ASSUMPTIONS,
+  judgeAt,
+  predecessorOf,
+  travelBasisStale,
   activeEvents,
   buildPipelineInput,
   computeJudgment,
@@ -24,6 +27,7 @@ import {
 import { kst } from "@/lib/pilot/time";
 import { cell, toCsv } from "@/lib/pilot/csv";
 import { friendlyError } from "@/lib/pilot/errors";
+import { readable } from "@/lib/pilot/display";
 
 /** KST "YYYY-MM-DDTHH:MM" → UTC ISO (DB 에 저장되는 형식) */
 const utc = (kstMinute: string) => new Date(`${kstMinute}:00+09:00`).toISOString();
@@ -203,6 +207,66 @@ describe("내보내기 CSV · 오류 문장", () => {
   });
 });
 
+describe("관리자 일정판 도우미", () => {
+  const base = (id: string, start: string, p: Partial<ScheduleRow> = {}): ScheduleRow => ({
+    id,
+    data_kind: "실제 업무",
+    work_date: "2026-11-09",
+    assignee_id: "w1",
+    site_name: `${id}현장`,
+    region: "",
+    planned_start: `${start}:00`,
+    planned_end: `${start.slice(0, 2)}:50:00`,
+    travel_minutes: null,
+    travel_from_id: null,
+    priority: "보통",
+    status: "예정",
+    version: 1,
+    ...p,
+  });
+
+  it("직전 일정은 DB 규칙과 같다 — 같은 직원·날짜·구분의 예정 일정 중 더 이른 마지막 일정", () => {
+    const list = [base("a", "08:00"), base("b", "10:00"), base("c", "12:00"), base("x", "11:00", { assignee_id: "w2" }), base("y", "11:00", { status: "취소" })];
+    expect(predecessorOf(list[2], list)?.id).toBe("b");
+    expect(predecessorOf(list[0], list)).toBeUndefined();
+    expect(predecessorOf(base("z", "12:00", { data_kind: "검증 시나리오" }), list)).toBeUndefined();
+  });
+
+  it("이동시간을 넣은 뒤 사이에 일정이 생기면 '출발 현장 바뀜'으로 알린다 (일정을 스스로 고치지 않음)", () => {
+    const a = base("a", "08:00");
+    const c = base("c", "12:00", { travel_minutes: 30, travel_from_id: "a" });
+    expect(travelBasisStale(c, [a, c])).toBe(false);
+    const b = base("b", "10:00");
+    expect(travelBasisStale(c, [a, b, c])).toBe(true);
+    expect(c.travel_from_id).toBe("a");
+  });
+
+  it("화면에서는 엔진 문장 속 일정 번호를 현장 이름으로 보여 주되, 원래 결과는 바꾸지 않는다", () => {
+    const id = "3f2a0c4e-1111-4222-8333-944455556666";
+    const a = base("a", "08:00");
+    const x = base(id, "09:00", { status: "취소", site_name: "B2현장" });
+    const c = base("c", "12:00", { travel_minutes: 30, travel_from_id: "a" });
+    const raw = judgeAt([a, x, c], [], utc("2026-11-09T07:00"));
+    const before = JSON.stringify(raw);
+    const link = raw.risk.links.find((l) => l.key === "a>c")!;
+    expect(link.reason).toContain(id);
+    const shown = readable(raw, { [id]: "B2현장" }).risk.links.find((l) => l.key === "a>c")!;
+    expect(shown.reason).toContain("B2현장 취소");
+    expect(shown.reason).not.toContain(id);
+    expect(JSON.stringify(raw)).toBe(before);
+  });
+
+  it("현재 판단은 기록 판단과 같은 파이프라인을 쓴다 — 출발 현장이 바뀐 연결은 판단 보류(R7)", () => {
+    const a = base("a", "08:00");
+    const b = base("b", "10:00");
+    const c = base("c", "12:00", { travel_minutes: 30, travel_from_id: "a" });
+    const r = judgeAt([a, b, c], [], utc("2026-11-09T07:00"));
+    const link = r.risk.links.find((l) => l.key === "b>c")!;
+    expect(link.status).toBe("판단 보류");
+    expect(link.rules).toContain("R7");
+  });
+});
+
 describe("데모와 실증 분리", () => {
   it("실증 코드는 데모 데이터·데모 기준시각 모듈을 가져오지 않는다", () => {
     const FORBIDDEN = /@\/lib\/(store|ops-data|data|company|team|ops-calc|risk-log|demo-tour|risk-scenarios|state-scenarios|videos)["']/;
@@ -231,5 +295,39 @@ describe("데모와 실증 분리", () => {
     });
     expect(files.length).toBeGreaterThan(3);
     expect(bad).toEqual([]);
+  });
+
+  it("데모 화면 부품은 데모 상태를 쓰지 않는 표시 부품만 쓰고, 직원·현장 이름은 늘 실증 값으로 넘긴다", () => {
+    const root = path.resolve(__dirname, "..");
+    const files: string[] = [];
+    const walk = (d: string) =>
+      readdirSync(d).forEach((f) => {
+        const p = path.join(d, f);
+        if (statSync(p).isDirectory()) walk(p);
+        else if (/\.(ts|tsx)$/.test(p)) files.push(p);
+      });
+    walk(path.join(root, "src/app/pilot"));
+    walk(path.join(root, "src/lib/pilot"));
+    const ALLOWED: Record<string, string[]> = {
+      "@/components/ui": [],
+      "@/components/RiskPanel": ["RiskLinkCard"],
+      "@/components/OpsFlowPanels": ["DeviationTable", "PriorityList", "PriorityNote"],
+    };
+    const problems: string[] = [];
+    for (const f of files) {
+      const src = readFileSync(f, "utf8");
+      for (const m of src.matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+"(@\/components\/[^"]+)"/g)) {
+        const mod = m[2];
+        if (!(mod in ALLOWED)) problems.push(`${f}: ${mod}`);
+        else if (ALLOWED[mod].length > 0) {
+          const names = m[1].split(",").map((x) => x.trim().replace(/^type\s+/, "")).filter(Boolean);
+          names.filter((n) => !ALLOWED[mod].includes(n)).forEach((n) => problems.push(`${f}: ${mod}.${n}`));
+        }
+      }
+      // 기본값이 데모 직원 이름(fullName)인 부품은 nameOf 를 꼭 넘긴다
+      for (const m of src.matchAll(/<(RiskLinkCard|DeviationTable)\b[^>]*>/g)) if (!/nameOf=/.test(m[0])) problems.push(`${f}: ${m[1]} nameOf 없음`);
+      for (const m of src.matchAll(/<RiskLinkCard\b[^>]*>/g)) if (!/titleOf=/.test(m[0])) problems.push(`${f}: RiskLinkCard titleOf 없음`);
+    }
+    expect(problems).toEqual([]);
   });
 });
