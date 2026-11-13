@@ -10,6 +10,7 @@ import { enqueue, flushQueue, removeItem, type QueuedEvent } from "@/lib/pilot/q
 import { kst } from "@/lib/pilot/time";
 import { recordEventAction, type EventResult } from "./actions";
 import { getQueue, isStorable, serverSnapshot, setQueue as storeQueue, subscribe } from "./queueStore";
+import { CasePanel, type FieldCase } from "./CasePanel";
 
 export interface FieldStep {
   id: string;
@@ -40,6 +41,10 @@ export interface FieldCard {
   started: boolean;
   ended: boolean;
   steps: FieldStep[];
+  /** 지금 예상 종료 (마지막 예상 종료 보고, 없으면 예정 종료) */
+  currentEnd: string;
+  /** 이 현장의 문제 사건 (본인 담당만) */
+  cases: FieldCase[];
 }
 
 const LABEL: Record<PilotEventKind, string> = {
@@ -53,7 +58,7 @@ const PHASE_TONE: Record<ScheduleProgress["phase"], Tone> = { 예정: "neutral",
 
 type Tap = Pick<QueuedEvent, "kind" | "mode" | "enteredTime" | "expectedEnd" | "voidsEventId">;
 
-export function FieldBoard({ userId, date, today, cards }: { userId: string; date: string; today: string; cards: FieldCard[] }) {
+export function FieldBoard({ userId, date, today, cards, scenario = false }: { userId: string; date: string; today: string; cards: FieldCard[]; scenario?: boolean }) {
   const router = useRouter();
   const queue = useSyncExternalStore(subscribe, () => getQueue(userId), serverSnapshot);
   const storable = queue === serverSnapshot() || isStorable();
@@ -162,13 +167,31 @@ export function FieldBoard({ userId, date, today, cards }: { userId: string; dat
       {cards.length === 0 ? (
         <p className="card px-5 py-6 text-[19px] text-ink-3">이 날짜에 배정된 일정이 없습니다.</p>
       ) : (
-        cards.map((c) => <Card key={c.id} c={c} date={date} today={today} pending={queue.filter((x) => x.scheduleId === c.id)} onTap={(t) => tap(c, t)} />)
+        cards.map((c) => (
+          <Card key={c.id} c={c} date={date} today={today} pending={queue.filter((x) => x.scheduleId === c.id)} onTap={(t) => tap(c, t)} userId={userId} scenario={scenario} />
+        ))
       )}
     </div>
   );
 }
 
-function Card({ c, date, today, pending, onTap }: { c: FieldCard; date: string; today: string; pending: QueuedEvent[]; onTap: (t: Tap) => void }) {
+function Card({
+  c,
+  date,
+  today,
+  pending,
+  onTap,
+  userId,
+  scenario,
+}: {
+  c: FieldCard;
+  date: string;
+  today: string;
+  pending: QueuedEvent[];
+  onTap: (t: Tap) => void;
+  userId: string;
+  scenario: boolean;
+}) {
   const [late, setLate] = useState(false);
   const [fix, setFix] = useState<string | null>(null);
   const live = pending.filter((x) => !x.stopped);
@@ -303,6 +326,14 @@ function Card({ c, date, today, pending, onTap }: { c: FieldCard; date: string; 
           )}
         </div>
       )}
+
+      <CasePanel
+        userId={userId}
+        scenario={scenario}
+        cases={c.cases}
+        canReport={active && isToday}
+        target={{ scheduleId: c.id, siteName: c.siteName, plannedEnd: c.plannedEnd, currentEnd: c.currentEnd, started }}
+      />
     </section>
   );
 }

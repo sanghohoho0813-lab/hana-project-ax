@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { requireField } from "@/lib/pilot/session";
 import { kindParam, loadDay, parseDay } from "@/lib/pilot/board";
-import { progressOf, sourceLabel } from "@/lib/pilot/core";
+import { activeEvents, progressOf, sourceLabel } from "@/lib/pilot/core";
+import { loadCasesOfDay } from "@/lib/pilot/case-data";
+import { AutoRefresh } from "../_ui/AutoRefresh";
 import { hhmm, kst, kstLabel } from "@/lib/pilot/time";
 import { KindBanner } from "../admin/AdminNav";
 import { FieldBoard, type FieldCard } from "./FieldBoard";
@@ -17,7 +19,8 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
   const { date, kind } = parseDay(await searchParams);
   const today = kst(new Date()).date;
   // RLS: 본인 담당 일정과 그 일정의 기록만 읽힌다
-  const day = await loadDay(s.sb, date, kind);
+  const [day, mine] = await Promise.all([loadDay(s.sb, date, kind), loadCasesOfDay(s.sb, date, kind)]);
+  const alive = activeEvents(day.events);
   const titles = Object.fromEntries(day.schedules.map((x) => [x.id, x.site_name]));
   const voidedBy = new Map<string, "정정" | "무효">();
   for (const e of day.events) if (e.voids_event_id) voidedBy.set(e.voids_event_id, e.kind === "기록 무효" ? "무효" : "정정");
@@ -42,6 +45,10 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
         acknowledged: !!p.acknowledged,
         started: !!p.started,
         ended: !!p.ended,
+        currentEnd: hhmm(alive.filter((e) => e.schedule_id === x.id && e.kind === "예상 종료 보고" && e.expected_end).at(-1)?.expected_end) ?? hhmm(x.planned_end)!,
+        cases: mine.cases
+          .filter((c) => c.schedule_id === x.id)
+          .map((c) => ({ c, steps: mine.steps.filter((st) => st.case_id === c.id), photos: mine.photos.filter((ph) => ph.case_id === c.id) })),
         steps: day.events
           .filter((e) => e.schedule_id === x.id && e.kind !== "기록 무효")
           .map((e) => ({
@@ -65,7 +72,9 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
         <h1 className="text-[26px] font-extrabold">
           {date === today ? "오늘" : date} 내 일정 · {s.profile?.display_name}
         </h1>
-        <p className="text-[16px] text-ink-3">기록 시각은 서버 시각으로 저장됩니다 · 지금 {kstLabel(new Date())}</p>
+        <p className="flex flex-wrap items-center gap-2 text-[16px] text-ink-3">
+          기록 시각은 서버 시각으로 저장됩니다 · 지금 {kstLabel(new Date())} <AutoRefresh seconds={15} label="본사 조치 확인" />
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-[17px]">
         <Link href={q(shift(date, -1))} className="rounded-xl bg-white px-3 py-1.5 font-semibold text-ink-2">
@@ -87,7 +96,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
       <KindBanner kind={kind} />
-      <FieldBoard userId={s.userId} date={date} today={today} cards={cards} />
+      <FieldBoard userId={s.userId} date={date} today={today} cards={cards} scenario={kind !== "실제 업무"} />
     </div>
   );
 }

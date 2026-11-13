@@ -1,4 +1,4 @@
-const TAG = /\[(권한|입력|중복|충돌|설정|서명|기록 보호)\]/;
+const TAG = /\[(권한|입력|중복|충돌|순서|설정|서명|기록 보호)\]/;
 
 /** 다시 보내도 결과가 같은 오류(권한·입력 검사 등)인지 — 아니면 연결 문제일 수 있어 같은 요청 번호로 다시 보낼 수 있다 */
 export function isFinalError(message: string | undefined | null): boolean {
@@ -8,7 +8,7 @@ export function isFinalError(message: string | undefined | null): boolean {
 /** DB 함수 오류([권한]·[입력]·[중복]·[충돌] …)를 화면 문장으로 — 그 밖의 오류는 원문을 숨기고 일반 문장으로 */
 export function friendlyError(message: string | undefined | null): string {
   const m = message ?? "";
-  const tagged = m.match(/\[(권한|입력|중복|충돌|설정|서명|기록 보호)\][^\n]*/);
+  const tagged = m.match(/\[(권한|입력|중복|충돌|순서|설정|서명|기록 보호)\][^\n]*/);
   if (tagged) return tagged[0];
   if (/Invalid login credentials/i.test(m)) return "이메일 또는 비밀번호가 맞지 않습니다.";
   if (/Email not confirmed/i.test(m)) return "이메일 확인이 끝나지 않은 계정입니다. 초대 메일의 링크를 먼저 눌러 주세요.";

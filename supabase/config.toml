@@ -114,9 +114,10 @@ port = 54324
 # sender_name = "Admin"
 
 [storage]
-enabled = false
+# 현장 사진 · 안전점검 사진 (비공개 버킷 — 접근은 storage.objects RLS 로 제한)
+enabled = true
 # The maximum file size allowed (e.g. "5MB", "500KB").
-file_size_limit = "50MiB"
+file_size_limit = "10MiB"
 
 # Uncomment to configure local storage buckets
 # [storage.buckets.images]
@@ -146,7 +147,7 @@ max_catalogs = 2
 
 # Store vector embeddings in S3 for large and durable datasets
 [storage.vector]
-enabled = true
+enabled = false
 max_buckets = 10
 max_indexes = 5
 

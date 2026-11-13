@@ -25,6 +25,11 @@ export function pilotConfig(): PilotPublicConfig | null {
 
 /** 프로그램 버전 — 판단 기록·내보내기에 남긴다 */
 export function appVersion(): string {
-  const commit = process.env.VERCEL_GIT_COMMIT_SHA || process.env.PILOT_APP_COMMIT || "커밋 미상";
-  return `${pkg.name}@${pkg.version}+${commit.slice(0, 12)}`;
+  // 1) Vercel 배포 커밋 2) 빌드할 때 next.config.ts 가 정한 버전(package 버전 + 커밋, 커밋 안 한 수정이 있으면 '.수정중') 3) 수동 지정
+  const vercel = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (vercel) return `${pkg.name}@${pkg.version}+${vercel.slice(0, 12)}`;
+  const built = process.env.NEXT_PUBLIC_APP_VERSION;
+  if (built && built !== "dev") return `${pkg.name}@${built}`;
+  const commit = process.env.PILOT_APP_COMMIT;
+  return `${pkg.name}@${pkg.version}+${commit ? commit.slice(0, 12) : "커밋 미상"}`;
 }

@@ -4,6 +4,7 @@ import { kindParam } from "@/lib/pilot/board";
 
 const TABS = [
   { key: "board", href: "/pilot/admin", label: "일정판" },
+  { key: "cases", href: "/pilot/admin/cases", label: "현장 문제·지원" },
   { key: "records", href: "/pilot/admin/records", label: "기록·판단 이력" },
   { key: "staff", href: "/pilot/admin/staff", label: "계정" },
 ] as const;

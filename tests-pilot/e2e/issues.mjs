@@ -214,7 +214,7 @@ await p.locator('article[aria-label="시험 증거 기록"]').waitFor();
 const evText = await p.locator('article[aria-label="시험 증거 기록"]').innerText();
 for (const h of ["1. 시험번호 · 날짜", "2. 프로그램 버전", "3. 현장 문제 원자료 · 출처", "4. 입력값", "5. 엔진 처리 과정 · 결과", "6. 관리자 조치", "7. 조치 전후 변화", "8. 실제 측정 시간", "9. 발견 문제 · 수정사항", "10. 참여자 실제 피드백", "11. 예상 대비 결과"]) check(evText.includes(h), `E1 증거 기록 항목: ${h}`);
 check(evText.includes("컨설턴트 진행") && evText.includes("보고 전 0 → 보고 후 1 → 관리자 조치 후 0") && evText.includes("5분 (가상)") && evText.includes("예상대로"), "E1 증거 기록 내용: 시험 방식 · 조치 전후 · 측정 시간(가상) · 예상 대비");
-check(/세트를 만든 버전 0\.2\.0\+[0-9a-f]{7}/.test(evText), "E1 프로그램 버전 기록 (package 버전 + 커밋)", evText.match(/세트를 만든 버전 [^ ]+/)?.[0]);
+check(/세트를 만든 버전 \d+\.\d+\.\d+\+[0-9a-f]{7}/.test(evText), "E1 프로그램 버전 기록 (package 버전 + 커밋)", evText.match(/세트를 만든 버전 [^ ]+/)?.[0]);
 await shot(p, "issue_3_evidence");
 await p.goto(`${APP}/records`);
 const [dl] = await Promise.all([p.waitForEvent("download"), p.click('button:has-text("현장 문제·지원 요청")')]);
