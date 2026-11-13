@@ -45,7 +45,7 @@ export default function RecordsPage() {
             </button>
           ))}
         </div>
-        <p className="text-[14.5px] text-ink-3">모든 CSV 에 데이터 구분(실제 업무·사후 재현·가상 시나리오)과 입력자·정보 제공자·자료 출처가 들어갑니다. 전체 원자료는 JSON 백업입니다.</p>
+        <p className="text-[14.5px] text-ink-3">모든 CSV 에 데이터 구분(실제 업무·사후 재현·가상 시나리오)과 입력자·정보 제공자·자료 출처가 들어갑니다. 현장 문제 CSV 에는 발견·보고·지원 결정·해결 시각과 근거, 소요시간 품질(실측·원자료·진술·추정·가상), 조치 전후 위험이 들어갑니다. 전체 원자료는 JSON 백업입니다.</p>
       </section>
 
       <section className="card space-y-2 p-4" aria-label="결과보고서">
@@ -96,10 +96,10 @@ function Sessions({ s }: { s: LabState }) {
   return (
     <section className="card overflow-x-auto p-4" aria-label="실증 세트와 회차">
       <h2 className="mb-2 text-[20px] font-extrabold">실증 세트·회차 ({s.sessions.length})</h2>
-      <table className="w-full min-w-[52rem] text-[15.5px]">
+      <table className="w-full min-w-[62rem] text-[15.5px]">
         <thead className="text-[14px] text-ink-3">
           <tr>
-            {["세트", "구분", "이름", "현장 업무", "핵심 참여자", "만든 날 · 회차", "반복", "출처", "일정", "작업 기록"].map((h) => (
+            {["세트", "구분", "이름", "시험 방식", "현장 업무", "핵심 참여자", "만든 날 · 회차", "반복", "출처", "일정", "작업 기록", "현장 문제", "증거"].map((h) => (
               <th key={h} className="py-1 pr-2 text-left font-semibold whitespace-nowrap">
                 {h}
               </th>
@@ -114,6 +114,7 @@ function Sessions({ s }: { s: LabState }) {
                 <KindBadge kind={x.kind} />
               </td>
               <td className="py-1.5 pr-2">{x.title}</td>
+              <td className={`py-1.5 pr-2 ${x.testMode ? "" : "text-warning"}`}>{x.testMode ?? "미지정"}</td>
               <td className="py-1.5 pr-2">{x.workDate}</td>
               <td className="py-1.5 pr-2">{personName(s, x.participantId)}</td>
               <td className="py-1.5 pr-2 whitespace-nowrap">
@@ -126,6 +127,12 @@ function Sessions({ s }: { s: LabState }) {
               </td>
               <td className="py-1.5 pr-2">{currentSchedules(s, x.id).length}</td>
               <td className="py-1.5 pr-2">{sessionEvents(s, x.id).length}</td>
+              <td className="py-1.5 pr-2">{s.issues.filter((i) => i.sessionId === x.id).length}</td>
+              <td className="py-1.5 pr-2">
+                <Link href={`/records/evidence?s=${x.id}`} className="font-bold whitespace-nowrap text-primary-dark underline">
+                  증거 기록
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>

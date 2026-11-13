@@ -54,7 +54,13 @@ export default function ReportPage() {
             {r.counts.trialsByType["실제 현장정보 재현"]}) · 무효 {r.counts.voidedTrials}회 제외
           </p>
           <p className="text-[16px]">
-            현장 실증 세트 {r.counts.sessions}개 (실제 업무 {r.counts.sessionsByKind["실제 업무"]} · 사후 재현 {r.counts.sessionsByKind["사후 재현"]} · 가상 시나리오 {r.counts.sessionsByKind["가상 시나리오"]}) · 작업 기록 {r.counts.events}건 · 위험 판단 {r.counts.judgments}건
+            현장 실증 세트 {r.counts.sessions}개 (실제 업무 {r.counts.sessionsByKind["실제 업무"]} · 사후 재현 {r.counts.sessionsByKind["사후 재현"]} · 가상 시나리오 {r.counts.sessionsByKind["가상 시나리오"]}) · 작업 기록 {r.counts.events}건 · 위험 판단 {r.counts.judgments}건 · 현장 문제 보고 {r.counts.issues}건
+          </p>
+          <p className="text-[16px]">
+            시험 방식:{" "}
+            {Object.entries(r.counts.testModes)
+              .map(([k, v]) => `${k} 세트 ${v.sessions}·측정 ${v.trials}`)
+              .join(" / ")}
           </p>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[40rem] text-[15px]">
@@ -92,16 +98,116 @@ export default function ReportPage() {
           <p className="text-[15px] text-ink-3">수기 방식 측정 {r.before.manualTrials}회 — 결과는 ④ 표</p>
         </section>
 
-        <section className="space-y-1.5">
-          <h2 className={h2}>③ AX 적용 후 실제 측정 결과</h2>
+        <section className="space-y-2">
+          <h2 className={h2}>③ AX 적용 후 결과 — 실측 · 현장정보 재현 · 가상 시나리오를 나눔</h2>
           <p className="text-[16px]">AX 방식 비교시험 {r.measured.ax}회</p>
-          <ul className="text-[16px]">
-            {Object.entries(r.measured.field).map(([k, v]) => (
-              <li key={k}>
-                · 현장 실증({k}): 세트 {v.sessions} · 작업 기록 {v.events} · 판단 {v.judgments} · 프로그램이 새로 표시한 위험 {v.newRisks}건 <span className="text-ink-3">(계산값)</span>
-              </li>
-            ))}
-          </ul>
+          {(Object.keys(r.measured.field) as (keyof typeof r.measured.field)[]).map((k, i) => {
+            const v = r.measured.field[k];
+            const iss = r.issues.byKind[k];
+            return (
+              <div key={k} className={`space-y-1 rounded-2xl p-3 ${k === "실제 업무" ? "bg-[#e8f1fe]/50" : k === "사후 재현" ? "bg-[#fdf3e0]/60" : "border-2 border-dashed border-[#7c3aed]/30 bg-[#faf7ff]"}`}>
+                <h3 className="text-[17px] font-bold">
+                  ③-{i + 1} {iss.section} ({k})
+                </h3>
+                <p className="text-[15.5px]">
+                  세트 {v.sessions} · 작업 기록 {v.events} · 판단 {v.judgments} · 프로그램이 새로 표시한 위험 {v.newRisks}건 <span className="text-ink-3">(계산값)</span>
+                </p>
+                <p className="text-[15.5px]">
+                  현장 문제 보고 {iss.count}건 · 예상 종료 엔진 전달 {iss.toEngine}건 · 해결 {iss.resolved}건
+                </p>
+                {iss.count > 0 && (
+                  <table className="w-full text-[14.5px] tabular-nums">
+                    <thead className="text-ink-3">
+                      <tr>
+                        <th className="py-0.5 pr-2 text-left font-semibold">소요시간(분)</th>
+                        <th className="py-0.5 pr-2 text-left font-semibold">값</th>
+                        <th className="py-0.5 pr-2 text-left font-semibold">시각 근거</th>
+                        <th className="py-0.5 text-left font-semibold">시각 모름</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {iss.spans.map((x) => (
+                        <tr key={x.key} className="border-t border-line/70">
+                          <td className="py-0.5 pr-2">{x.label}</td>
+                          <td className="py-0.5 pr-2">{fmt(x.stat)}</td>
+                          <td className="py-0.5 pr-2">
+                            {Object.entries(x.qualities)
+                              .map(([q, c]) => `${q} ${c}`)
+                              .join(", ") || "-"}
+                          </td>
+                          <td className="py-0.5">{x.missing}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })}
+          {r.issues.rows.length > 0 && (
+            <div className="overflow-x-auto">
+              <h3 className="text-[17px] font-bold">현장 문제별 관리자 조치 전후 (계산값)</h3>
+              <table className="w-full min-w-[44rem] text-[14.5px] tabular-nums">
+                <thead className="text-ink-3">
+                  <tr>
+                    {["문제", "세트·구분", "시험 방식", "유형", "상태", "위험 연결 보고 전→후→조치 후", "최대 지연(분) 보고 후→조치 후"].map((h) => (
+                      <th key={h} className="py-0.5 pr-2 text-left font-semibold">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.issues.rows.map((x) => (
+                    <tr key={x.no} className="border-t border-line">
+                      <td className="py-0.5 pr-2">#{x.no}</td>
+                      <td className="py-0.5 pr-2">
+                        {x.set} · {x.kind}
+                      </td>
+                      <td className="py-0.5 pr-2">{x.testMode}</td>
+                      <td className="py-0.5 pr-2">{x.type}</td>
+                      <td className="py-0.5 pr-2">{x.status}</td>
+                      <td className="py-0.5 pr-2">
+                        {x.riskBefore ?? "-"}→{x.riskReported ?? "-"}→{x.riskAfter ?? "-"}
+                      </td>
+                      <td className="py-0.5">
+                        {x.delayReported ?? "-"}→{x.delayAfter ?? "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {r.issues.scenarios.length > 0 && (
+            <div>
+              <h3 className="text-[17px] font-bold">시험 시나리오 정답(손 계산) 대비 엔진 결과 — 예상과 달라도 그대로 기록</h3>
+              <ul className="text-[15px]">
+                {r.issues.scenarios.map((x) => (
+                  <li key={x.set}>
+                    · 세트 {x.set} {x.id} {x.name} ({x.testMode}): 정답 위험 {x.expected ?? "-"} · 엔진 {x.got ?? "보고 없음"} · {x.outcomes.map((o) => `${o.match}${o.text ? `: ${o.text}` : ""}`).join(" / ") || "예상 대비 기록 없음"}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(r.issues.estimates.length > 0 || r.estimatedTrials.length > 0) && (
+            <div>
+              <h3 className="text-[17px] font-bold">추정 값 (기억에 의함 — 통계·비교에 넣지 않음)</h3>
+              <ul className="text-[15px]">
+                {r.issues.estimates.map((x, i) => (
+                  <li key={`i${i}`}>
+                    · 현장 문제 #{x.no} ({x.kind}) {x.label}: {x.minutes}분 (추정)
+                  </li>
+                ))}
+                {r.estimatedTrials.map((x) => (
+                  <li key={`t${x.no}`}>
+                    · 비교시험 측정 #{x.no} ({x.method} · {x.scenario}): 위험 발견 {x.t1Sec ?? "-"}초 · 재판단 {x.t2Sec ?? "-"}초 (추정)
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <section className="space-y-1.5">
@@ -148,6 +254,16 @@ export default function ReportPage() {
             {r.feedback.map((f) => (
               <li key={f.no}>
                 · {f.speaker} ({f.confirmation}): {f.text}
+              </li>
+            ))}
+          </ul>
+          <h3 className="pt-1 text-[17px] font-bold">의견으로 바뀐 요구사항·프로그램 (날짜·내용)</h3>
+          {r.devLinks.length === 0 && <p className="text-[16px] text-ink-3">(기록 없음)</p>}
+          <ul className="text-[16px]">
+            {r.devLinks.map((d, i) => (
+              <li key={i}>
+                · {d.date} {d.kind}
+                {d.version && ` (버전 ${d.version})`}: {d.text} <span className="text-ink-3">— 근거: 기록 #{d.note} {d.speaker} &ldquo;{d.noteText}&rdquo;</span>
               </li>
             ))}
           </ul>

@@ -38,6 +38,7 @@ const TITLE: Record<string, string> = {
   "/compare": "전후 비교시험",
   "/records": "실증 기록·내보내기",
   "/records/report": "결과보고서 정리",
+  "/records/evidence": "시험 증거 기록",
 };
 
 export type DeviceMode = "pc" | "mobile" | "both";

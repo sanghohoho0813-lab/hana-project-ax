@@ -1,21 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { CopyPlus, FolderPlus, Upload } from "lucide-react";
+import { AlertTriangle, CopyPlus, FolderPlus, Upload } from "lucide-react";
 import {
+  addOutcome,
   createSession,
   currentSchedules,
   KIND_DESC,
   LAB_KINDS,
+  OUTCOME_MATCH,
   personName,
   repeatNo,
   repeatSession,
   sessionRound,
   setClock,
+  setTestMode,
   SOURCES,
+  TEST_MODES,
   type LabKind,
+  type LabState,
+  type Session,
+  type TestMode,
 } from "@/lib/lab/model";
 import { loadTrialScenario, TRIAL_SCENARIOS } from "@/lib/lab/trialData";
+import { ISSUE_SCENARIOS, issueScenarioOf, loadIssueScenario } from "@/lib/lab/issueScenarios";
 import { kst } from "@/lib/pilot/time";
 import { useOperator } from "./LabShell";
 import { KindBadge, MsgBox, btnGhost, btnPrimary, inputSm, labelSm, sessionLabel, useAct, useCurrentSession } from "./common";
@@ -25,7 +33,7 @@ export function SessionBar({ compact = false }: { compact?: boolean }) {
   const [session, setSession, state] = useCurrentSession();
   const op = useOperator();
   const { msg, act } = useAct();
-  const [panel, setPanel] = useState<"none" | "new" | "trial">("none");
+  const [panel, setPanel] = useState<"none" | "new" | "trial" | "issue">("none");
   if (!state) return null;
 
   if (compact) {
@@ -40,7 +48,9 @@ export function SessionBar({ compact = false }: { compact?: boolean }) {
         <p className="text-[14.5px] text-ink-3">
           현장 업무 {session.workDate}
           {session.clock ? ` · 판단 기준 ${session.clock} (가정값)` : " · 판단 기준 지금"}
+          {session.testMode && ` · ${session.testMode}`}
         </p>
+        {session.scenarioId && <ScenarioCard id={session.scenarioId} compact />}
       </div>
     ) : (
       <p className="card px-4 py-3 text-[16.5px] text-ink-3">실증 세트가 없습니다. PC 화면의 &lsquo;새 세트&rsquo;에서 먼저 만드세요.</p>
@@ -74,18 +84,26 @@ export function SessionBar({ compact = false }: { compact?: boolean }) {
           <button
             className={btnGhost}
             onClick={() => {
-              const id = act((s, c) => {
-                const r = repeatSession(s, session.id, op, c);
-                return { state: r.state, value: r.id };
-              }, "같은 일정으로 반복 회차를 만들었습니다 (작업 기록은 비어 있음).");
+              const id = session.scenarioId
+                ? act((s, c) => {
+                    const r = loadIssueScenario(s, session.scenarioId!, op, session.participantId, c, { testMode: session.testMode, basedOn: session.basedOn ?? session.id });
+                    return { state: r.state, value: r.sessionId };
+                  }, "같은 현장 문제 시나리오로 반복 회차를 만들었습니다 (시작 상태부터).")
+                : act((s, c) => {
+                    const r = repeatSession(s, session.id, op, c);
+                    return { state: r.state, value: r.id };
+                  }, "같은 일정으로 반복 회차를 만들었습니다 (작업 기록은 비어 있음).");
               if (id) setSession(id);
             }}
           >
-            <CopyPlus size={18} /> 같은 일정으로 반복
+            <CopyPlus size={18} /> {session.scenarioId ? "같은 시나리오로 반복" : "같은 일정으로 반복"}
           </button>
         )}
         <button className={btnGhost} onClick={() => setPanel(panel === "trial" ? "none" : "trial")}>
           <Upload size={18} /> 비교시험 시나리오 불러오기
+        </button>
+        <button className={btnGhost} onClick={() => setPanel(panel === "issue" ? "none" : "issue")}>
+          <AlertTriangle size={18} /> 현장 문제 시나리오
         </button>
       </div>
 
@@ -102,6 +120,22 @@ export function SessionBar({ compact = false }: { compact?: boolean }) {
             {session.sourceRef && ` (${session.sourceRef})`}
           </span>
           <span>일정 {currentSchedules(state, session.id).length}건</span>
+          <label className="inline-flex items-center gap-1.5">
+            시험 방식
+            <select
+              aria-label="시험 방식"
+              value={session.testMode ?? ""}
+              onChange={(e) => e.target.value && act((s, c) => ({ state: setTestMode(s, session.id, e.target.value as TestMode, op, c), value: null }), `시험 방식을 '${e.target.value}'(으)로 기록했습니다 (변경 이력 남음).`)}
+              className={`rounded-lg border bg-white px-2 py-1 text-[15.5px] ${session.testMode ? "border-line" : "border-warning font-bold text-warning"}`}
+            >
+              <option value="" disabled>
+                미지정 — 고르세요
+              </option>
+              {TEST_MODES.map((m) => (
+                <option key={m}>{m}</option>
+              ))}
+            </select>
+          </label>
           {session.kind === "실제 업무" ? (
             <span className="font-semibold text-[#1b64da]">판단 기준: 실제 현재 시각</span>
           ) : (
@@ -123,8 +157,37 @@ export function SessionBar({ compact = false }: { compact?: boolean }) {
         </div>
       )}
       <MsgBox msg={msg} />
+      {session?.scenarioId && <ScenarioCard id={session.scenarioId} />}
+      {session && (session.scenarioId || session.outcomes.length > 0) && <Outcomes s={state} session={session} />}
 
       {panel === "new" && <NewSession onDone={(id) => (setSession(id), setPanel("none"))} />}
+      {panel === "issue" && (
+        <div className="space-y-2 rounded-2xl border border-line p-3">
+          <p className="text-[15.5px] text-ink-2">
+            2026-11-13 구본석 이사 인터뷰의 문제 유형을 바탕으로 만든 <b>가상 시나리오</b>입니다. 일정 A·B·C와 A현장 작업 시작(09:00)까지만 들어가고, 문제 보고·관리자 조치는 참여자가 화면에서 직접 입력합니다. 시각·작업시간·이동시간은 시험용 가정값입니다 (실제 발생빈도·실제 효과 아님).
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {ISSUE_SCENARIOS.map((t) => (
+              <button
+                key={t.id}
+                className={btnGhost}
+                onClick={() => {
+                  const id = act((s, c) => {
+                    const r = loadIssueScenario(s, t.id, op, session?.participantId ?? "p-koo", c, { testMode: null });
+                    return { state: r.state, value: r.sessionId };
+                  }, `현장 문제 시나리오 ${t.id} ${t.name}를 가상 시나리오 세트로 불러왔습니다 — 시험 방식을 고르세요.`);
+                  if (id) {
+                    setSession(id);
+                    setPanel("none");
+                  }
+                }}
+              >
+                {t.id} {t.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {panel === "trial" && (
         <div className="rounded-2xl border border-line p-3">
           <p className="mb-2 text-[15.5px] text-ink-2">
@@ -162,6 +225,7 @@ function NewSession({ onDone }: { onDone: (id: string) => void }) {
   const { msg, act } = useAct();
   const today = kst(new Date()).date;
   const [kind, setKind] = useState<LabKind>("사후 재현");
+  const [mode, setMode] = useState<TestMode | null>(null);
   if (!state) return null;
   const people = state.people.filter((p) => p.role !== "시험용 가상 기사");
   return (
@@ -186,6 +250,7 @@ function NewSession({ onDone }: { onDone: (id: string) => void }) {
                 clock: g("clock") || null,
                 note: g("note"),
                 createdBy: op,
+                testMode: mode,
               },
               c,
             );
@@ -208,6 +273,14 @@ function NewSession({ onDone }: { onDone: (id: string) => void }) {
           >
             <KindBadge kind={k} big />
             <span className="mt-1 block text-[14.5px] text-ink-2">{KIND_DESC[k]}</span>
+          </button>
+        ))}
+      </div>
+      <div role="radiogroup" aria-label="시험 방식" className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[15.5px] font-semibold text-ink-2">시험 방식</span>
+        {TEST_MODES.map((m) => (
+          <button type="button" key={m} role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={`rounded-xl px-3 py-2 text-[15.5px] font-bold ${mode === m ? "bg-ink text-white" : "bg-[#f2f4f6] text-ink-2"}`}>
+            {m}
           </button>
         ))}
       </div>
@@ -268,5 +341,80 @@ function NewSession({ onDone }: { onDone: (id: string) => void }) {
       <MsgBox msg={msg} />
       <button className={btnPrimary}>세트 만들기</button>
     </form>
+  );
+}
+
+/** 현장 문제 시나리오 카드 — 참여자가 입력할 상황. 정답은 진행요원이 눌러야 보인다 */
+function ScenarioCard({ id, compact = false }: { id: string; compact?: boolean }) {
+  const sc = issueScenarioOf(id);
+  const [open, setOpen] = useState(!compact);
+  const [answer, setAnswer] = useState(false);
+  if (!sc) return null;
+  return (
+    <div className={`rounded-2xl border-2 border-dashed border-[#7c3aed]/40 bg-[#faf7ff] ${compact ? "px-3 py-2" : "px-4 py-3"}`} aria-label="시나리오 카드">
+      <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="w-full text-left text-[15.5px] font-extrabold text-[#5b21b6]">
+        시나리오 카드 {sc.id} · {sc.name} (가상 · 시험용 가정값) {open ? "▲" : "▼"}
+      </button>
+      {open && (
+        <>
+          <ol className="mt-1 space-y-0.5 text-[15px] text-ink-2">
+            {sc.card.map((l) => (
+              <li key={l}>· {l}</li>
+            ))}
+          </ol>
+          {!compact && (
+            <>
+              <p className="mt-1 text-[13.5px] text-ink-3">근거: {sc.basis}</p>
+              <button onClick={() => setAnswer((v) => !v)} className="mt-1 text-[14.5px] font-bold text-[#5b21b6] underline">
+                {answer ? "정답 숨기기" : "정답 보기 (진행요원)"}
+              </button>
+              {answer && (
+                <ul className="mt-1 space-y-0.5 text-[14.5px]">
+                  {sc.answer.map((a) => (
+                    <li key={a.label}>
+                      <b>{a.label}</b>: 위험 연결 {a.risks}건 · A→B {a.links["A>B"]} · B→C {a.links["B>C"]}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 이번 회차 결과가 예상(정답표)과 같았는지 — 달라도 지우지 않고 남긴다 */
+function Outcomes({ s, session }: { s: LabState; session: Session }) {
+  const op = useOperator();
+  const { msg, act } = useAct();
+  const [text, setText] = useState("");
+  return (
+    <div className="space-y-1.5 rounded-2xl bg-[#f7f8fa] px-3.5 py-2.5" aria-label="예상 대비 결과">
+      <p className="text-[15.5px] font-bold">이번 회차 결과가 예상과 같았나요? (예상과 달라도 그대로 남깁니다)</p>
+      {session.outcomes.map((o, i) => (
+        <p key={i} className="text-[14.5px] text-ink-2">
+          · {o.match}
+          {o.text && ` — ${o.text}`} <span className="text-ink-3">({personName(s, o.by)} · {kst(o.at).time} · {o.appVersion ?? "버전 기록 없음"})</span>
+        </p>
+      ))}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="달랐다면 어떻게 달랐는지" aria-label="예상과 다른 내용" className="min-w-[12rem] flex-1 rounded-xl border border-line bg-white px-3 py-2 text-[16px]" />
+        {OUTCOME_MATCH.map((m) => (
+          <button
+            key={m}
+            className="rounded-xl bg-white px-3 py-2 text-[15px] font-bold text-ink-2 shadow-[var(--shadow-card)]"
+            onClick={() => {
+              const ok = act((st, c) => ({ state: addOutcome(st, session.id, { match: m, text }, op, c), value: true }), `'${m}'으로 기록했습니다.`);
+              if (ok) setText("");
+            }}
+          >
+            {m}
+          </button>
+        ))}
+      </div>
+      <MsgBox msg={msg} />
+    </div>
   );
 }

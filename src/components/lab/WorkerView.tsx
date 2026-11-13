@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Clock, PlayCircle, StopCircle, UserRound } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, PlayCircle, StopCircle, UserRound } from "lucide-react";
 import { Badge, type Tone } from "@/components/ui";
 import { usePref } from "@/lib/lab/store";
 import { newOpId } from "@/lib/pilot/op-id";
@@ -24,6 +24,7 @@ import {
 } from "@/lib/lab/model";
 import { ProvenanceBar, useProvenance } from "./Provenance";
 import { MsgBox, useAct } from "./common";
+import { IssueReportSheet, WorkerIssues } from "./Issues";
 
 const LABEL: Record<PilotEventKind, string> = { "업무 확인": "업무 확인", 작업개시: "작업 시작", "예상 종료 보고": "예상 종료", 작업종료: "작업 종료", "기록 무효": "기록 무효" };
 const PHASE_TONE: Record<Phase, Tone> = { 예정: "neutral", 확인함: "info", "작업 중": "warning", "작업 종료": "success", 취소: "neutral" };
@@ -92,8 +93,9 @@ export function WorkerView({ s, session }: { s: LabState; session: Session }) {
 
 function Card({ s, session, x, notes }: { s: LabState; session: Session; x: Snap; notes: string[] }) {
   const [prov] = useProvenance(session);
-  const { msg, act } = useAct();
+  const { msg, setMsg, act } = useAct();
   const [sheet, setSheet] = useState<Sheet>(null);
+  const [reporting, setReporting] = useState(false);
   // 기록 직후 잠깐은 버튼을 받지 않는다 — 두 번 누른 두 번째 손가락이 바뀐 화면의 다른 버튼을 누르지 않게
   const [cool, setCool] = useState(false);
   const cooling = () => cool;
@@ -139,7 +141,10 @@ function Card({ s, session, x, notes }: { s: LabState; session: Session; x: Snap
   };
 
   const open = (s: NonNullable<Sheet>) => {
-    if (!cooling()) setSheet(s);
+    if (!cooling()) {
+      setReporting(false);
+      setSheet(s);
+    }
   };
 
   const tap = (kind: PilotEventKind) => {
@@ -193,8 +198,23 @@ function Card({ s, session, x, notes }: { s: LabState; session: Session; x: Snap
         </p>
       ))}
       <MsgBox msg={msg} />
+      <WorkerIssues s={s} session={session} x={x} onMsg={(text) => setMsg({ ok: true, text })} />
 
-      {sheet ? (
+      {reporting ? (
+        <IssueReportSheet
+          s={s}
+          session={session}
+          x={x}
+          started={!!p.start}
+          onCancel={() => setReporting(false)}
+          onDone={(text) => {
+            setReporting(false);
+            setMsg({ ok: true, text });
+            setCool(true);
+            window.setTimeout(() => setCool(false), 450);
+          }}
+        />
+      ) : sheet ? (
         <TimeSheet
           session={session}
           x={x}
@@ -232,6 +252,16 @@ function Card({ s, session, x, notes }: { s: LabState; session: Session; x: Snap
                 시각을 놓쳤어요 (직접 입력)
               </button>
             )}
+            <button
+              onClick={() => {
+                if (cooling()) return;
+                setSheet(null);
+                setReporting(true);
+              }}
+              className="flex min-h-[3.6rem] w-full items-center justify-center gap-2 rounded-2xl border-2 border-danger/50 bg-white text-[19px] font-extrabold text-danger active:scale-[0.99]"
+            >
+              <AlertTriangle size={24} /> 현장 문제 보고 · 지원 요청
+            </button>
           </div>
         )
       )}

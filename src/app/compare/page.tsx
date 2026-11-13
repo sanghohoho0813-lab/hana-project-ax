@@ -7,6 +7,10 @@ import {
   addNote,
   addTrial,
   CONFIRMATION,
+  DEV_LINK_KINDS,
+  linkNoteChange,
+  TEST_MODES,
+  VALUE_BASES,
   editNote,
   editTrial,
   FOLLOW_UP,
@@ -23,6 +27,8 @@ import {
   type TrialValues,
 } from "@/lib/lab/model";
 import { pairKeyOf, TRIAL_SCENARIOS } from "@/lib/lab/trialData";
+import { ISSUE_SCENARIOS, issueScenarioOf, keyRisks } from "@/lib/lab/issueScenarios";
+import { APP_VERSION } from "@/lib/lab/version";
 import { buildReport } from "@/lib/lab/report";
 import { kst } from "@/lib/pilot/time";
 import { LabAlerts } from "@/components/lab/LabAlerts";
@@ -95,6 +101,9 @@ const blank = (op: string, participant: string): TrialValues => ({
   issues: "",
   confirmedByParticipant: false,
   note: "",
+  testMode: null,
+  valueBasis: "시험 실측",
+  sessionId: null,
 });
 
 const num = (v: string) => (v.trim() === "" ? null : Number(v));
@@ -107,6 +116,8 @@ function MeasureForm({ s, initialId, onDone }: { s: LabState; initialId?: string
   const set = (p: Partial<TrialValues>) => setV((x) => ({ ...x, ...p }));
   const people = s.people.filter((p) => p.role !== "시험용 가상 기사");
   const trial = TRIAL_SCENARIOS.find((t) => t.id === v.scenario);
+  const issueSc = issueScenarioOf(v.scenario);
+  const answer = trial ? trial.risks : issueSc ? keyRisks(issueSc) : null;
 
   return (
     <section className="card space-y-3 p-4" aria-label="측정 입력">
@@ -163,7 +174,8 @@ function MeasureForm({ s, initialId, onDone }: { s: LabState; initialId?: string
             value={v.scenario}
             onChange={(e) => {
               const sc = e.target.value;
-              set({ scenario: sc, pairKey: pairKeyOf(sc) || v.pairKey, scenarioType: TRIAL_SCENARIOS.some((t) => t.id === sc) ? "가상 시나리오" : v.scenarioType });
+              const iss = issueScenarioOf(sc);
+              set({ scenario: sc, pairKey: iss ? `현장 문제 ${iss.id} ${iss.name}` : pairKeyOf(sc) || v.pairKey, scenarioType: TRIAL_SCENARIOS.some((t) => t.id === sc) || iss ? "가상 시나리오" : v.scenarioType });
             }}
             placeholder="A1~B5 또는 세트 이름"
             className={inputSm}
@@ -172,6 +184,11 @@ function MeasureForm({ s, initialId, onDone }: { s: LabState; initialId?: string
             {TRIAL_SCENARIOS.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.label}
+              </option>
+            ))}
+            {ISSUE_SCENARIOS.map((t) => (
+              <option key={t.id} value={t.id}>
+                현장 문제 {t.id} {t.name}
               </option>
             ))}
             {s.sessions.map((x) => (
@@ -184,6 +201,37 @@ function MeasureForm({ s, initialId, onDone }: { s: LabState; initialId?: string
         <label>
           <span className={labelSm}>대응 묶음 (같은 묶음의 수기·AX를 비교)</span>
           <input value={v.pairKey} onChange={(e) => set({ pairKey: e.target.value })} placeholder="예: 비교시험 쌍 1" className={inputSm} />
+        </label>
+        <div className="sm:col-span-2">
+          <span className={labelSm}>시험 방식</span>
+          <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="측정 시험 방식">
+            {TEST_MODES.map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={v.testMode === m} onClick={() => set({ testMode: m })} className={`rounded-xl px-1 py-2 text-[14.5px] font-bold ${v.testMode === m ? "bg-ink text-white" : "bg-[#f2f4f6] text-ink-2"}`}>
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="sm:col-span-2">
+          <span className={labelSm}>소요시간 근거 (기억 추정은 비교 통계에서 뺌)</span>
+          <div className="grid grid-cols-3 gap-1" role="radiogroup" aria-label="소요시간 근거">
+            {VALUE_BASES.map((m) => (
+              <button key={m} type="button" role="radio" aria-checked={v.valueBasis === m} onClick={() => set({ valueBasis: m })} className={`rounded-xl px-1 py-2 text-[15px] font-bold ${v.valueBasis === m ? "bg-ink text-white" : "bg-[#f2f4f6] text-ink-2"}`}>
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="sm:col-span-2">
+          <span className={labelSm}>연결 실증 세트 (AX 방식으로 앱에서 푼 세트)</span>
+          <select value={v.sessionId ?? ""} onChange={(e) => set({ sessionId: e.target.value || null })} className={inputSm} aria-label="연결 실증 세트">
+            <option value="">없음</option>
+            {[...s.sessions].reverse().map((x) => (
+              <option key={x.id} value={x.id}>
+                세트 {x.no} · {x.title} ({x.kind})
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           <span className={labelSm}>측정 방법</span>
@@ -250,8 +298,8 @@ function MeasureForm({ s, initialId, onDone }: { s: LabState; initialId?: string
           <span className={labelSm}>정답 위험 수 (진행요원)</span>
           <div className="flex gap-1">
             <input inputMode="numeric" value={v.expected ?? ""} onChange={(e) => set({ expected: num(e.target.value) })} className={inputSm} aria-label="정답 위험 수" />
-            {trial && (
-              <button type="button" className="shrink-0 rounded-xl bg-[#f2f4f6] px-2 text-[14px] font-bold" onClick={() => set({ expected: trial.risks })}>
+            {answer !== null && (
+              <button type="button" className="shrink-0 rounded-xl bg-[#f2f4f6] px-2 text-[14px] font-bold" onClick={() => set({ expected: answer })}>
                 정답표 값
               </button>
             )}
@@ -374,7 +422,12 @@ function TrialTable({ s, editing, setEditing, onDone }: { s: LabState; editing: 
                 </td>
                 <td className="py-1.5 pr-2">{personName(s, t.participantId)}</td>
                 <td className="py-1.5 pr-2">{personName(s, t.operatorId)}</td>
-                <td className="py-1.5 pr-2 font-bold">{t.method}</td>
+                <td className="py-1.5 pr-2 font-bold">
+                  {t.method}
+                  <span className="block text-[13px] font-normal text-ink-3">
+                    {t.testMode ?? "방식 미지정"} · {t.valueBasis ?? "근거 미지정"}
+                  </span>
+                </td>
                 <td className="py-1.5 pr-2">
                   {t.scenario}
                   <span className="block text-[13.5px] text-ink-3">{t.scenarioType}</span>
@@ -504,6 +557,14 @@ function Notes({ s }: { s: LabState }) {
           ))}
         </select>
         <input value={v.text} onChange={(e) => setV({ ...v, text: e.target.value })} placeholder="들은 그대로 적기 (확인하지 않은 의견을 만들지 않음)" className={inputSm} aria-label="내용" />
+        <select value={v.sessionId ?? ""} onChange={(e) => setV({ ...v, sessionId: e.target.value || null })} className={`${inputSm} sm:col-span-2`} aria-label="관련 실증 세트">
+          <option value="">관련 세트 없음</option>
+          {[...s.sessions].reverse().map((x) => (
+            <option key={x.id} value={x.id}>
+              세트 {x.no} · {x.title}
+            </option>
+          ))}
+        </select>
       </div>
       <button
         className={btnPrimary}
@@ -529,7 +590,8 @@ function Notes({ s }: { s: LabState }) {
 
 function NoteRow({ s, n }: { s: LabState; n: Note }) {
   const op = useOperator();
-  const { act } = useAct();
+  const { msg, act } = useAct();
+  const [dev, setDev] = useState(false);
   const values: NoteValues = { type: n.type, text: n.text, speakerId: n.speakerId, confirmation: n.confirmation, status: n.status, sessionId: n.sessionId, trialId: n.trialId };
   return (
     <li className="flex flex-wrap items-center gap-x-2 gap-y-1 py-2 text-[16px]">
@@ -553,6 +615,42 @@ function NoteRow({ s, n }: { s: LabState; n: Note }) {
         <button className="rounded-lg bg-[#f2f4f6] px-2 py-1 text-[14px] font-bold" onClick={() => act((st, c) => ({ state: editNote(st, n.id, { ...values, confirmation: "참여자가 직접 확인" }, op, c), value: true }), "참여자 확인으로 바꿨습니다 (이력 남음).")}>
           참여자 확인함
         </button>
+      )}
+      <button className="rounded-lg bg-[#f2f4f6] px-2 py-1 text-[14px] font-bold" onClick={() => setDev((x) => !x)} aria-expanded={dev}>
+        요구사항·프로그램 변경 기록
+      </button>
+      {n.sessionId && <span className="w-full pl-8 text-[13.5px] text-ink-3">관련 세트 {s.sessions.find((x) => x.id === n.sessionId)?.no}</span>}
+      {(n.devLinks ?? []).map((d, i) => (
+        <span key={i} className="w-full pl-8 text-[14.5px] font-semibold text-primary-dark">
+          → {d.date} {d.kind}: {d.text} {d.version && <span className="font-normal text-ink-3">(버전 {d.version})</span>}
+        </span>
+      ))}
+      {dev && (
+        <form
+          className="grid w-full gap-1.5 pl-8 sm:grid-cols-[10rem_9.5rem_1fr_9rem_auto]"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const f = new FormData(e.currentTarget);
+            const g = (k: string) => String(f.get(k) ?? "");
+            const ok = act((st, c) => ({ state: linkNoteChange(st, n.id, { kind: g("kind") as (typeof DEV_LINK_KINDS)[number], date: g("date"), text: g("text"), version: g("version") }, op, c), value: true }), "의견으로 바뀐 내용을 기록했습니다.");
+            if (ok) setDev(false);
+          }}
+        >
+          <select name="kind" className={inputSm} aria-label="변경 종류">
+            {DEV_LINK_KINDS.map((k) => (
+              <option key={k}>{k}</option>
+            ))}
+          </select>
+          <input name="date" type="date" defaultValue={kst(new Date()).date} className={inputSm} aria-label="바뀐 날짜" />
+          <input name="text" placeholder="무엇이 바뀌었는지" className={inputSm} aria-label="바뀐 내용" />
+          <input name="version" defaultValue={APP_VERSION} className={inputSm} aria-label="프로그램 버전" />
+          <button className={btnPrimary}>기록</button>
+        </form>
+      )}
+      {msg && (
+        <span className="w-full pl-8">
+          <MsgBox msg={msg} />
+        </span>
       )}
     </li>
   );

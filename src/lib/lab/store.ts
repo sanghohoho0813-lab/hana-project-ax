@@ -11,7 +11,8 @@
  */
 import { useCallback, useSyncExternalStore } from "react";
 import { newOpId } from "@/lib/pilot/op-id";
-import { emptyState, LabError, type Ctx, type LabState } from "./model";
+import { emptyState, LabError, normalizeState, type Ctx, type LabState } from "./model";
+import { APP_VERSION } from "./version";
 
 export const LAB_KEY = "hana-ax-lab:v1";
 export const LAB_BEFORE_IMPORT_KEY = "hana-ax-lab:v1:before-import";
@@ -50,8 +51,10 @@ function read(): LabSnapshot {
   const raw = st.getItem(LAB_KEY);
   if (!raw) return { state: emptyState(new Date()), loadError: null, saveError: snap?.saveError ?? null, bytes: 0, unavailable: false };
   try {
-    const state = JSON.parse(raw) as LabState;
-    if (state.format !== "hana-ax-lab" || state.version !== 1) throw new Error("형식");
+    const parsed = JSON.parse(raw) as LabState;
+    if (parsed.format !== "hana-ax-lab" || parsed.version !== 1) throw new Error("형식");
+    // 예전 형식이면 새 항목(현장 문제 등)을 빈 값으로 채워 읽는다 — 다음 저장 때 함께 저장됨
+    const state = normalizeState(parsed);
     return { state, loadError: null, saveError: snap?.saveError ?? null, bytes: raw.length * 2, unavailable: false };
   } catch {
     return { state: null, loadError: "저장된 실증 기록을 읽을 수 없습니다 (손상). 백업 JSON 을 불러오거나, 손상된 원문을 내려받은 뒤 새로 시작하세요.", saveError: null, bytes: raw.length * 2, unavailable: false };
@@ -91,7 +94,7 @@ export function commit<T>(change: (s: LabState, ctx: Ctx) => { state: LabState; 
   if (!fresh.state) return { ok: false, error: fresh.loadError ?? "저장된 기록을 읽을 수 없습니다." };
   let out: { state: LabState; value: T };
   try {
-    out = change(fresh.state, { now: new Date(), id: newOpId });
+    out = change(fresh.state, { now: new Date(), id: newOpId, appVersion: APP_VERSION });
   } catch (e) {
     if (e instanceof LabError) return { ok: false, error: e.message };
     return { ok: false, error: `처리하지 못했습니다: ${e instanceof Error ? e.message : String(e)}` };

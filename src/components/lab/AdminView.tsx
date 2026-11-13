@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, Pencil, UserPlus, XCircle } from "lucide-react";
+import Link from "next/link";
+import { CalendarPlus, FileSearch, Pencil, UserPlus, XCircle } from "lucide-react";
 import { Badge, type Tone } from "@/components/ui";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kstLabel } from "@/lib/pilot/time";
@@ -25,6 +26,7 @@ import { JudgmentNow } from "@/app/pilot/_ui/JudgmentNow";
 import { HistoryList } from "./History";
 import { ProvenanceBar, useProvenance } from "./Provenance";
 import { MsgBox, btnGhost, btnPrimary, inputSm, labelSm, useAct } from "./common";
+import { AdminIssuePanel, openIssuesBySite } from "./Issues";
 
 const PHASE_TONE: Record<Phase, Tone> = { 예정: "neutral", 확인함: "info", "작업 중": "warning", "작업 종료": "success", 취소: "neutral" };
 
@@ -45,10 +47,12 @@ export function AdminView({ s, session }: { s: LabState; session: Session }) {
   const { result, asOf, asOfBasis } = judgeSession(s, session.id, new Date());
   const workers = [...new Set(schedules.map((x) => x.workerId))];
   const recheck = schedules.filter((x) => (hints.get(x.id)?.cancelledBefore.length ?? 0) > 0 || hints.get(x.id)?.stale);
+  const problems = openIssuesBySite(s, session.id);
 
   return (
     <div className="space-y-4">
       <ProvenanceBar s={s} session={session} />
+      <AdminIssuePanel s={s} session={session} />
 
       <section className="card space-y-3 p-4" aria-label="현장기사">
         <div className="flex flex-wrap items-center gap-2">
@@ -158,6 +162,11 @@ export function AdminView({ s, session }: { s: LabState; session: Session }) {
                             <td className="py-1.5 pr-2">
                               <b>{x.siteName}</b>
                               {x.priority === "긴급" && <Badge tone="danger" className="ml-1 !py-0 !text-[13.5px]">긴급</Badge>}
+                              {(problems.get(x.id) ?? []).map((i) => (
+                                <span key={i.id} className="ml-1 rounded-full bg-danger-bg px-2 py-0.5 text-[13.5px] font-bold text-danger no-underline">
+                                  ⚠ 문제 #{i.no}
+                                </span>
+                              ))}
                               {x.region && <span className="ml-1 text-ink-3">{x.region}</span>}
                             </td>
                             <td className="py-1.5 pr-2">
@@ -218,11 +227,16 @@ export function AdminView({ s, session }: { s: LabState; session: Session }) {
       />
 
       <section className="space-y-2" aria-label="판단 전후 기록">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-[21px] font-extrabold">입력·조정할 때마다 판단 전 → 후</h2>
-          <button className="text-[15.5px] font-bold text-primary-dark underline" onClick={() => setAll((v) => !v)}>
-            {all ? "최근 10건만" : "전체 보기"}
-          </button>
+          <span className="inline-flex items-center gap-3">
+            <Link href={`/records/evidence?s=${session.id}`} className="inline-flex items-center gap-1 text-[15.5px] font-bold text-primary-dark underline">
+              <FileSearch size={16} /> 이 세트 시험 증거 기록
+            </Link>
+            <button className="text-[15.5px] font-bold text-primary-dark underline" onClick={() => setAll((v) => !v)}>
+              {all ? "최근 10건만" : "전체 보기"}
+            </button>
+          </span>
         </div>
         <HistoryList s={s} sessionId={session.id} limit={all ? undefined : 10} />
       </section>

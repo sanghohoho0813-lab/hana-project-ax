@@ -5,8 +5,11 @@
 import { canonical } from "@/lib/pilot/core";
 import { toCsv } from "@/lib/pilot/csv";
 import { kst } from "@/lib/pilot/time";
+import { issueMetrics, issueRiskChange, issueStatus, maxShortfall } from "./issues";
+import { issueScenarioOf } from "./issueScenarios";
 import {
   activeLabEvents,
+  normalizeState,
   currentSchedules,
   isProxy,
   judgmentsMatch,
@@ -50,6 +53,7 @@ export const counts = (s: LabState) => ({
   trials: s.trials.length,
   notes: s.notes.length,
   people: s.people.length,
+  issues: (s.issues ?? []).length,
 });
 
 export async function makeBackup(s: LabState, exportedBy: string, now: Date): Promise<BackupFile> {
@@ -96,14 +100,17 @@ export async function checkBackup(text: string, now: Date): Promise<ImportCheck>
   const seqs = d.entries.map((e) => e.seq);
   if (seqs.some((x, i) => i > 0 && x <= seqs[i - 1])) throw new Error("기록 번호 순서가 맞지 않습니다.");
   if (d.entries.some((e) => !d.sessions.some((x) => x.id === e.sessionId))) throw new Error("세트가 없는 기록이 있습니다.");
+  if (d.issues !== undefined && !Array.isArray(d.issues)) throw new Error("백업의 현장 문제 목록 형식이 맞지 않습니다.");
+  // 지문은 파일에 담긴 그대로 확인한 뒤, 예전 형식이면 새 항목을 빈 값으로 채운다
   const checksumOk = (await sha256Hex(canonical(d))) === f.sha256;
+  const state = normalizeState(d);
   return {
-    state: d,
-    counts: counts(d),
+    state,
+    counts: counts(state),
     exportedAt: f.exportedAt,
     exportedBy: f.exportedBy,
     checksumOk,
-    recompute: judgmentsMatch(d.judgments, recomputeJudgments(d, now)),
+    recompute: judgmentsMatch(state.judgments, recomputeJudgments(state, now)),
   };
 }
 
@@ -142,9 +149,11 @@ export function eventsCsv(s: LabState): string {
         원자료: e.sourceRef,
         입력화면: e.via,
         정정대상번호: e.voidsSeq ?? "",
+        현장문제번호: e.issueId ? (s.issues.find((o) => o.id === e.issueId)?.no ?? "") : "",
         상태: e.kind === "기록 무효" ? "무효 처리 기록" : r ? `${r.kind === "기록 무효" ? "무효" : "정정됨"}(번호 ${r.seq})` : active.has(e.seq) ? "유효" : "",
         판단기준시각: t(e.asOf),
         기준시각근거: e.asOfBasis,
+        프로그램버전: e.appVersion ?? "",
         비고: e.note,
       });
     }
@@ -225,9 +234,12 @@ export function trialsCsv(s: LabState): string {
     참가자코드: s.people.find((p) => p.id === r.participantId)?.code ?? "",
     실제입력자: personName(s, r.operatorId),
     시험유형: r.method,
+    시험방식: r.testMode ?? "미지정",
     시나리오구분: r.scenarioType,
     시나리오: r.scenario,
     대응묶음: r.pairKey,
+    연결세트: r.sessionId ? (s.sessions.find((x) => x.id === r.sessionId)?.no ?? "") : "",
+    소요시간근거: r.valueBasis ?? "미지정",
     위험발견소요초: r.t1Sec ?? "",
     위험발견시간초과: r.t1Timeout ? "예" : "",
     정답위험수: r.expected ?? "",
@@ -266,6 +278,7 @@ export function notesCsv(s: LabState): string {
     세트: n.sessionId ? (s.sessions.find((x) => x.id === n.sessionId)?.no ?? "") : "",
     측정번호: n.trialId ? (s.trials.find((x) => x.id === n.trialId)?.no ?? "") : "",
     고친횟수: n.history.length,
+    요구사항_프로그램변경: (n.devLinks ?? []).map((d) => `${d.date} ${d.kind}: ${d.text}${d.version ? ` (${d.version})` : ""}`).join(" / "),
   }));
   return toCsv(Object.keys(rows[0] ?? { 번호: "" }), rows);
 }
@@ -283,14 +296,114 @@ export function sessionsCsv(s: LabState): string {
     기본정보제공자: personName(s, x.informantId),
     기본자료출처: x.source,
     원자료: x.sourceRef,
+    시험방식: x.testMode ?? "미지정",
+    시험시나리오: x.scenarioId ? `${x.scenarioId} ${issueScenarioOf(x.scenarioId)?.name ?? ""}` : "",
+    예상대비결과: (x.outcomes ?? []).map((o) => `${o.match}${o.text ? `: ${o.text}` : ""}`).join(" / "),
+    프로그램버전: x.appVersion ?? "",
     재현기준시각_가정값: x.clock ?? "실제 현재 시각",
     작업기록수: sessionEvents(s, x.id).length,
     일정수: currentSchedules(s, x.id).length,
     만든시각: t(x.createdAt),
     만든사람: personName(s, x.createdBy),
     메모: x.note,
+    현장문제수: (s.issues ?? []).filter((o) => o.sessionId === x.id).length,
   }));
   return toCsv(Object.keys(rows[0] ?? { 세트: "" }), rows);
+}
+
+const hm = (iso: string | null) => (iso ? kst(iso).time : "모름");
+
+/** 현장 문제 보고 1건 = 1행 — 시각·근거·소요시간(품질)·관리자 조치 전후 위험 */
+export function issuesCsv(s: LabState): string {
+  const rows = (s.issues ?? []).map((i) => {
+    const x = s.sessions.find((o) => o.id === i.sessionId)!;
+    const site = currentSchedules(s, x.id).find((o) => o.id === i.scheduleId);
+    const m = issueMetrics(s, i);
+    const span = (k: string) => m.find((o) => o.key === k)!;
+    const receipt = i.steps.find((o) => o.kind === "지원 요청 접수");
+    const decision = i.steps.find((o) => o.kind === "지원 조치 결정");
+    const adjusts = i.steps.filter((o) => o.kind === "일정 조정");
+    const res = i.steps.filter((o) => o.kind === "해결 여부").at(-1);
+    const risk = issueRiskChange(s, i);
+    const qs = [...new Set(m.map((o) => o.quality).filter(Boolean))];
+    return {
+      문제번호: i.no,
+      세트: x.no,
+      세트이름: x.title,
+      데이터구분: x.kind,
+      시험방식: x.testMode ?? "미지정",
+      현장업무날짜: x.workDate,
+      현장: site?.siteName ?? "",
+      현장기사: personName(s, i.workerId),
+      문제유형: i.type,
+      유형메모: i.typeNote,
+      진행상황: i.progress,
+      지원요청: i.needs.join(" / "),
+      요청내용: i.request,
+      발견시각: hm(i.discovered.at),
+      발견시각근거: i.discovered.basis,
+      보고시각: hm(i.reported.at),
+      보고시각근거: i.reported.basis,
+      변경예상종료: i.expectedEnd ?? "미확인(엔진 전달 안 함)",
+      엔진전달기록번호: i.linkedSeq ?? "",
+      접수시각: receipt ? hm(receipt.moment.at) : "",
+      지원결정시각: decision ? hm(decision.moment.at) : "",
+      지원조치: decision?.action ?? "",
+      일정조정기록번호: adjusts.map((o) => o.linkedSeq).join(" / "),
+      해결여부: res?.resolution ?? "",
+      해결시각: res ? hm(res.moment.at) : "",
+      "발견→보고_분": span("발견→보고").minutes ?? "",
+      "발견→보고_품질": span("발견→보고").quality ?? span("발견→보고").missing ?? "",
+      "보고→접수_분": span("보고→접수").minutes ?? "",
+      "보고→지원결정_분": span("보고→지원 결정").minutes ?? "",
+      "보고→지원결정_품질": span("보고→지원 결정").quality ?? span("보고→지원 결정").missing ?? "",
+      "지원요청→해결_분": span("지원 요청→해결").minutes ?? "",
+      "지원요청→해결_품질": span("지원 요청→해결").quality ?? span("지원 요청→해결").missing ?? "",
+      소요시간품질: qs.join("/"),
+      위험연결_보고전: risk.before?.risky ?? "",
+      위험연결_보고후: risk.reported?.risky ?? "",
+      위험연결_조치후: risk.afterActions?.risky ?? "",
+      최대지연분_보고후: maxShortfall(risk.reported) ?? "",
+      최대지연분_조치후: maxShortfall(risk.afterActions) ?? "",
+      상태: issueStatus(i),
+      입력자: personName(s, i.enteredBy),
+      정보제공자: personName(s, i.informantId),
+      대리입력: isProxy(i.enteredBy, i.workerId) ? "대리 입력" : "본인 입력",
+      자료출처: i.source,
+      원자료: i.sourceRef,
+      입력화면: i.via,
+      프로그램입력시각: t(i.enteredAt),
+      프로그램버전: i.appVersion ?? "",
+      고친횟수: i.history.length,
+      무효사유: i.voided?.reason ?? "",
+    };
+  });
+  return toCsv(Object.keys(rows[0] ?? { 문제번호: "" }), rows);
+}
+
+/** 현장 문제의 관리자 조치·해결 단계 1건 = 1행 */
+export function issueStepsCsv(s: LabState): string {
+  const rows = (s.issues ?? []).flatMap((i) =>
+    i.steps.map((o) => ({
+      문제번호: i.no,
+      세트: s.sessions.find((x) => x.id === i.sessionId)?.no ?? "",
+      단계번호: o.no,
+      단계: o.kind,
+      실제시각: hm(o.moment.at),
+      시각근거: o.moment.basis,
+      지원조치: o.action ?? "",
+      해결여부: o.resolution ?? "",
+      내용: o.text,
+      연결기록번호: o.linkedSeq ?? "",
+      입력자: personName(s, o.enteredBy),
+      정보제공자: personName(s, o.informantId),
+      자료출처: o.source,
+      입력화면: o.via,
+      프로그램입력시각: t(o.enteredAt),
+      프로그램버전: o.appVersion ?? "",
+    })),
+  );
+  return toCsv(Object.keys(rows[0] ?? { 문제번호: "" }), rows);
 }
 
 export const CSV_SETS = [
@@ -300,6 +413,8 @@ export const CSV_SETS = [
   { key: "trials", label: "비교시험 측정", file: "비교시험", make: trialsCsv },
   { key: "notes", label: "문제·피드백", file: "문제피드백", make: notesCsv },
   { key: "sessions", label: "실증 세트·회차", file: "실증세트", make: sessionsCsv },
+  { key: "issues", label: "현장 문제·지원 요청", file: "현장문제", make: issuesCsv },
+  { key: "issueSteps", label: "현장 문제 조치 단계", file: "현장문제조치", make: issueStepsCsv },
 ] as const;
 
 export type CsvKey = (typeof CSV_SETS)[number]["key"];

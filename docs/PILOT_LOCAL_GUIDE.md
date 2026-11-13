@@ -5,6 +5,8 @@
 
 > **중앙 DB 가 아닙니다.** 기록은 이 브라우저(localStorage)에만 저장됩니다. 다른 기기·다른 브라우저와 실시간으로 공유되지 않습니다.
 > 브라우저 데이터를 지우면 기록이 사라질 수 있으니 **시험이 끝날 때마다 JSON 백업**을 받아 두세요. Supabase 연결은 보류 중입니다.
+>
+> **현장 문제 보고 · 지원 요청 (0.2.0, 2026-11-13 인터뷰 근거)**: 대응표·시험 방법·데이터 목록·변경내용은 `docs/FIELD_ISSUE_PILOT.md`.
 
 ---
 
@@ -110,9 +112,9 @@
 ```bash
 npm test                                     # 기존 자동 테스트 113개
 npx vitest run --config trial/vitest.config.ts   # 비교시험 정답표 = 실제 엔진 (62)
-npm run test:pilot                           # 실증 단위 시험 (54 — 로컬 실증 16 포함)
+npm run test:pilot                           # 실증 단위 시험 (70 — 로컬 실증 16 · 현장 문제 16 포함)
 npm run build && npx next start -p 3197 &    # 화면 시험용 서버
-npm run test:lab:e2e                         # 로컬 실증 12단계(49) + 기존 데모 회귀(37)
+npm run test:lab:e2e                         # 로컬 실증 12단계(49) + 현장 문제 흐름(41) + 기존 데모 회귀(38)
 ```
 
 `npm run test:pilot:db` · `npm run test:pilot:e2e` 는 보류 중인 Supabase 판의 시험이다 (로컬 Supabase 필요).

@@ -41,9 +41,17 @@ export const KIND_DESC: Record<LabKind, string> = {
 };
 
 export const SOURCES = ["현장기사 실시간 입력", "현장기사 구두 전달", "업무일지", "일정표", "메신저 기록", "직접 시험", "가상 시나리오"] as const;
-export const TIME_BASES = ["버튼 누른 시각(실시간)", "정보 제공자 진술", "원자료 기록", "가상 시각", "모름"] as const;
+export const TIME_BASES = ["버튼 누른 시각(실시간)", "정보 제공자 진술", "원자료 기록", "기억에 의한 추정", "가상 시각", "모름"] as const;
 export type TimeBasis = (typeof TIME_BASES)[number];
 export type AsOfBasis = "실제 현재 시각" | "재현 기준시각(가정값)";
+
+/** 시험을 누가 어떻게 했는지 — 결과를 섞지 않는다 */
+export const TEST_MODES = ["구본석 이사 직접 수행", "컨설턴트 진행", "과거 현장정보 재현시험"] as const;
+export type TestMode = (typeof TEST_MODES)[number];
+/** 기존 방식 소요시간의 근거 — 기억에 의한 값은 '추정'으로 따로 둔다 (비교 통계에 넣지 않음) */
+export const VALUE_BASES = ["시험 실측", "과거 기록", "기억 추정"] as const;
+export type ValueBasis = (typeof VALUE_BASES)[number];
+export const OUTCOME_MATCH = ["예상대로", "예상과 다름", "판단 못 함"] as const;
 
 /* ── 기록 형식 ──────────────────────────────────────── */
 
@@ -84,6 +92,16 @@ export interface Session {
   createdAt: string;
   createdBy: string;
   note: string;
+  /** 시험 방식 (예전 기록은 null — 미지정) */
+  testMode: TestMode | null;
+  /** 현장 문제 시험 시나리오 (I1~I3) — 정답표와 엔진 결과를 비교할 때 */
+  scenarioId: string | null;
+  /** 세트를 만들 때의 프로그램 버전 */
+  appVersion: string | null;
+  /** 시험 결과가 예상과 같았는지 — 예상과 달라도 지우지 않고 남긴다 */
+  outcomes: { at: string; by: string; match: (typeof OUTCOME_MATCH)[number]; text: string; appVersion: string | null }[];
+  /** 시험 방식 등 세트 정보를 바꾼 이력 */
+  changes: { at: string; by: string; field: string; from: string | null; to: string | null }[];
 }
 
 export interface Snap {
@@ -118,6 +136,8 @@ interface EntryBase {
   /** 이 기록 뒤 위험 판단의 기준시각과 그 근거 */
   asOf: string;
   asOfBasis: AsOfBasis;
+  /** 입력할 때의 프로그램 버전 (예전 기록에는 없음) */
+  appVersion?: string | null;
 }
 
 export interface RevisionEntry extends EntryBase {
@@ -143,6 +163,8 @@ export interface EventEntry extends EntryBase {
   /** 정정·무효 대상 기록 번호 */
   voidsSeq: number | null;
   note: string;
+  /** 현장 문제 보고에서 넘어온 기록이면 그 문제 번호 (엔진에는 예상 종료 값만 전달) */
+  issueId?: string | null;
 }
 
 export type Entry = RevisionEntry | EventEntry;
@@ -205,6 +227,12 @@ export interface TrialValues {
   /** 참여자가 결과를 직접 확인했는지 */
   confirmedByParticipant: boolean;
   note: string;
+  /** 시험 방식 (구본석 이사 직접 수행 / 컨설턴트 진행 / 과거 현장정보 재현시험) — 예전 기록에는 없음 */
+  testMode?: TestMode | null;
+  /** 소요시간 값의 근거 — '기억 추정'은 비교 통계에서 뺀다 (예전 기록에는 없음) */
+  valueBasis?: ValueBasis | null;
+  /** 이 측정에서 쓴 실증 세트 (있으면) */
+  sessionId?: string | null;
 }
 
 export interface TrialRun extends TrialValues {
@@ -231,12 +259,105 @@ export interface NoteValues {
   trialId: string | null;
 }
 
+export const DEV_LINK_KINDS = ["요구사항 반영", "프로그램 수정"] as const;
+export interface DevLink {
+  /** 기록한 시각 */
+  at: string;
+  by: string;
+  kind: (typeof DEV_LINK_KINDS)[number];
+  /** 실제로 요구사항·프로그램이 바뀐 날짜 */
+  date: string;
+  text: string;
+  /** 바뀐 프로그램 버전 */
+  version: string;
+}
+
 export interface Note extends NoteValues {
   id: string;
   no: number;
   at: string;
   recordedBy: string;
   history: { at: string; by: string; values: NoteValues }[];
+  /** 이 의견으로 바뀐 요구사항·프로그램 (날짜·내용) */
+  devLinks: DevLink[];
+}
+
+/* ── 현장 문제 보고 · 지원 요청 ─────────────────────── */
+
+export const ISSUE_TYPES = ["기술적 장애", "예상과 다른 현장상황", "추가 장비 필요", "기술 지원 필요", "기타"] as const;
+export type IssueType = (typeof ISSUE_TYPES)[number];
+export const ISSUE_PROGRESS = ["작업 시작 전", "분해·설치 시작 후", "작업 진행 중", "작업 중단"] as const;
+export type IssueProgress = (typeof ISSUE_PROGRESS)[number];
+/** 현장기사가 요청하는 지원 */
+export const SUPPORT_NEEDS = ["원격 기술 지원", "숙련 기술자", "추가 장비", "일정 조정", "보고만 (지원 불필요)"] as const;
+export type SupportNeed = (typeof SUPPORT_NEEDS)[number];
+/** 관리자가 정한 지원 조치 */
+export const SUPPORT_ACTIONS = ["원격 기술 지원", "숙련 기술자 파견", "추가 장비 전달", "일정 조정", "지원 불필요", "기타"] as const;
+export type SupportAction = (typeof SUPPORT_ACTIONS)[number];
+export const RESOLUTIONS = ["해결", "임시 조치", "해결 못 함 (재방문 필요)"] as const;
+export type Resolution = (typeof RESOLUTIONS)[number];
+export const ISSUE_STEP_KINDS = ["지원 요청 접수", "지원 조치 결정", "일정 조정", "예상 종료 변경", "해결 여부"] as const;
+export type IssueStepKind = (typeof ISSUE_STEP_KINDS)[number];
+
+/** 실제로 일어난 시각 — 모르면 at=null (추정해 채우지 않음) */
+export interface Moment {
+  at: string | null;
+  basis: TimeBasis;
+  /** 사람이 넣은 시각 HH:MM (버튼 실시간이면 null) */
+  entered: string | null;
+}
+
+interface IssueRecordBase {
+  opId: string;
+  enteredAt: string;
+  enteredBy: string;
+  informantId: string | null;
+  source: string;
+  sourceRef: string;
+  via: EventEntry["via"];
+  appVersion: string | null;
+}
+
+export interface IssueStep extends IssueRecordBase {
+  no: number;
+  kind: IssueStepKind;
+  moment: Moment;
+  /** 지원 조치 결정 */
+  action: SupportAction | null;
+  /** 해결 여부 */
+  resolution: Resolution | null;
+  text: string;
+  /** 엔진에 들어간 기록 번호 (일정 조정·예상 종료 변경) */
+  linkedSeq: number | null;
+}
+
+export interface IssueValues {
+  type: IssueType;
+  typeNote: string;
+  progress: IssueProgress;
+  needs: SupportNeed[];
+  /** 지원 요청 내용 (말한 그대로) */
+  request: string;
+  discovered: Moment;
+}
+
+export interface FieldIssue extends IssueRecordBase, IssueValues {
+  id: string;
+  /** 전체 일련번호 */
+  no: number;
+  sessionId: string;
+  scheduleId: string;
+  workerId: string;
+  /** 본사에 처음 알린 시각 */
+  reported: Moment;
+  /** 보고 때 알려 준 변경 예상 종료 (모르면 null — 엔진에 전달하지 않음) */
+  expectedEnd: string | null;
+  /** 엔진에 전달한 예상 종료 보고 기록 번호 */
+  linkedSeq: number | null;
+  steps: IssueStep[];
+  /** 고치기 전 값 (엔진과 무관한 항목만 고칠 수 있음) */
+  history: { at: string; by: string; values: IssueValues }[];
+  voided: { at: string; by: string; reason: string } | null;
 }
 
 export interface ReportText {
@@ -262,6 +383,8 @@ export interface LabState {
   judgments: JudgmentEntry[];
   trials: TrialRun[];
   notes: Note[];
+  /** 현장 문제 보고·지원 요청 (예전 기록에는 없음 — 읽을 때 빈 목록으로 채움) */
+  issues: FieldIssue[];
   report: ReportText;
   backup: { lastAt: string | null; lastChangeCount: number; lastFile: string | null };
 }
@@ -269,13 +392,15 @@ export interface LabState {
 /* ── 오류 ──────────────────────────────────────────── */
 
 export class LabError extends Error {}
-const fail = (m: string): never => {
+export const fail = (m: string): never => {
   throw new LabError(m);
 };
 
 export interface Ctx {
   now: Date;
   id: () => string;
+  /** 지금 프로그램 버전 (기록마다 남김) */
+  appVersion?: string;
 }
 
 /* ── 시작 상태 ──────────────────────────────────────── */
@@ -300,20 +425,44 @@ export function emptyState(now: Date): LabState {
     judgments: [],
     trials: [],
     notes: [],
+    issues: [],
     report: { before: "", expected: "", limits: "" },
     backup: { lastAt: null, lastChangeCount: 0, lastFile: null },
   };
 }
 
+/**
+ * 예전 형식으로 저장된 기록 읽기 — 새로 생긴 항목만 빈 값으로 채운다 (기존 값은 바꾸지 않음).
+ * 저장된 판단은 그대로 두며, 다시 계산해도 같은 결과가 나온다.
+ */
+export function normalizeState(s: LabState): LabState {
+  const x = s as LabState & Partial<Record<"issues", FieldIssue[]>>;
+  return {
+    ...s,
+    sessions: s.sessions.map((o) => ({
+      ...o,
+      testMode: o.testMode ?? null,
+      scenarioId: o.scenarioId ?? null,
+      appVersion: o.appVersion ?? null,
+      outcomes: o.outcomes ?? [],
+      changes: o.changes ?? [],
+    })),
+    trials: s.trials.map((t) => ({ ...t, testMode: t.testMode ?? null, valueBasis: t.valueBasis ?? null, sessionId: t.sessionId ?? null })),
+    notes: s.notes.map((n) => ({ ...n, devLinks: n.devLinks ?? [] })),
+    issues: x.issues ?? [],
+  };
+}
+
 /* ── 도우미 ────────────────────────────────────────── */
 
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+export const hhmmMin = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 const min = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
 /** 한국 날짜 + 시각 → ISO */
 export const kstIso = (date: string, hhmm: string) => new Date(`${date}T${hhmm}:00+09:00`).toISOString();
 
-const touch = (s: LabState, now: Date): LabState => ({ ...s, updatedAt: now.toISOString(), changeCount: s.changeCount + 1 });
+export const touch = (s: LabState, now: Date): LabState => ({ ...s, updatedAt: now.toISOString(), changeCount: s.changeCount + 1 });
 
 export const personName = (s: LabState, id: string | null | undefined) => (id ? (s.people.find((p) => p.id === id)?.name ?? "알 수 없음") : "-");
 export const sessionOf = (s: LabState, id: string) => s.sessions.find((x) => x.id === id) ?? fail("[입력] 실증 세트를 찾을 수 없습니다.");
@@ -402,6 +551,17 @@ export function judgeSession(s: LabState, sessionId: string, now: Date): { resul
   return { result: judgeAt(schedules, events, asOf), asOf, asOfBasis };
 }
 
+/** 기록 번호 seq 까지의 기록으로, 주어진 기준시각에 다시 판단 — 저장된 판단의 세부(연결별 등급·늦는 시간)를 볼 때 */
+export function judgeUpTo(s: LabState, sessionId: string, seq: number, asOf: string): PipelineResult {
+  const session = sessionOf(s, sessionId);
+  const entries = sessionEntries(s, sessionId).filter((e) => e.seq <= seq);
+  const latest = new Map<string, RevisionEntry>();
+  for (const e of entries) if (e.type === "schedule") latest.set(e.scheduleId, e);
+  const schedules = [...latest.values()].map((r) => toScheduleRow(session, r.snapshot));
+  const events = entries.filter((e): e is EventEntry => e.type === "event").map((e) => toEventRow(session, e));
+  return judgeAt(schedules, events, asOf);
+}
+
 export function sessionAsOf(session: Session, now: Date): { asOf: string; asOfBasis: AsOfBasis } {
   if (session.kind === "실제 업무" || !session.clock) return { asOf: now.toISOString(), asOfBasis: "실제 현재 시각" };
   return { asOf: kstIso(session.workDate, session.clock), asOfBasis: "재현 기준시각(가정값)" };
@@ -409,7 +569,7 @@ export function sessionAsOf(session: Session, now: Date): { asOf: string; asOfBa
 
 /* ── 계산 흐름 문장 ─────────────────────────────────── */
 
-const gradeText = (l: Pick<RiskLink, "status" | "grade"> | null | undefined) =>
+export const gradeText = (l: Pick<RiskLink, "status" | "grade"> | null | undefined) =>
   !l ? "연결 없음" : l.status !== "판정" ? l.status : l.grade === "없음" ? "위험 없음" : `위험 ${l.grade}`;
 
 function linkLine(l: RiskLink): string {
@@ -437,7 +597,9 @@ function triggerLine(s: LabState, session: Session, e: Entry, prev: Snap | undef
   const fix = e.voidsSeq !== null ? ` · 번호 ${e.voidsSeq} 정정` : "";
   if (e.kind === "예상 종료 보고") {
     const late = sched && e.expectedEnd ? min(e.expectedEnd) - min(sched.plannedEnd) : 0;
-    return `${site} 예상 종료 보고: ${e.expectedEnd}${late > 0 ? ` (예정 종료 ${sched?.plannedEnd}보다 ${late}분 늦음)` : ""} · 보고 시각 ${time}${fix}`;
+    const issue = e.issueId ? s.issues.find((o) => o.id === e.issueId) : undefined;
+    const from = issue ? ` · 현장 문제 보고 #${issue.no}(${issue.type})에서 전달된 값` : "";
+    return `${site} 예상 종료 보고: ${e.expectedEnd}${late > 0 ? ` (예정 종료 ${sched?.plannedEnd}보다 ${late}분 늦음)` : ""} · 보고 시각 ${time}${fix}${from}`;
   }
   let late = "";
   if (e.kind === "작업개시" && e.occurredAt && sched) {
@@ -561,6 +723,8 @@ export interface SessionInput {
   clock: string | null;
   note: string;
   createdBy: string;
+  testMode?: TestMode | null;
+  scenarioId?: string | null;
 }
 
 export function createSession(s: LabState, input: SessionInput, ctx: Ctx): { state: LabState; id: string } {
@@ -569,6 +733,7 @@ export function createSession(s: LabState, input: SessionInput, ctx: Ctx): { sta
   if (input.kind === "실제 업무" && input.workDate !== kst(ctx.now).date) fail("[입력] '실제 업무'는 오늘 날짜만 됩니다. 지난 업무는 '사후 재현'으로 입력하세요.");
   if (input.kind !== "실제 업무" && !(input.clock && TIME_RE.test(input.clock))) fail("[입력] 재현 기준시각(HH:MM)을 넣어 주세요 — 위험 판단을 이 시각 기준으로 합니다 (가정값).");
   if (!s.people.some((p) => p.id === input.participantId)) fail("[입력] 핵심 참여자를 고르세요.");
+  if (input.testMode && !TEST_MODES.includes(input.testMode)) fail("[입력] 시험 방식을 고르세요.");
   const id = ctx.id();
   const no = s.sessions.length + 1;
   const session: Session = {
@@ -587,8 +752,31 @@ export function createSession(s: LabState, input: SessionInput, ctx: Ctx): { sta
     createdAt: ctx.now.toISOString(),
     createdBy: input.createdBy,
     note: input.note.trim(),
+    testMode: input.testMode ?? null,
+    scenarioId: input.scenarioId ?? null,
+    appVersion: ctx.appVersion ?? null,
+    outcomes: [],
+    changes: [],
   };
   return { state: touch({ ...s, sessions: [...s.sessions, session] }, ctx.now), id };
+}
+
+/** 시험 방식 지정·변경 — 바꾼 이력이 남는다 */
+export function setTestMode(s: LabState, sessionId: string, mode: TestMode, by: string, ctx: Ctx): LabState {
+  const x = sessionOf(s, sessionId);
+  if (!TEST_MODES.includes(mode)) fail("[입력] 시험 방식을 고르세요.");
+  if (x.testMode === mode) return s;
+  const next: Session = { ...x, testMode: mode, changes: [...x.changes, { at: ctx.now.toISOString(), by, field: "시험 방식", from: x.testMode, to: mode }] };
+  return touch({ ...s, sessions: s.sessions.map((o) => (o.id === sessionId ? next : o)) }, ctx.now);
+}
+
+/** 시험 결과가 예상과 같았는지 기록 — 예상과 달라도 그대로 남긴다 (지우기 없음) */
+export function addOutcome(s: LabState, sessionId: string, v: { match: Session["outcomes"][number]["match"]; text: string }, by: string, ctx: Ctx): LabState {
+  const x = sessionOf(s, sessionId);
+  if (!OUTCOME_MATCH.includes(v.match)) fail("[입력] 예상과 같았는지 고르세요.");
+  if (v.match !== "예상대로" && !v.text.trim()) fail("[입력] 어떻게 달랐는지 적어 주세요.");
+  const o = { at: ctx.now.toISOString(), by, match: v.match, text: v.text.trim(), appVersion: ctx.appVersion ?? null };
+  return touch({ ...s, sessions: s.sessions.map((q) => (q.id === sessionId ? { ...x, outcomes: [...x.outcomes, o] } : q)) }, ctx.now);
 }
 
 /** 같은 일정으로 반복 회차 — 원본의 지금 일정(취소 제외)을 새 세트에 다시 등록한다 (작업 기록은 옮기지 않음) */
@@ -611,6 +799,7 @@ export function repeatSession(s: LabState, sessionId: string, by: string, ctx: C
       clock: override?.clock ?? src.clockHistory[0]?.from ?? src.clock ?? plans[0]?.plannedStart ?? null,
       note: `세트 ${src.no} 일정으로 반복`,
       createdBy: by,
+      testMode: src.testMode,
     },
     ctx,
   );
@@ -694,7 +883,8 @@ function duplicate(s: LabState, opId: string): Result | null {
   return e ? { state: s, seq: e.seq, duplicated: true } : null;
 }
 
-function baseOf(s: LabState, session: Session, opId: string, prov: Provenance, now: Date, asOfOverride?: string): EntryBase {
+function baseOf(s: LabState, session: Session, opId: string, prov: Provenance, ctx: Ctx, asOfOverride?: string): EntryBase {
+  const now = ctx.now;
   if (!s.people.some((p) => p.id === prov.enteredBy)) fail("[입력] 입력자를 고르세요.");
   const a = sessionAsOf(session, now);
   return {
@@ -708,6 +898,7 @@ function baseOf(s: LabState, session: Session, opId: string, prov: Provenance, n
     sourceRef: prov.sourceRef,
     asOf: asOfOverride ?? a.asOf,
     asOfBasis: a.asOfBasis,
+    appVersion: ctx.appVersion ?? null,
   };
 }
 
@@ -751,7 +942,7 @@ export function saveSchedule(s: LabState, x: ScheduleInput, ctx: Ctx): Result {
   if (x.travelMinutes !== null && !pred) fail("[입력] 이 기사의 그날 첫 일정이라 직전 현장에서의 이동시간을 넣을 수 없습니다.");
   draft.travelFromId = x.travelMinutes === null ? null : (pred?.id ?? null);
   const entry: RevisionEntry = {
-    ...baseOf(s, session, x.opId, x.prov, ctx.now),
+    ...baseOf(s, session, x.opId, x.prov, ctx),
     type: "schedule",
     scheduleId: id,
     revision: version,
@@ -776,7 +967,7 @@ export function cancelSchedule(
   if (prev.status === "취소") fail("[입력] 이미 취소된 일정입니다.");
   const snap: Snap = { ...prev, status: "취소", version: prev.version + 1 };
   const entry: RevisionEntry = {
-    ...baseOf(s, session, x.opId, x.prov, ctx.now),
+    ...baseOf(s, session, x.opId, x.prov, ctx),
     type: "schedule",
     scheduleId: prev.id,
     revision: snap.version,
@@ -804,6 +995,32 @@ export interface EventInput {
   via: EventEntry["via"];
   note?: string;
   prov: Provenance;
+  /** 현장 문제 보고에서 넘어온 값이면 그 문제 번호 */
+  issueId?: string | null;
+}
+
+/** 실제 시각 입력 — 지금(버튼 누른 시각, 실제 업무만) · 입력(사람이 넣은 시각과 근거) · 모름(비워 둠) */
+export interface MomentInput {
+  mode: "지금" | "입력" | "모름";
+  time?: string;
+  basis?: TimeBasis;
+}
+
+/** 실제 시각 정하기 — 작업 기록과 현장 문제 기록이 같은 규칙을 쓴다 (모르면 비우고, 추정해 채우지 않음) */
+export function momentOf(session: Session, m: MomentInput, now: Date, opts: { anyDay?: boolean } = {}): Moment {
+  if (m.mode === "지금") {
+    if (session.kind !== "실제 업무") fail("[입력] 지금 시각 기록은 '실제 업무' 세트에서만 됩니다. 실제 시각을 넣거나 '모름'을 고르세요.");
+    if (!opts.anyDay && session.workDate !== kst(now).date) fail(`[입력] 일정 날짜(${session.workDate})가 오늘이 아닙니다. 실제 시각을 넣어 주세요.`);
+    return { at: now.toISOString(), basis: "버튼 누른 시각(실시간)", entered: null };
+  }
+  if (m.mode === "입력") {
+    if (!m.time || !TIME_RE.test(m.time)) fail("[입력] 실제 시각(HH:MM)을 넣거나 '모름'을 고르세요.");
+    const at = kstIso(session.workDate, m.time!);
+    const basis: TimeBasis = session.kind === "가상 시나리오" ? "가상 시각" : m.basis && m.basis !== "모름" && m.basis !== "버튼 누른 시각(실시간)" ? m.basis : "정보 제공자 진술";
+    if (session.kind === "실제 업무" && Date.parse(at) > now.getTime() + 60_000) fail("[입력] 아직 오지 않은 시각은 기록할 수 없습니다.");
+    return { at, basis, entered: m.time! };
+  }
+  return { at: null, basis: "모름", entered: null };
 }
 
 export function recordEvent(s: LabState, x: EventInput, ctx: Ctx): Result {
@@ -812,26 +1029,12 @@ export function recordEvent(s: LabState, x: EventInput, ctx: Ctx): Result {
   const session = sessionOf(s, x.sessionId);
   const sched = currentSchedules(s, session.id).find((o) => o.id === x.scheduleId) ?? fail("[입력] 일정을 찾을 수 없습니다.");
   if (sched.status === "취소" && x.kind !== "기록 무효") fail("[입력] 취소된 일정입니다.");
-  const today = kst(ctx.now).date;
 
   // 실제 발생시각 — 모르면 비운다
-  let occurredAt: string | null = null;
-  let timeBasis: TimeBasis = "모름";
-  let enteredTime: string | null = null;
-  if (x.kind === "기록 무효") {
-    timeBasis = "모름";
-  } else if (x.timeMode === "지금") {
-    if (session.kind !== "실제 업무") fail("[입력] 지금 시각 기록은 '실제 업무' 세트에서만 됩니다. 실제 시각을 넣거나 '모름'을 고르세요.");
-    if (x.kind !== "업무 확인" && session.workDate !== today) fail(`[입력] 일정 날짜(${session.workDate})가 오늘이 아닙니다. 실제 시각을 넣어 주세요.`);
-    occurredAt = ctx.now.toISOString();
-    timeBasis = "버튼 누른 시각(실시간)";
-  } else if (x.timeMode === "입력") {
-    if (!x.time || !TIME_RE.test(x.time)) fail("[입력] 실제 시각(HH:MM)을 넣거나 '모름'을 고르세요.");
-    enteredTime = x.time!;
-    occurredAt = kstIso(session.workDate, enteredTime);
-    timeBasis = session.kind === "가상 시나리오" ? "가상 시각" : x.timeBasis && x.timeBasis !== "모름" && x.timeBasis !== "버튼 누른 시각(실시간)" ? x.timeBasis : "정보 제공자 진술";
-    if (session.kind === "실제 업무" && Date.parse(occurredAt) > ctx.now.getTime() + 60_000) fail("[입력] 아직 오지 않은 시각은 기록할 수 없습니다.");
-  }
+  const m = x.kind === "기록 무효" ? momentOf(session, { mode: "모름" }, ctx.now) : momentOf(session, { mode: x.timeMode, time: x.time, basis: x.timeBasis }, ctx.now, { anyDay: x.kind === "업무 확인" });
+  const occurredAt = m.at;
+  const timeBasis = m.basis;
+  const enteredTime = m.entered;
 
   if (x.kind === "예상 종료 보고") {
     if (!x.expectedEnd || !TIME_RE.test(x.expectedEnd)) fail("[입력] 예상 종료 시각(HH:MM)을 넣어 주세요.");
@@ -870,7 +1073,7 @@ export function recordEvent(s: LabState, x: EventInput, ctx: Ctx): Result {
     asOfOverride = kstIso(session.workDate, enteredTime);
   }
   const entry: EventEntry = {
-    ...baseOf(st, sessionOf(st, session.id), x.opId, x.prov, ctx.now, asOfOverride),
+    ...baseOf(st, sessionOf(st, session.id), x.opId, x.prov, ctx, asOfOverride),
     type: "event",
     scheduleId: sched.id,
     kind: x.kind,
@@ -881,6 +1084,7 @@ export function recordEvent(s: LabState, x: EventInput, ctx: Ctx): Result {
     via: x.via,
     voidsSeq,
     note: (x.note ?? "").trim(),
+    ...(x.issueId ? { issueId: x.issueId } : {}),
   };
   return { state: touch(append(st, entry, undefined, ctx.now), ctx.now), seq: entry.seq, duplicated: false };
 }
@@ -902,12 +1106,15 @@ function checkTrial(s: LabState, v: TrialValues) {
     ["정답 위험 수", v.expected],
   ] as const)
     if (n !== null && !(Number.isFinite(n) && n >= 0)) fail(`[입력] ${k}는 0 이상의 숫자이거나 비워 두세요.`);
+  if (v.testMode && !TEST_MODES.includes(v.testMode)) fail("[입력] 시험 방식을 고르세요.");
+  if (v.valueBasis && !VALUE_BASES.includes(v.valueBasis)) fail("[입력] 소요시간 근거를 고르세요.");
+  if (v.sessionId && !s.sessions.some((x) => x.id === v.sessionId)) fail("[입력] 연결한 실증 세트를 찾을 수 없습니다.");
 }
 
 const TRIAL_KEYS: (keyof TrialValues)[] = [
   "date", "participantId", "operatorId", "method", "scenarioType", "scenario", "pairKey", "t1Sec", "t2Sec", "t1Timeout", "t2Timeout",
   "stamps", "correct", "expected", "missed", "missedNote", "wrong", "wrongNote", "followUp", "followUpNote", "measureMethod", "rawRef",
-  "issues", "confirmedByParticipant", "note",
+  "issues", "confirmedByParticipant", "note", "testMode", "valueBasis", "sessionId",
 ];
 
 export function trialValues(t: TrialValues): TrialValues {
@@ -942,7 +1149,7 @@ export function addNote(s: LabState, v: NoteValues, by: string, ctx: Ctx): { sta
   if (!v.text.trim()) fail("[입력] 내용을 넣어 주세요.");
   if (!NOTE_TYPES.includes(v.type)) fail("[입력] 종류를 고르세요.");
   const id = ctx.id();
-  const n: Note = { ...v, text: v.text.trim(), id, no: s.notes.length + 1, at: ctx.now.toISOString(), recordedBy: by, history: [] };
+  const n: Note = { ...v, text: v.text.trim(), id, no: s.notes.length + 1, at: ctx.now.toISOString(), recordedBy: by, history: [], devLinks: [] };
   return { state: touch({ ...s, notes: [...s.notes, n] }, ctx.now), id };
 }
 
@@ -951,6 +1158,16 @@ export function editNote(s: LabState, id: string, v: NoteValues, by: string, ctx
   if (!v.text.trim()) fail("[입력] 내용을 넣어 주세요.");
   const old: NoteValues = { type: n.type, text: n.text, speakerId: n.speakerId, confirmation: n.confirmation, status: n.status, sessionId: n.sessionId, trialId: n.trialId };
   return touch({ ...s, notes: s.notes.map((x) => (x.id === id ? { ...x, ...v, text: v.text.trim(), history: [...x.history, { at: ctx.now.toISOString(), by, values: old }] } : x)) }, ctx.now);
+}
+
+/** 의견 → 요구사항·프로그램 변경 연결 — 실제로 바뀐 날짜와 내용, 버전을 남긴다 */
+export function linkNoteChange(s: LabState, noteId: string, v: { kind: DevLink["kind"]; date: string; text: string; version: string }, by: string, ctx: Ctx): LabState {
+  const n = s.notes.find((x) => x.id === noteId) ?? fail("[입력] 기록을 찾을 수 없습니다.");
+  if (!DEV_LINK_KINDS.includes(v.kind)) fail("[입력] 요구사항 반영 / 프로그램 수정 중 하나를 고르세요.");
+  if (!DATE_RE.test(v.date)) fail("[입력] 바뀐 날짜를 넣어 주세요.");
+  if (!v.text.trim()) fail("[입력] 무엇이 바뀌었는지 적어 주세요.");
+  const link: DevLink = { at: ctx.now.toISOString(), by, kind: v.kind, date: v.date, text: v.text.trim(), version: v.version.trim() || ctx.appVersion || "" };
+  return touch({ ...s, notes: s.notes.map((x) => (x.id === noteId ? { ...n, devLinks: [...n.devLinks, link] } : x)) }, ctx.now);
 }
 
 export function setReportText(s: LabState, r: ReportText, ctx: Ctx): LabState {

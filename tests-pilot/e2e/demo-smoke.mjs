@@ -32,7 +32,7 @@ p.on("pageerror", (e) => errs.push(e.message));
 
 // 실증 메뉴 + 기존 메뉴(기타 · 기존 기능) 전체
 const routes = [
-  "/", "/field", "/compare", "/records", "/records/report",
+  "/", "/field", "/compare", "/records", "/records/report", "/records/evidence",
   "/today", "/brief", "/tasks", "/schedule", "/reports", "/comms", "/projects", "/logs", "/change-orders", "/closeout", "/profit", "/inquiries",
   "/customers", "/insight", "/documents", "/procurement", "/performance", "/approvals", "/videos/inspection", "/videos/guide", "/demo", "/demo/verify",
   "/store", "/store/process", "/store/request", "/store/services",
