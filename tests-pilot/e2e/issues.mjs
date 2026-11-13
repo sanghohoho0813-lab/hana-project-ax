@@ -38,7 +38,6 @@ const until = async (fn, ms = 8000) => {
   }
   return false;
 };
-const RISKY = ["중간", "높음", "매우 높음"];
 
 // ── 준비: PC+Mobile 동시보기 · PC 쪽 관리자 시점 ──
 await p.goto(APP + "/field");
