@@ -3,6 +3,7 @@ import type { PilotClient } from "./supabase";
 import type { DataKind, JudgmentSummary } from "./core";
 import type { LinkChange, RiskDiff } from "@/lib/risk-engine";
 import { CASE_COLS, OPEN, PHOTO_COLS, STEP_COLS, type CaseRow, type PhotoRow, type StepRow } from "./cases";
+import { PENDING_REVIEW, REVIEW_COLS, SAFETY_COLS, type SafetyCheckRow, type SafetyReviewRow } from "./safety";
 
 /**
  * 사건 읽기 — 로그인한 사용자 세션으로 읽으므로 RLS 가 범위를 정한다 (현장 직원: 본인 사건만).
@@ -125,4 +126,51 @@ export async function loadCaseEvidence(sb: PilotClient, id: string): Promise<Cas
   const seqs = [...events.map((e) => e.seq), ...((rev.data ?? []) as { seq: number }[]).map((r) => r.seq)];
   const j = seqs.length ? await sb.from("risk_judgments").select("*").in("seq", seqs).order("seq") : { data: [] };
   return { ...b, events, revisions: (rev.data ?? []) as Record<string, unknown>[], judgments: (j.data ?? []) as Record<string, unknown>[], schedule: (sch.data as Record<string, unknown>) ?? null };
+}
+
+/* ── 안전점검 ─────────────────────────────────────── */
+
+
+export interface SafetyBundle {
+  checks: SafetyCheckRow[];
+  reviews: SafetyReviewRow[];
+  photos: (PhotoRow & { url: string | null })[];
+}
+
+async function safetyDetails(sb: PilotClient, checks: SafetyCheckRow[]): Promise<SafetyBundle> {
+  const ids = checks.map((c) => c.id);
+  if (ids.length === 0) return { checks, reviews: [], photos: [] };
+  const [r, p] = await Promise.all([
+    sb.from("safety_reviews").select(REVIEW_COLS).in("check_id", ids).order("review_no"),
+    sb.from("case_photos").select(PHOTO_COLS).in("safety_check_id", ids).order("recorded_at"),
+  ]);
+  if (r.error) throw new Error(r.error.message);
+  if (p.error) throw new Error(p.error.message);
+  const photos = (p.data ?? []) as PhotoRow[];
+  const live = photos.filter((x) => !x.deleted_at).map((x) => x.object_path);
+  const urls = new Map<string, string>();
+  if (live.length) {
+    const { data } = await sb.storage.from("field-photos").createSignedUrls(live, 600);
+    for (const u of data ?? []) if (u.path && u.signedUrl) urls.set(u.path, u.signedUrl);
+  }
+  return { checks, reviews: (r.data ?? []) as SafetyReviewRow[], photos: photos.map((x) => ({ ...x, url: urls.get(x.object_path) ?? null })) };
+}
+
+export async function loadSafetyOfDay(sb: PilotClient, date: string, kind: DataKind): Promise<SafetyBundle> {
+  const { data, error } = await sb.from("safety_checks").select(SAFETY_COLS).eq("work_date", date).eq("data_kind", kind).order("recorded_at");
+  if (error) throw new Error(error.message);
+  return safetyDetails(sb, (data ?? []) as SafetyCheckRow[]);
+}
+
+/** 관리자 — 확인할 점검(확인 대기 · 보완 제출)은 날짜와 상관없이 계속 + 그 날짜의 점검 */
+export async function loadSafetyInbox(sb: PilotClient, date: string, kind: DataKind): Promise<SafetyBundle> {
+  const [p, d] = await Promise.all([
+    sb.from("safety_checks").select(SAFETY_COLS).eq("data_kind", kind).in("review_status", PENDING_REVIEW).order("recorded_at"),
+    sb.from("safety_checks").select(SAFETY_COLS).eq("data_kind", kind).eq("work_date", date).order("recorded_at"),
+  ]);
+  if (p.error) throw new Error(p.error.message);
+  if (d.error) throw new Error(d.error.message);
+  const all = new Map<string, SafetyCheckRow>();
+  for (const c of [...((p.data ?? []) as SafetyCheckRow[]), ...((d.data ?? []) as SafetyCheckRow[])]) all.set(c.id, c);
+  return safetyDetails(sb, [...all.values()]);
 }

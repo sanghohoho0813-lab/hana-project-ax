@@ -13,12 +13,14 @@ import { kindParam } from "@/lib/pilot/board";
 export default async function AdminPage({ searchParams }: { searchParams: Promise<{ date?: string; kind?: string }> }) {
   const s = await requireAdmin();
   const { date, kind } = parseDay(await searchParams);
-  const [day, staff, pending, openCases] = await Promise.all([
+  const [day, staff, pending, openCases, safetyPending] = await Promise.all([
     loadDay(s.sb, date, kind),
     loadStaff(s.sb),
     pendingJobs(s.sb),
     s.sb.from("field_cases").select("status, urgency, issue_type").eq("data_kind", kind).in("status", OPEN),
+    s.sb.from("safety_checks").select("review_status, deficient").eq("data_kind", kind).in("review_status", ["확인 대기", "보완 제출"]),
   ]);
+  const safetyWait = (safetyPending.data ?? []) as { review_status: string; deficient: string[] }[];
   const open = (openCases.data ?? []) as { status: string; urgency: string; issue_type: string }[];
   const now = new Date();
   const result = judgeAt(day.schedules, day.events, now.toISOString());
@@ -56,6 +58,15 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           aria-label="미처리 지원 요청"
         >
           ⚠ 미처리 지원 요청 {open.length}건 — 새 보고 {open.filter((x) => x.status === "보고됨").length}건 · 긴급·안전 {open.filter((x) => x.urgency === "긴급").length}건 → 현장 문제·지원 화면
+        </Link>
+      )}
+      {safetyWait.length > 0 && (
+        <Link
+          href={`/pilot/admin/safety?date=${date}&kind=${kindParam(kind)}`}
+          className="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-warning/50 bg-warning-bg/50 px-4 py-3 text-[18px] font-bold text-warning"
+          aria-label="안전점검 확인 대기"
+        >
+          안전점검 확인 대기 {safetyWait.length}건 — 미흡 포함 {safetyWait.filter((x) => x.deficient.length > 0).length}건 → 안전점검 화면
         </Link>
       )}
       <ScheduleBoard date={date} kind={kind} staff={fieldStaff} names={names} rows={rows} pending={pending} />

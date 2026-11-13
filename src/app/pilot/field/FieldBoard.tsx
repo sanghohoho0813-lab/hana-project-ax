@@ -11,6 +11,7 @@ import { kst } from "@/lib/pilot/time";
 import { recordEventAction, type EventResult } from "./actions";
 import { getQueue, isStorable, serverSnapshot, setQueue as storeQueue, subscribe } from "./queueStore";
 import { CasePanel, type FieldCase } from "./CasePanel";
+import { SafetyPanel, type FieldSafety } from "./SafetyPanel";
 
 export interface FieldStep {
   id: string;
@@ -45,6 +46,8 @@ export interface FieldCard {
   currentEnd: string;
   /** 이 현장의 문제 사건 (본인 담당만) */
   cases: FieldCase[];
+  /** 이 현장의 안전점검 */
+  safety: FieldSafety[];
 }
 
 const LABEL: Record<PilotEventKind, string> = {
@@ -326,6 +329,8 @@ function Card({
           )}
         </div>
       )}
+
+      {c.status === "예정" && <SafetyPanel userId={userId} scheduleId={c.id} checks={c.safety} canCheck={active && isToday} />}
 
       <CasePanel
         userId={userId}

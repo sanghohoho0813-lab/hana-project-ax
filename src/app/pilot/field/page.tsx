@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireField } from "@/lib/pilot/session";
 import { kindParam, loadDay, parseDay } from "@/lib/pilot/board";
 import { activeEvents, progressOf, sourceLabel } from "@/lib/pilot/core";
-import { loadCasesOfDay } from "@/lib/pilot/case-data";
+import { loadCasesOfDay, loadSafetyOfDay } from "@/lib/pilot/case-data";
 import { AutoRefresh } from "../_ui/AutoRefresh";
 import { hhmm, kst, kstLabel } from "@/lib/pilot/time";
 import { KindBanner } from "../admin/AdminNav";
@@ -19,7 +19,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
   const { date, kind } = parseDay(await searchParams);
   const today = kst(new Date()).date;
   // RLS: 본인 담당 일정과 그 일정의 기록만 읽힌다
-  const [day, mine] = await Promise.all([loadDay(s.sb, date, kind), loadCasesOfDay(s.sb, date, kind)]);
+  const [day, mine, safety] = await Promise.all([loadDay(s.sb, date, kind), loadCasesOfDay(s.sb, date, kind), loadSafetyOfDay(s.sb, date, kind)]);
   const alive = activeEvents(day.events);
   const titles = Object.fromEntries(day.schedules.map((x) => [x.id, x.site_name]));
   const voidedBy = new Map<string, "정정" | "무효">();
@@ -49,6 +49,9 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
         cases: mine.cases
           .filter((c) => c.schedule_id === x.id)
           .map((c) => ({ c, steps: mine.steps.filter((st) => st.case_id === c.id), photos: mine.photos.filter((ph) => ph.case_id === c.id) })),
+        safety: safety.checks
+          .filter((k) => k.schedule_id === x.id)
+          .map((k) => ({ c: k, reviews: safety.reviews.filter((r) => r.check_id === k.id), photos: safety.photos.filter((ph) => ph.safety_check_id === k.id) })),
         steps: day.events
           .filter((e) => e.schedule_id === x.id && e.kind !== "기록 무효")
           .map((e) => ({

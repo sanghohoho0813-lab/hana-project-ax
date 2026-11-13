@@ -102,9 +102,10 @@ describe.skipIf(!DB_TEST)("현장 문제 사건 · 조치 · 사진 (로컬 Supa
     expect(psql(`select kind || '|' || to_char(expected_end,'HH24:MI') || '|' || entry_mode || '|' || source from public.work_events where id = '${r.end_event_id}'`)).toBe("예상 종료 보고|10:40|즉시 기록|현장 직원");
     expect(psql(`select discovered_at = reported_at from public.field_cases where id = '${caseId}'`)).toBe("t");
     const p = await judge(admin.aal2, r.job_id);
-    const ab = p.result_after.risk.links.find((l) => l.prev.title === "A현장" && l.next.title === "B현장")!;
+    // 같은 날 앞선 시험 회차의 'A현장'도 판단 입력에 있으므로 이 회차 기사의 연결만 본다
+    const ab = p.result_after.risk.links.find((l) => l.workerId === fa.id && l.prev.title === "A현장" && l.next.title === "B현장")!;
     expect([ab.grade, ab.shortfall, ab.arrival]).toEqual(["매우 높음", 30, "11:00"]);
-    expect(p.summary.risky_after).toBeGreaterThan(p.summary.risky_before);
+    expect(p.changes.changes.find((c) => c.key === ab.key)?.kind).toBe("신규 위험");
     // 같은 요청 번호가 다시 와도 사건·이벤트가 늘지 않는다
     const again = await report(fa.c, { p_op_id: opId, p_schedule_id: A, p_expected_end: "10:40", p_report_mode: "즉시", p_report_time: null, p_report_basis: null, p_discovered_basis: "보고와 같은 시각", p_discovered_time: null });
     expect((again.data as { duplicated: boolean; case_id: string }).duplicated).toBe(true);
@@ -156,9 +157,9 @@ describe.skipIf(!DB_TEST)("현장 문제 사건 · 조치 · 사진 (로컬 Supa
     const r = data as { seq: number; job_id: string };
     expect(psql(`select change_kind || '|' || (snapshot->>'planned_start') from public.schedule_revisions where seq = ${r.seq}`)).toBe("수정|11:00:00");
     const p = await judge(admin.aal2, r.job_id);
-    const ab = p.result_after.risk.links.find((l) => l.prev.title === "A현장" && l.next.title === "B현장")!;
+    const ab = p.result_after.risk.links.find((l) => l.workerId === fa.id && l.prev.title === "A현장" && l.next.title === "B현장")!;
     expect(["주의", "없음"]).toContain(ab.grade);
-    expect(p.changes.changes.some((c) => c.kind === "해소")).toBe(true);
+    expect(p.changes.changes.some((c) => c.kind === "해소" && c.key === ab.key)).toBe(true);
     const s = await fa.c.from("case_steps").select("kind, linked_seq").eq("case_id", caseId).eq("kind", "일정 조정").single();
     expect(s.data?.linked_seq).toBe(r.seq);
   });
