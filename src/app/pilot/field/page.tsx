@@ -4,6 +4,7 @@ import { kindParam, loadDay, parseDay } from "@/lib/pilot/board";
 import { activeEvents, progressOf, sourceLabel } from "@/lib/pilot/core";
 import { loadCasesOfDay, loadSafetyOfDay } from "@/lib/pilot/case-data";
 import { AutoRefresh } from "../_ui/AutoRefresh";
+import { FeedbackForm } from "./FeedbackForm";
 import { hhmm, kst, kstLabel } from "@/lib/pilot/time";
 import { KindBanner } from "../admin/AdminNav";
 import { FieldBoard, type FieldCard } from "./FieldBoard";
@@ -100,6 +101,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
       </div>
       <KindBanner kind={kind} />
       <FieldBoard userId={s.userId} date={date} today={today} cards={cards} scenario={kind !== "실제 업무"} />
+      <FeedbackForm />
     </div>
   );
 }
