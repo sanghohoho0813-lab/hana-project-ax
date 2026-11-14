@@ -7,6 +7,10 @@
 > 브라우저 데이터를 지우면 기록이 사라질 수 있으니 **시험이 끝날 때마다 JSON 백업**을 받아 두세요. Supabase 연결은 보류 중입니다.
 >
 > **현장 문제 보고 · 지원 요청 (0.2.0, 2026-11-13 인터뷰 근거)**: 대응표·시험 방법·데이터 목록·변경내용은 `docs/FIELD_ISSUE_PILOT.md`.
+>
+> **현장 실사용판 0.3.0 (2026-11-14)**: 보류했던 `/pilot` Supabase 판을 재사용해 로그인 · 기기 간 연동 · 사진 · 안전점검 · 성과 측정을 구현했다 (로컬 Supabase에서 검증, 운영 배포는 승인 대기).
+> 구조·검증 `docs/FIELD_SYSTEM_0.3.md` · 인프라·비용·사진 기준 `docs/FIELD_SYSTEM_DEPLOYMENT.md` · 참여시험 `docs/FIELD_SYSTEM_PARTICIPATION_GUIDE.md`.
+> 이 문서의 브라우저 저장판은 그대로 두었다. 기록도 0.3.0 DB에 섞지 않는다.
 
 ---
 
