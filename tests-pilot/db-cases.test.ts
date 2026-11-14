@@ -74,7 +74,9 @@ describe.skipIf(!DB_TEST)("현장 문제 사건 · 조치 · 사진 (로컬 Supa
     fb = await makeField(admin.aal2, "현장기사 B");
     A = (await schedule(admin.aal2, fa.id, "A현장", "09:00", "10:00", null)).schedule_id;
     B = await schedule(admin.aal2, fa.id, "B현장", "10:30", "12:00", 20);
-    X = (await schedule(admin.aal2, fb.id, "X현장", "09:00", "11:00", null)).schedule_id;
+    // 조치 뒤 새 위험 확인용 — 처음에는 B 종료 + 이동 20분이 C 시작보다 넉넉히 이르다
+    await schedule(admin.aal2, fa.id, "C현장", "13:30", "14:30", 20);
+    X =(await schedule(admin.aal2, fb.id, "X현장", "09:00", "11:00", null)).schedule_id;
   });
 
   it("기사 A 문제 보고 (예상 종료 모름) → 사건번호 · 발견/보고/서버 시각 분리 · 엔진 기록 없음", async () => {
@@ -162,6 +164,24 @@ describe.skipIf(!DB_TEST)("현장 문제 사건 · 조치 · 사진 (로컬 Supa
     expect(p.changes.changes.some((c) => c.kind === "해소" && c.key === ab.key)).toBe(true);
     const s = await fa.c.from("case_steps").select("kind, linked_seq").eq("case_id", caseId).eq("kind", "일정 조정").single();
     expect(s.data?.linked_seq).toBe(r.seq);
+  });
+
+  it("조치 뒤 새 위험: 관리자가 B 작업시간을 늘리면(11:00~13:30) A→B는 해소된 채 B→C가 새로 위험해지고, 숨기지 않고 '신규 위험'으로 기록된다", async () => {
+    const v = Number(psql(`select version from public.schedules where id = '${B.schedule_id}'`));
+    const { data, error } = await admin.aal2.rpc("case_adjust_schedule", {
+      p_op_id: op(), p_case_id: caseId, p_schedule_id: B.schedule_id, p_expected_version: v, p_planned_start: "11:00", p_planned_end: "13:30",
+      p_message: "숙련 기술자 작업으로 B현장 작업시간 연장", p_app_version: "db-test",
+    });
+    expect(error).toBeNull();
+    const p = await judge(admin.aal2, (data as { job_id: string }).job_id);
+    const link = (a: string, b: string) => p.result_after.risk.links.find((l) => l.workerId === fa.id && l.prev.title === a && l.next.title === b)!;
+    const bc = link("B현장", "C현장");
+    // B 종료 13:30 + 이동 20분(입력값) → C 도착 13:50(계산값) / C 예정 시작 13:30 → 20분 늦음
+    expect([bc.status, bc.arrival, bc.shortfall]).toEqual(["판정", "13:50", 20]);
+    expect(["높음", "매우 높음"]).toContain(bc.grade);
+    expect(p.changes.changes.find((c) => c.key === bc.key)?.kind).toBe("신규 위험");
+    expect(["주의", "없음"]).toContain(link("A현장", "B현장").grade);
+    expect(Number(psql(`select count(*) from public.case_steps where case_id = '${caseId}' and kind = '일정 조정'`))).toBe(2);
   });
 
   it("사진: 본인 폴더 업로드 → 등록 → 관리자 서명 주소 열람 · 기사 B 접근 불가 · 남의 폴더·덮어쓰기 불가 · 삭제 표시", async () => {

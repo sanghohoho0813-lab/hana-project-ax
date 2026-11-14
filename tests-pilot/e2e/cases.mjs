@@ -181,6 +181,19 @@ const ev = await admin.locator('article[aria-label="사건 증빙"]').innerText(
 for (const h of ["1. 사건 · 참가자 · 출처", "2. 시각", "3. 현장 사진 (1장)", "4. 관리자 조치", "5. 연쇄위험 엔진 입력", "6. 측정"]) check(ev.includes(h), `사건 증빙 항목: ${h}`);
 check(/문제 발견 → 최초 보고: \d+분 \(진술\)/.test(ev) && /문제 보고 → 관리자 확인\(접수\): \d+분 \(실측\)/.test(ev), "측정: 발견→보고(진술) · 보고→확인(실측) 품질 구분", ev.match(/문제 발견 → 최초 보고[^\n]*/)?.[0]);
 await shot(admin, "cases_4_evidence");
+// 인쇄(PDF) — 공용 인쇄 규칙은 .print-area 만 보이게 하므로, 본문이 실제로 인쇄되는지 본다 (빈 PDF 방지)
+async function printable(pg, sel, label) {
+  await pg.emulateMedia({ media: "print" });
+  const vis = await pg.locator(sel).first().evaluate((el) => [el, el.querySelector("h1"), el.querySelector("table, section, dl")].every((x) => x && getComputedStyle(x).visibility === "visible"));
+  const pdf = await pg.pdf({ format: "A4" });
+  await pg.emulateMedia({ media: "screen" });
+  check(vis && pdf.length > 30000, `${label} 인쇄(PDF): 본문이 보이고 PDF가 비어 있지 않음`, `${Math.round(pdf.length / 1024)}KB`);
+}
+await printable(admin, 'article[aria-label="사건 증빙"]', "사건 증빙");
+const JUDGE_ID = psql(`select id from risk_judgments where seq = (select linked_seq from case_steps where case_id = '${CASE}' and kind = '일정 조정');`);
+await admin.goto(`${APP}/pilot/admin/judgments/${JUDGE_ID}`);
+await printable(admin, '[aria-label="위험 판단 기록"]', "위험 판단 기록");
+await admin.goto(`${APP}/pilot/admin/cases/${CASE}`);
 const js = await admin.request.get(`${APP}/pilot/admin/cases/${CASE}/export?format=json`);
 const J = await js.json();
 check(js.status() === 200 && J.case.case_no === CASE_NO && J.photos.length === 1 && /^[0-9a-f]{64}$/.test(J.photos[0].sha256) && !("url" in J.photos[0]) && J.judgments.length >= 2 && J.steps.length === 7, "사건 증빙 JSON: 사건·사진 지문·조치 7건·판단 전후 (서명 주소는 담지 않음)", `steps ${J.steps?.length} · judgments ${J.judgments?.length}`);

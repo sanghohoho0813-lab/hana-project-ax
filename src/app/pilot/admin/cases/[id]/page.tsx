@@ -43,7 +43,8 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
           CSV 내려받기
         </a>
       </div>
-      <article className="card space-y-4 p-5" aria-label="사건 증빙">
+      {/* print-area: 공용 인쇄 규칙(globals.css)은 이 영역만 인쇄한다 — 없으면 PDF가 빈 쪽으로 나온다 */}
+      <article className="card print-area space-y-4 p-5" aria-label="사건 증빙">
         <header>
           <h1 className="text-[24px] font-extrabold">
             사건 증빙 {c.case_no} — {site}

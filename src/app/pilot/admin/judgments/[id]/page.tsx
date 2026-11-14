@@ -79,7 +79,8 @@ export default async function JudgmentPage({ params }: { params: Promise<{ id: s
   const back = `/pilot/admin/records?date=${j.work_date}&kind=${kindParam(j.data_kind)}`;
 
   return (
-    <div className="space-y-5">
+    // print-area: 공용 인쇄 규칙(globals.css)은 이 영역만 인쇄한다 — 없으면 PDF가 빈 쪽으로 나온다
+    <div className="print-area space-y-5" aria-label="위험 판단 기록">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-[27px] font-extrabold">
           위험 판단 번호 {j.seq} <span className="text-[19px] font-semibold text-ink-3">{j.work_date} · {j.data_kind}</span>
