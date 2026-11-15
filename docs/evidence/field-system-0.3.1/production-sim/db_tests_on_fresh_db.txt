@@ -1,0 +1,9 @@
+ ✓ tests-pilot/db-writes.test.ts (8 tests) 6061ms
+   ✓ 쓰기 순서 보장 · 계정 이력 > 기록 함수는 한 번에 하나씩 처리된다 — 다른 트랜잭션이 잠금을 쥐고 있으면 끝날 때까지 기다린다  2055ms
+ ✓ tests-pilot/db-cases.test.ts (12 tests) 4775ms
+   ✓ 현장 문제 사건 · 조치 · 사진 (로컬 Supabase) > 사진: 본인 폴더 업로드 → 등록 → 관리자 서명 주소 열람 · 기사 B 접근 불가 · 남의 폴더·덮어쓰기 불가 · 삭제 표시  429ms
+ ✓ tests-pilot/db.test.ts (26 tests) 3914ms
+ ✓ tests-pilot/db-safety.test.ts (4 tests) 3722ms
+ ✓ tests-pilot/db-measures.test.ts (3 tests) 3343ms
+ Test Files  5 passed (5)
+      Tests  53 passed (53)

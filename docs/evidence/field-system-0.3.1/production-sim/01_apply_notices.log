@@ -1,0 +1,3 @@
+psql:supabase/production/01_apply_all_migrations.sql:28: NOTICE:  extension "pgcrypto" already exists, skipping
+psql:supabase/production/01_apply_all_migrations.sql:1095: NOTICE:  identifier "관리자 전체 · 현장 직원은 본인 사건·본인 사진" will be truncated to "관리자 전체 · 현장 직원은 본인 사건·본인 사"
+psql:supabase/production/01_apply_all_migrations.sql:1126: NOTICE:  identifier "현장 사진 보기 — 관리자 · 본인이 올린 것 · 본인 사건" will be truncated to "현장 사진 보기 — 관리자 · 본인이 올린 것 · "

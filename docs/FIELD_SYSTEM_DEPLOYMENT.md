@@ -3,6 +3,14 @@
 대상: `hana-project-ax@0.3.0` (현장기사 모바일 `/pilot/field` · 본사 관리자 `/pilot/admin`)
 작성: 2026-11-14 · 가격 확인일: 2026-11-14 (공식 페이지, USD, 부가세 별도)
 
+> **2026-11-15 갱신 (0.3.1)** — 아래 원문은 그대로 두고 바뀐 점만 적습니다.
+> - 설정 절차: 명령어 없이 대시보드에서 하는 방식으로 새로 썼습니다 → `docs/FIELD_SYSTEM_SETUP_GUIDE.md`
+>   - 마이그레이션은 이제 **6개**입니다(0.3.1 자료 구분 규칙 추가). 한 파일로 묶은 `supabase/production/01_apply_all_migrations.sql`을 SQL Editor에 붙여 넣습니다.
+> - Vercel Hobby: 이용약관 4조 "personal or non-commercial use"를 확인했습니다 → 회사 업무에는 **Pro**가 필요합니다. 아래 2-3의 '확인하지 못함'을 대신합니다.
+> - Supabase 기본 메일: 프로젝트 팀원에게만, 시간당 2통 → 계정은 메일 없이 대시보드에서 직접 만듭니다(설정 가이드 3-3).
+> - 사진 파일은 Supabase DB 백업에 포함되지 않습니다(공식 문서) → `docs/FIELD_SYSTEM_OPERATIONS_READINESS.md` ⑦
+> - Vercel 함수 기본 지역은 미국(iad1)입니다 → 서울(icn1)로 바꿉니다. 환경변수는 Production에만 넣습니다.
+>
 > **아직 운영 인프라는 하나도 바꾸지 않았습니다.** Supabase 새 프로젝트도 Vercel 환경변수도 만들지 않았습니다.
 > 지금까지의 개발과 시험은 모두 이 개발 환경의 **로컬 Supabase(도커)** 에서 했습니다.
 > 아래 4장의 항목을 승인하시면 5장 순서대로 진행합니다. Vercel 배포와 환경변수 입력은 지금처럼 직접 해 주시면 됩니다. Vercel 토큰은 다시 요청하지 않습니다.

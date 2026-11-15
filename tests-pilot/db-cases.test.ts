@@ -254,6 +254,18 @@ describe.skipIf(!DB_TEST)("현장 문제 사건 · 조치 · 사진 (로컬 Supa
     expect(psql(`select occurred_mode || '|' || occurred_basis from public.case_steps where case_id = '${id}'`)).toBe("사후 입력|원자료 기록");
   });
 
+  it("동시 수정: 두 관리자가 같은 사건을 동시에 접수하면 한 건만 접수되고 다른 쪽은 [중복]으로 거절", async () => {
+    const r = await report(fa.c, { p_schedule_id: A, p_report_mode: "즉시", p_report_time: null, p_report_basis: null, p_discovered_basis: "보고와 같은 시각", p_discovered_time: null });
+    expect(r.error).toBeNull();
+    const id = (r.data as { case_id: string }).case_id;
+    const admin2 = await makeAdmin();
+    const [x, y] = await Promise.all([step(admin.aal2, id, "접수"), step(admin2.aal2, id, "접수")]);
+    const errs = [x.error, y.error].filter(Boolean).map((e) => msg(e));
+    expect(errs).toHaveLength(1);
+    expect(errs[0]).toMatch(/\[중복\] 이미 접수된 사건/);
+    expect(Number(psql(`select count(*) from public.case_steps where case_id = '${id}' and kind = '접수'`))).toBe(1);
+  });
+
   it("0.3.1 자료 구분: 실제 과거 현장정보 재현은 원자료 이름이 있어야 저장 · 원자료 없는 시험은 가상 시나리오", async () => {
     const sc = await admin.aal2.rpc("save_schedule", {
       p_op_id: op(), p_schedule_id: null, p_expected_version: null, p_data_kind: "검증 시나리오", p_work_date: D, p_assignee_id: fa.id,
