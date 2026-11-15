@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPilotSession } from "@/lib/pilot/session";
 import { loadCaseEvidence } from "@/lib/pilot/case-data";
-import { CLASS_LABEL, caseChanges, caseSpans, classOf, isTestOnly, tally } from "@/lib/pilot/cases";
+import { CLASS_LABEL, caseChanges, caseSpans, classOf, isTestOnly, tally, timeMeaning } from "@/lib/pilot/cases";
 import type { LinkChange } from "@/lib/risk-engine";
 import { toCsv } from "@/lib/pilot/csv";
 import { appVersion } from "@/lib/pilot/config";
@@ -33,7 +33,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
           label: CLASS_LABEL[classOf(c)],
           source_ref: c.source_ref ?? null,
           test_only: isTestOnly(c),
-          note: isTestOnly(c) ? "시험용 기록 — 인물·현장·사진은 실제 참여자·실제 현장사진이 아니다" : null,
+          note: isTestOnly(c)
+            ? "시험용 기록 — 인물·현장·사진은 실제 참여자·실제 현장사진이 아니다. 시각 필드(discovered_at · reported_at · occurred_at)는 시험 중 누른 시각 또는 시험용 가정 시각이며 실제 현장 발생시각이 아니다. recorded_at 은 서버 기록시각"
+            : null,
         },
         case: c,
         schedule: ev.schedule,
@@ -65,7 +67,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       데이터구분: c.data_kind,
       날짜: c.work_date,
       내용: `${c.issue_type} · ${c.progress} · 요청 ${c.needs.join("/")}${c.request ? ` · ${c.request}` : ""}`,
-      실제시각: c.discovered_at ?? "",
+      시각: c.discovered_at ?? "",
+      시각_뜻: timeMeaning(c, c.discovered_basis),
       시각근거: c.discovered_basis,
       보고시각: c.reported_at,
       보고근거: `${c.report_mode} · ${c.report_basis}`,
@@ -88,7 +91,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       데이터구분: c.data_kind,
       날짜: c.work_date,
       내용: `${x.kind}${x.action ? ` · ${x.action}` : ""}${x.resolution ? ` · ${x.resolution}` : ""}${x.message ? ` · ${x.message}` : ""}`,
-      실제시각: x.occurred_at ?? "",
+      시각: x.occurred_at ?? "",
+      시각_뜻: timeMeaning(c, x.occurred_basis),
       시각근거: `${x.occurred_mode} · ${x.occurred_basis}`,
       보고시각: "",
       보고근거: "",

@@ -220,8 +220,22 @@ async function printable(pg, sel, label) {
   check(vis && pdf.length > 30000, `${label} 인쇄(PDF): 본문이 보이고 PDF가 비어 있지 않음`, `${Math.round(pdf.length / 1024)}KB · ${pages}쪽`);
   return pages;
 }
+// 0.3.2: 1쪽 = 핵심 흐름 요약 (현장 문제 → 엔진 계산 → 관리자 조치 → 조치 전후) · 2쪽부터 상세
+const summary = await admin.locator('[aria-label="핵심 흐름 요약"]').innerText();
+check(
+  summary.includes("① 현장 문제") && summary.includes("② 엔진 입력 → 계산") && /이 사건으로 새로 생긴 위험 2건/.test(summary) && summary.includes("③ 관리자 조치") && summary.includes("④ 조치 전후") && summary.includes("해소") && summary.includes("⑤ 측정"),
+  "핵심 흐름 요약: 현장 문제 · 엔진 계산(이 사건 새 위험 2건) · 관리자 조치 · 조치 전후(해소) · 측정",
+);
+check(summary.includes(`${SA} → ${SB}`) && /\d{2}:\d{2}/.test(summary) && summary.includes("시험용 가정 시각") && summary.includes("시험 중 누른 시각"), "요약: 연결별 도착(계산값) · 시각의 뜻(시험 중 누른 시각 / 시험용 가정 시각)");
+await admin.emulateMedia({ media: "print" });
+const sumBottom = await admin.locator('[aria-label="핵심 흐름 요약"]').evaluate((el) => el.getBoundingClientRect().bottom - el.closest("article").getBoundingClientRect().top);
+await admin.emulateMedia({ media: "screen" });
 const evPages = await printable(admin, 'article[aria-label="사건 증빙"]', "사건 증빙");
-check(evPages >= 1 && evPages <= 2, "사건 증빙 인쇄: A4 2쪽 이내 (흰 바탕 · 작은 글씨 · 내용 높이만큼)", `${evPages}쪽`);
+check(sumBottom > 0 && sumBottom <= 1122 && evPages >= 2 && evPages <= 3, "사건 증빙 인쇄: 요약이 A4 1쪽 안 · 상세는 다음 쪽부터 · 전체 3쪽 이내", `요약 높이 ${Math.round(sumBottom)}px / A4 1122px · ${evPages}쪽`);
+check(
+  !/실제 \d{4}-\d{2}-\d{2}/.test(ev) && ev.includes("시험 시각 (실제 현장 발생시각 아님)") && ev.includes("서버 기록"),
+  "가상 시나리오 조치 이력: '실제 시각' 표기 없음 · 시험 시각과 서버 기록 구분",
+);
 const JUDGE_ID = psql(`select id from risk_judgments where seq = (select linked_seq from case_steps where case_id = '${CASE}' and kind = '일정 조정');`);
 await admin.goto(`${APP}/pilot/admin/judgments/${JUDGE_ID}`);
 await printable(admin, '[aria-label="위험 판단 기록"]', "위험 판단 기록");
@@ -239,8 +253,8 @@ const csvRes = await admin.request.get(`${APP}/pilot/admin/cases/${CASE}/export?
 const csv = await csvRes.text();
 const head = csv.split("\r\n")[0];
 check(
-  csvRes.status() === 200 && csv.startsWith("\ufeff") && head.includes("자료구분_표시") && head.includes("원자료") && head.includes("보고→확인_초") && csv.includes("가상 시나리오 (시험용 가정값)") && csv.split("\r\n").filter(Boolean).length === 1 + 1 + 7,
-  "사건 CSV: 자료 구분 표시 · 원자료 · 초 단위 열 · 사건 1행 + 조치 7행",
+  csvRes.status() === 200 && csv.startsWith("\ufeff") && head.includes("자료구분_표시") && head.includes("원자료") && head.includes("보고→확인_초") && head.includes("시각_뜻") && !head.includes("실제시각") && csv.includes("시험 중 누른 시각") && csv.includes("가상 시나리오 (시험용 가정값)") && csv.split("\r\n").filter(Boolean).length === 1 + 1 + 7,
+  "사건 CSV: 자료 구분 표시 · 원자료 · 초 단위 열 · 시각_뜻(실제시각 열 없음) · 사건 1행 + 조치 7행",
   head.slice(0, 120),
 );
 

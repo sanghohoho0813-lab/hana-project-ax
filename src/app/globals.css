@@ -324,15 +324,22 @@ body {
   }
   .print-compact,
   .print-compact * {
-    font-size: 9.5pt !important;
-    line-height: 1.38 !important;
+    font-size: 10pt !important;
+    line-height: 1.45 !important;
+  }
+  .print-compact .text-ink-3 {
+    font-size: 8.8pt !important;
   }
   .print-compact h1 {
-    font-size: 14pt !important;
+    font-size: 15pt !important;
   }
   .print-compact h2 {
-    font-size: 11pt !important;
+    font-size: 12pt !important;
+    margin-top: 2.5mm !important;
     break-after: avoid;
+  }
+  .print-compact section[aria-label="핵심 흐름 요약"] h2 {
+    font-size: 13pt !important;
   }
   .print-compact li,
   .print-compact tr,

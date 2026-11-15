@@ -208,15 +208,36 @@ export function caseSpans(c: CaseRow, steps: StepRow[]): Span[] {
  * 판단 요약의 위험 연결 수(risky_before/after)는 그날 모든 기사·모든 일정(앞선 시험 기록 포함)을 센 값이라 따로 표시한다.
  * 엔진의 변화 목록에는 바뀐 연결만 있다 (그대로인 연결은 없음).
  */
+/** 이 사건 연결인가 — 담당 기사의 사건 현장부터 그 뒤 현장에서 출발하는 연결 (키: 앞 일정 id > 뒤 일정 id) */
+export function caseLinkFilter(schedules: { id: string; workerId: string; start: string }[], caseScheduleId: string, workerId: string): (key: string) => boolean {
+  const from = schedules.find((s) => s.id === caseScheduleId)?.start ?? "00:00";
+  const ids = new Set(schedules.filter((s) => s.workerId === workerId && s.start >= from).map((s) => s.id));
+  return (key: string) => ids.has(key.split(">")[0]);
+}
+
+/**
+ * 시각의 뜻 — 증빙에서 '실제 시각'이라고 쓰지 않는다.
+ *  - 가상 시나리오 · 분류 확인 필요: 시험 중 누른 시각 / 시험용 가정 시각 (실제 현장 발생시각이 아님)
+ *  - 실제 과거 현장정보 재현: 재현 입력 시각(버튼) / 재현 시각(원자료·진술 등 근거)
+ *  - 실제 업무: 발생 시각(근거)
+ * 서버 기록시각은 늘 따로 '서버 기록'으로 쓴다.
+ */
+export function timeMeaning(c: { evidence_class: string; source_ref?: string | null }, basis: string): string {
+  const k = classOf(c);
+  const button = basis === "버튼 누른 시각" || basis === "보고와 같은 시각" || basis === "즉시 기록" || basis === "지연 전송";
+  if (k === "가상 시나리오" || k === "분류 확인 필요") return button ? "시험 중 누른 시각" : "시험용 가정 시각";
+  if (k === "현장정보 재현") return button ? "재현 입력 시각" : `재현 시각 · ${basis}`;
+  return `발생 시각 · ${basis}`;
+}
+
 export function caseChanges(
   changes: LinkChange[],
   schedules: { id: string; workerId: string; start: string }[],
   caseScheduleId: string,
   workerId: string,
 ): { mine: LinkChange[]; others: LinkChange[] } {
-  const from = schedules.find((s) => s.id === caseScheduleId)?.start ?? "00:00";
-  const ids = new Set(schedules.filter((s) => s.workerId === workerId && s.start >= from).map((s) => s.id));
-  const isMine = (c: LinkChange) => ids.has(c.key.split(">")[0]);
+  const isCase = caseLinkFilter(schedules, caseScheduleId, workerId);
+  const isMine = (c: LinkChange) => isCase(c.key);
   return { mine: changes.filter(isMine), others: changes.filter((c) => !isMine(c)) };
 }
 
