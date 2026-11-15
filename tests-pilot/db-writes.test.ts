@@ -5,7 +5,7 @@
 import { spawn } from "node:child_process";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DB_TEST, createUser, kstToday, makeAdmin, makeField, op, psql, signIn } from "./helpers/local";
+import { DB_PORT, DB_TEST, createUser, kstToday, makeAdmin, makeField, op, psql, signIn } from "./helpers/local";
 
 const D = kstToday();
 type Admin = Awaited<ReturnType<typeof makeAdmin>>;
@@ -74,7 +74,7 @@ describe.skipIf(!DB_TEST)("쓰기 순서 보장 · 계정 이력", () => {
   });
 
   it("기록 함수는 한 번에 하나씩 처리된다 — 다른 트랜잭션이 잠금을 쥐고 있으면 끝날 때까지 기다린다", async () => {
-    const holder = spawn("psql", ["-h", "127.0.0.1", "-p", "54322", "-U", "postgres", "-d", "postgres", "-X", "-At", "-c",
+    const holder = spawn("psql", ["-h", "127.0.0.1", "-p", DB_PORT, "-U", "postgres", "-d", "postgres", "-X", "-At", "-c",
       "begin; select pg_advisory_xact_lock(7240311001); select pg_sleep(2); commit;"], { env: { ...process.env, PGPASSWORD: "postgres" } });
     const exited = new Promise((r) => holder.on("exit", r));
     await new Promise((r) => setTimeout(r, 500));

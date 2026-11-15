@@ -7,21 +7,26 @@ import { createHash, createHmac, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 export const DB_TEST = process.env.PILOT_DB_TEST === "1";
-/** supabase/seed.sql 의 로컬 개발 전용 값 */
-export const LOCAL_JUDGE_SECRET = "local-dev-only-judge-secret-0123456789abcdef";
+/**
+ * supabase/seed.sql 의 로컬 개발 전용 값.
+ * 운영 적용 모의시험(seed 없이 supabase/production/*.sql 로 만든 별도 로컬 DB)에서는 그 DB 에서 만든 값을 환경변수로 넘긴다.
+ *   PILOT_TEST_JUDGE_SECRET · PILOT_DB_PORT · PILOT_SUPABASE_DIR (그 DB 의 supabase 폴더가 있는 곳)
+ */
+export const LOCAL_JUDGE_SECRET = process.env.PILOT_TEST_JUDGE_SECRET || "local-dev-only-judge-secret-0123456789abcdef";
+export const DB_PORT = process.env.PILOT_DB_PORT || "54322";
 export const PASSWORD = "Pilot-Test-2026a";
 
 let status: { API_URL: string; PUBLISHABLE_KEY: string; SECRET_KEY: string } | null = null;
 export function local() {
   if (!status) {
-    const out = execSync("npx -y supabase@2.122.0 status -o json", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    const out = execSync("npx -y supabase@2.122.0 status -o json", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], cwd: process.env.PILOT_SUPABASE_DIR || undefined });
     status = JSON.parse(out.slice(out.indexOf("{")));
   }
   return status!;
 }
 
 export function psql(sql: string): string {
-  return execSync(`psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -X -At -v ON_ERROR_STOP=1`, {
+  return execSync(`psql -h 127.0.0.1 -p ${DB_PORT} -U postgres -d postgres -X -At -v ON_ERROR_STOP=1`, {
     input: sql,
     encoding: "utf8",
     env: { ...process.env, PGPASSWORD: "postgres" },
