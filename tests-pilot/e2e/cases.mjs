@@ -75,8 +75,17 @@ await tap(sheet.locator('[aria-label="지금 작업 진행상황"] button:text-i
 await tap(sheet.locator('[aria-label="요청 (여러 개 가능)"] button:text-is("숙련 기술자 지원")'));
 await tap(sheet.locator('[aria-label="변경 예상 종료"] button:text-is("+1시간")'));
 await tap(sheet.locator('[aria-label="문제 발견시각"] button:text-is("10분 전")'));
-// 검증 시나리오 날짜 — 자료 구분: 이번 시험은 '현장정보 재현'으로 둔다 (기본값은 가상 시나리오)
-await tap(sheet.locator('[aria-label="자료 구분 (검증 시나리오)"] button:text-is("현장정보 재현")'));
+// 검증 시나리오 날짜 — 자료 구분: 시험용 가정값이므로 '가상 시나리오'(기본값)로 둔다 (0.3.1)
+// 실제 과거 현장정보 재현은 원자료 이름이 있어야 보낼 수 있다 — 골라 보고 되돌린다 (보고 버튼 횟수에 넣지 않음)
+const evGroup = sheet.locator('[aria-label="자료 구분 (검증 시나리오)"]');
+check((await evGroup.locator('button[aria-checked="true"]').innerText()).startsWith("가상 시나리오"), "검증 시나리오의 자료 구분 기본값은 가상 시나리오");
+await evGroup.locator('button:has-text("실제 과거 현장정보 재현")').click();
+const sendBtn = sheet.locator('button:has-text("보고 보내기")');
+const blocked = await sendBtn.isDisabled();
+await sheet.locator('input[aria-label="원자료 이름"]').fill("시험: 원자료 입력칸 확인");
+const unblocked = !(await sendBtn.isDisabled());
+await evGroup.locator('button:has-text("가상 시나리오")').click();
+check(blocked && unblocked && (await sheet.locator('input[aria-label="원자료 이름"]').count()) === 0, "실제 과거 현장정보 재현은 원자료 이름 없이는 보낼 수 없음 (가상 시나리오로 되돌림)");
 await sheet.locator('input[aria-label="현장 사진"]').setInputFiles(PHOTO);
 taps++;
 await sheet.locator('ul[aria-label="첨부할 사진"] img').waitFor();
@@ -105,6 +114,12 @@ const ctext = await caseCard.innerText();
 check(ctext.includes("우선 확인 이유") && /후속 현장 \d곳 위험/.test(ctext), "우선 확인 이유에 엔진이 계산한 후속 현장 위험 표시", ctext.match(/우선 확인 이유[^\n]*/)?.[0]);
 // 판단 요약의 위험 수는 그날 전체(앞선 시험 회차 포함)라서, 이 회차 현장의 연결 변화로 확인한다
 check(ctext.includes(`${SA} → ${SB} 신규 위험(없음→매우 높음)`) && ctext.includes(`${SB} → ${SC} 신규 위험(없음→매우 높음)`), "보고의 예상 종료 → 엔진 판단: 후속 B·C현장 신규 위험(매우 높음)", ctext.match(/엔진 판단[^\n]*/)?.[0]);
+check(
+  /이 사건 관련: 새로 생긴 위험 2건/.test(ctext) && /참고: 그날 전체 위험 연결 \d+ → \d+건/.test(ctext),
+  "이 사건으로 새로 생긴 위험(2건)과 그날 전체 위험 연결 수를 나눠 표시",
+  ctext.match(/이 사건 관련:[^\n]*/)?.[0],
+);
+check(ctext.includes("가상 시나리오 (시험용 가정값)") && ctext.includes("시험용 이미지 — 실제 현장사진이 아닙니다"), "관리자 화면: 가상 시나리오 표시 · 시험용 이미지 표시");
 const imgOk = await caseCard.locator('ul[aria-label="현장 사진"] img').evaluate((img) => img.complete && img.naturalWidth > 0).catch(() => false);
 check(imgOk, "관리자 화면에서 현장 사진 실제 열람 (비공개 저장소 서명 주소)");
 await shot(admin, "cases_2_admin_inbox");
@@ -142,8 +157,9 @@ await act("일정 조정", async (f) => {
   await f.locator('input[aria-label="내용"]').fill("A현장 지원으로 B현장 시작 조정 (고객 연락)");
 });
 const notice = await admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first().innerText();
-const [rb, ra] = (notice.match(/재판단: 위험 연결 (\d+) → (\d+)건/) ?? []).slice(1).map(Number);
-check(rb - ra === 1, "관리자 일정 조정(B) → 기존 엔진으로 재판단: 위험 1건 해소", notice);
+const resolved = Number(notice.match(/재판단\(이 사건 관련\): 풀린 위험 (\d+)건/)?.[1]);
+const [rb, ra] = (notice.match(/그날 전체\(모든 기사\) 위험 연결 (\d+) → (\d+)건/) ?? []).slice(1).map(Number);
+check(resolved === 1 && rb - ra === 1, "관리자 일정 조정(B) → 기존 엔진으로 재판단: 이 사건 관련 위험 1건 해소 (그날 전체 수는 참고로 따로)", notice);
 await until(async () => (await caseCard.locator('[aria-label="조치 이력"]').innerText()).includes("재판단"), 15000);
 const adjText = await caseCard.locator('[aria-label="조치 이력"]').innerText();
 check(adjText.includes(`${SA} → ${SB} 해소`) && !adjText.includes(`${SB} → ${SC} 해소`), "재판단: A→B 해소 · B→C 위험은 남음 (조치 후 남은 위험을 숨기지 않음)", adjText.replace(/\s+/g, " "));
@@ -178,8 +194,21 @@ check(await until(async () => (await admin.locator(`li[aria-label="사건 ${X_NO
 // ── 사건 증빙 (PDF용 화면 · JSON) ──
 await admin.goto(`${APP}/pilot/admin/cases/${CASE}`);
 const ev = await admin.locator('article[aria-label="사건 증빙"]').innerText();
-for (const h of ["1. 사건 · 참가자 · 출처", "2. 시각", "3. 현장 사진 (1장)", "4. 관리자 조치", "5. 연쇄위험 엔진 입력", "6. 측정"]) check(ev.includes(h), `사건 증빙 항목: ${h}`);
-check(/문제 발견 → 최초 보고: \d+분 \(진술\)/.test(ev) && /문제 보고 → 관리자 확인\(접수\): \d+분 \(실측\)/.test(ev), "측정: 발견→보고(진술) · 보고→확인(실측) 품질 구분", ev.match(/문제 발견 → 최초 보고[^\n]*/)?.[0]);
+for (const h of ["1. 사건 · 참가자 · 출처", "2. 시각", "3. 시험용 이미지 (1장) — 실제 현장사진 아님", "4. 관리자 조치", "5. 연쇄위험 엔진 입력", "6. 측정"]) check(ev.includes(h), `사건 증빙 항목: ${h}`);
+check(
+  (await admin.locator('[aria-label="자료 구분 안내"]').innerText()).startsWith("가상 시나리오 — 시험용 가정값") && ev.includes("시험 계정(현장기사 역할)") && !ev.includes("현장기사(참가자)"),
+  "사건 증빙: 가상 시나리오 안내 · 시험 계정 표시 (실제 참여자로 설명하지 않음)",
+);
+check(
+  /문제 발견 → 최초 보고: \d+분 \(가상\)/.test(ev) && /문제 보고 → 관리자 확인\(접수\): (\d+분 )?\d+초 \(가상 · 초 단위\)/.test(ev),
+  "측정: 진술이 섞인 값은 분 · 두 시각 모두 버튼 시각이면 초 단위 (같은 초는 0초)",
+  ev.match(/문제 보고 → 관리자 확인[^\n]*/)?.[0],
+);
+check(
+  /이 사건 관련 연결 \(담당 기사 · 사건 현장부터\): 새로 생긴 위험 2건/.test(ev) && ev.includes("참고 — 그날 전체(모든 기사·모든 일정") && ev.includes(`${SA} → ${SB}: 신규 위험`),
+  "사건 증빙: 이 사건 관련 위험(연결 이름 포함)과 그날 전체 위험 연결 수 구분",
+  ev.match(/이 사건 관련 연결[^\n]*/)?.[0],
+);
 await shot(admin, "cases_4_evidence");
 // 인쇄(PDF) — 공용 인쇄 규칙은 .print-area 만 보이게 하므로, 본문이 실제로 인쇄되는지 본다 (빈 PDF 방지)
 async function printable(pg, sel, label) {
@@ -187,9 +216,12 @@ async function printable(pg, sel, label) {
   const vis = await pg.locator(sel).first().evaluate((el) => [el, el.querySelector("h1"), el.querySelector("table, section, dl")].every((x) => x && getComputedStyle(x).visibility === "visible"));
   const pdf = await pg.pdf({ format: "A4" });
   await pg.emulateMedia({ media: "screen" });
-  check(vis && pdf.length > 30000, `${label} 인쇄(PDF): 본문이 보이고 PDF가 비어 있지 않음`, `${Math.round(pdf.length / 1024)}KB`);
+  const pages = (pdf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+  check(vis && pdf.length > 30000, `${label} 인쇄(PDF): 본문이 보이고 PDF가 비어 있지 않음`, `${Math.round(pdf.length / 1024)}KB · ${pages}쪽`);
+  return pages;
 }
-await printable(admin, 'article[aria-label="사건 증빙"]', "사건 증빙");
+const evPages = await printable(admin, 'article[aria-label="사건 증빙"]', "사건 증빙");
+check(evPages >= 1 && evPages <= 2, "사건 증빙 인쇄: A4 2쪽 이내 (흰 바탕 · 작은 글씨 · 내용 높이만큼)", `${evPages}쪽`);
 const JUDGE_ID = psql(`select id from risk_judgments where seq = (select linked_seq from case_steps where case_id = '${CASE}' and kind = '일정 조정');`);
 await admin.goto(`${APP}/pilot/admin/judgments/${JUDGE_ID}`);
 await printable(admin, '[aria-label="위험 판단 기록"]', "위험 판단 기록");
@@ -198,6 +230,19 @@ const js = await admin.request.get(`${APP}/pilot/admin/cases/${CASE}/export?form
 const J = await js.json();
 check(js.status() === 200 && J.case.case_no === CASE_NO && J.photos.length === 1 && /^[0-9a-f]{64}$/.test(J.photos[0].sha256) && !("url" in J.photos[0]) && J.judgments.length >= 2 && J.steps.length === 7, "사건 증빙 JSON: 사건·사진 지문·조치 7건·판단 전후 (서명 주소는 담지 않음)", `steps ${J.steps?.length} · judgments ${J.judgments?.length}`);
 check(/^hana-project-ax@\d+\.\d+\.\d+\+[0-9a-f]{7}/.test(J.case.app_version), "기록마다 프로그램 버전", J.case.app_version);
+check(
+  J.classification?.stored === "가상 시나리오" && J.classification?.test_only === true && J.case_related_changes?.some((x) => x.case_tally.newRisk === 2),
+  "사건 증빙 JSON: 자료 구분(시험용 표시) · 이 사건 관련 위험 변화 따로 담음",
+  JSON.stringify(J.classification),
+);
+const csvRes = await admin.request.get(`${APP}/pilot/admin/cases/${CASE}/export?format=csv`);
+const csv = await csvRes.text();
+const head = csv.split("\r\n")[0];
+check(
+  csvRes.status() === 200 && csv.startsWith("\ufeff") && head.includes("자료구분_표시") && head.includes("원자료") && head.includes("보고→확인_초") && csv.includes("가상 시나리오 (시험용 가정값)") && csv.split("\r\n").filter(Boolean).length === 1 + 1 + 7,
+  "사건 CSV: 자료 구분 표시 · 원자료 · 초 단위 열 · 사건 1행 + 조치 7행",
+  head.slice(0, 120),
+);
 
 for (const [n, pg] of [["관리자", admin], ["A", a], ["B", b]]) check(pg.errs.length === 0, `${n} 화면 오류 없음`, pg.errs.join(" | "));
 await bro.close();

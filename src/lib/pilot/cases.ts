@@ -4,6 +4,7 @@
  * 기술 중심: 사건은 단순 접수 대장이 아니다. 사건의 '변경 예상 종료'가 기존 연쇄위험 엔진에 들어가고,
  * 엔진이 계산한 후속 현장 지연·위험이 관리자 우선 확인 순서와 조치 전후 비교의 기준이 된다.
  */
+import type { LinkChange } from "@/lib/risk-engine";
 import type { PipelineResult } from "@/lib/state-events";
 
 export const ISSUE_TYPES = ["기술적 장애", "예상과 다른 설치환경", "추가 장비 필요", "기술 지원 필요", "안전 위험", "기타"] as const;
@@ -14,6 +15,31 @@ export const RESOLUTIONS = ["해결", "임시 조치", "해결 못 함"] as cons
 export const EVIDENCE_CLASSES = ["실제 업무", "현장정보 재현", "가상 시나리오"] as const;
 export const INFO_SOURCES = ["현장기사 앱", "전화", "메신저", "업무일지", "시험 시나리오"] as const;
 export const BASES = ["현장 직원 진술", "원자료 기록", "기억에 의한 추정"] as const;
+
+/**
+ * 자료 구분 — 저장값은 그대로 두고 화면·내보내기에서 뜻이 분명한 이름을 쓴다 (0.3.1).
+ *  - 실제 업무: 그날 실제로 일어난 일을 그때 입력
+ *  - 현장정보 재현 → '실제 과거 현장정보 재현': 원자료(업무일지·통화기록 등)가 있는 지난 사례를 다시 입력
+ *  - 가상 시나리오: 시험용 가정값 — 인물·현장·사진은 실제가 아니다
+ * 원자료 없이 '현장정보 재현'으로 저장된 기존 기록(0.3.0 시험)은 '분류 확인 필요'로 보이고 재현 집계에서 빠진다.
+ */
+export const CLASS_LABEL: Record<(typeof EVIDENCE_CLASSES)[number] | "분류 확인 필요", string> = {
+  "실제 업무": "실제 업무",
+  "현장정보 재현": "실제 과거 현장정보 재현",
+  "가상 시나리오": "가상 시나리오 (시험용 가정값)",
+  "분류 확인 필요": "분류 확인 필요 (원자료 없는 재현 기록)",
+};
+export type ClassKey = keyof typeof CLASS_LABEL;
+/** 집계·표시에 쓰는 자료 구분 — 원자료가 없는 '현장정보 재현'은 재현으로 세지 않는다 */
+export function classOf(c: { evidence_class: string; source_ref?: string | null; raw_ref?: string | null }): ClassKey {
+  if (c.evidence_class === "현장정보 재현" && !(c.source_ref ?? c.raw_ref ?? "").trim()) return "분류 확인 필요";
+  return c.evidence_class as ClassKey;
+}
+/** 실제 사람·현장·사진으로 설명하면 안 되는 기록인가 (가상 시나리오 · 원자료 없는 재현) */
+export const isTestOnly = (c: { evidence_class: string; source_ref?: string | null; raw_ref?: string | null }) => {
+  const k = classOf(c);
+  return k === "가상 시나리오" || k === "분류 확인 필요";
+};
 export type CaseStatus = "보고됨" | "접수됨" | "조치 중" | "현장 해결 보고" | "미해결" | "해결" | "무효";
 export const OPEN: CaseStatus[] = ["보고됨", "접수됨", "조치 중", "현장 해결 보고", "미해결"];
 
@@ -23,6 +49,8 @@ export interface CaseRow {
   schedule_id: string;
   data_kind: string;
   evidence_class: (typeof EVIDENCE_CLASSES)[number];
+  /** 원자료 이름 (실제 과거 현장정보 재현의 근거, 0.3.1) */
+  source_ref?: string | null;
   work_date: string;
   worker_id: string;
   reporter_id: string;
@@ -89,7 +117,7 @@ export interface PhotoRow {
 }
 
 export const CASE_COLS =
-  "id, case_no, schedule_id, data_kind, evidence_class, work_date, worker_id, reporter_id, source, info_source, issue_type, type_note, progress, needs, request, urgency, discovered_at, discovered_basis, reported_at, report_mode, report_basis, send_delay_seconds, recorded_at, expected_end, end_event_id, status, handler_id, app_version, updated_at";
+  "id, case_no, schedule_id, data_kind, evidence_class, source_ref, work_date, worker_id, reporter_id, source, info_source, issue_type, type_note, progress, needs, request, urgency, discovered_at, discovered_basis, reported_at, report_mode, report_basis, send_delay_seconds, recorded_at, expected_end, end_event_id, status, handler_id, app_version, updated_at";
 export const STEP_COLS =
   "id, step_no, case_id, kind, action, resolution, assignee_id, assignee_name, message, occurred_at, occurred_mode, occurred_basis, recorded_at, actor_id, source, linked_seq, linked_job_id, app_version";
 export const PHOTO_COLS =
@@ -114,19 +142,43 @@ export interface Span {
   key: "발견→보고" | "보고→확인" | "확인→지원 결정" | "발생→해결" | "보고→해결";
   label: string;
   minutes: number | null;
+  /** 두 시각의 실제 차이(초) — 같은 초 안에 한 조치는 0초 */
+  seconds: number | null;
+  /** 두 시각이 모두 버튼 누른 시각(서버 기록 기준)이라 초 단위까지 의미가 있는가 */
+  precise: boolean;
   quality: Quality | null;
   missing: string | null;
 }
 
-const quality = (c: Pick<CaseRow, "evidence_class">, ...bases: string[]): Quality => {
-  if (c.evidence_class === "가상 시나리오") return "가상";
+/** 소요시간 표시 — 초 단위가 의미 있을 때(두 시각 모두 버튼 시각)는 초까지, 아니면 분 */
+export function fmtSpan(s: Pick<Span, "minutes" | "seconds" | "precise" | "quality" | "missing">): string {
+  if (s.minutes === null || s.seconds === null) return s.missing ?? "-";
+  if (!s.precise) return `${s.minutes}분 (${s.quality})`;
+  const sec = Math.max(0, s.seconds);
+  const m = Math.floor(sec / 60);
+  const r = sec % 60;
+  return `${m > 0 ? `${m}분 ${r}초` : `${r}초`} (${s.quality} · 초 단위)`;
+}
+
+const quality = (c: Pick<CaseRow, "evidence_class" | "source_ref">, ...bases: string[]): Quality => {
+  // 가상 시나리오와 원자료 없는 재현 기록(분류 확인 필요)은 시험용 가정값 — 실측·진술로 보이지 않게 '가상'
+  if (isTestOnly(c)) return "가상";
   return bases.map((b) => BASIS_Q[b] ?? "진술").reduce((a, b) => (RANK[b] < RANK[a] ? b : a));
 };
 
 function span(c: CaseRow, key: Span["key"], label: string, a: { at: string | null; basis: string } | null, b: { at: string | null; basis: string } | null, none: string): Span {
-  if (!a || !b) return { key, label, minutes: null, quality: null, missing: none };
-  if (!a.at || !b.at) return { key, label, minutes: null, quality: null, missing: "시각 모름 (추정하지 않음)" };
-  return { key, label, minutes: Math.round((Date.parse(b.at) - Date.parse(a.at)) / 60000), quality: quality(c, a.basis, b.basis), missing: null };
+  if (!a || !b) return { key, label, minutes: null, seconds: null, precise: false, quality: null, missing: none };
+  if (!a.at || !b.at) return { key, label, minutes: null, seconds: null, precise: false, quality: null, missing: "시각 모름 (추정하지 않음)" };
+  const ms = Date.parse(b.at) - Date.parse(a.at);
+  return {
+    key,
+    label,
+    minutes: Math.round(ms / 60000),
+    seconds: Math.round(ms / 1000),
+    precise: a.basis === "버튼 누른 시각" && b.basis === "버튼 누른 시각",
+    quality: quality(c, a.basis, b.basis),
+    missing: null,
+  };
 }
 
 const firstStep = (steps: StepRow[], kinds: string[]) => steps.filter((s) => kinds.includes(s.kind)).sort((a, b) => a.step_no - b.step_no)[0];
@@ -147,6 +199,37 @@ export function caseSpans(c: CaseRow, steps: StepRow[]): Span[] {
     span(c, "발생→해결", "문제 발생(발견) → 해결 확인", disc, t(solved), "해결 확인 기록 없음"),
     span(c, "보고→해결", "문제 보고 → 해결 확인", rep, t(solved), "해결 확인 기록 없음"),
   ];
+}
+
+/* ── 판단 변화 중 '이 사건'에 해당하는 것 · 그날 전체와 구분 ─────────── */
+
+/**
+ * 판단 전후의 연결 변화 가운데 이 사건 담당 기사의 '사건 현장부터 그 뒤' 연결만 고른다.
+ * 판단 요약의 위험 연결 수(risky_before/after)는 그날 모든 기사·모든 일정(앞선 시험 기록 포함)을 센 값이라 따로 표시한다.
+ * 엔진의 변화 목록에는 바뀐 연결만 있다 (그대로인 연결은 없음).
+ */
+export function caseChanges(
+  changes: LinkChange[],
+  schedules: { id: string; workerId: string; start: string }[],
+  caseScheduleId: string,
+  workerId: string,
+): { mine: LinkChange[]; others: LinkChange[] } {
+  const from = schedules.find((s) => s.id === caseScheduleId)?.start ?? "00:00";
+  const ids = new Set(schedules.filter((s) => s.workerId === workerId && s.start >= from).map((s) => s.id));
+  const isMine = (c: LinkChange) => ids.has(c.key.split(">")[0]);
+  return { mine: changes.filter(isMine), others: changes.filter((c) => !isMine(c)) };
+}
+
+const RISKY_GRADE = new Set(["중간", "높음", "매우 높음"]);
+/** 이 사건 관련 변화 수 — 새로 생긴 위험 · 커진 위험 · 풀린 위험 · 등급은 같고 부족시간이 바뀐 위험 */
+export function tally(chs: LinkChange[]) {
+  const risky = (x: LinkChange["after"]) => !!x && x.status === "판정" && RISKY_GRADE.has(x.grade ?? "");
+  return {
+    newRisk: chs.filter((c) => c.kind === "신규 위험" && risky(c.after)).length,
+    worse: chs.filter((c) => c.kind === "악화" && risky(c.after)).length,
+    resolved: chs.filter((c) => c.kind === "해소").length,
+    kept: chs.filter((c) => c.kind === "유지" && risky(c.after)).length,
+  };
 }
 
 /* ── 엔진 결과로 본 후속 현장 영향 · 우선 확인 순서 ─────────── */

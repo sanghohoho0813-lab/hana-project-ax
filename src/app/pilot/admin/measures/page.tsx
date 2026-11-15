@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/pilot/session";
 import { kindParam, loadStaff, parseDay } from "@/lib/pilot/board";
 import { loadMeasures } from "@/lib/pilot/measure-data";
 import { fmtStat, spanSummary, trialComparison } from "@/lib/pilot/measures";
-import { EVIDENCE_CLASSES } from "@/lib/pilot/cases";
+import { CLASS_LABEL, EVIDENCE_CLASSES, classOf, fmtSpan } from "@/lib/pilot/cases";
 import { appVersion } from "@/lib/pilot/config";
 import { kst } from "@/lib/pilot/time";
 import { AdminNav, KindBanner } from "../AdminNav";
@@ -26,8 +26,9 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
   const names = Object.fromEntries(staff.map((p) => [p.id, p.display_name]));
   const sum = spanSummary(m.measures);
   const cmp = trialComparison(m.trials);
-  const classes = kind === "실제 업무" ? (["실제 업무"] as const) : (["현장정보 재현", "가상 시나리오"] as const);
-  const SECTION: Record<(typeof EVIDENCE_CLASSES)[number], string> = { "실제 업무": "실측 결과 (실제 업무)", "현장정보 재현": "현장정보 재현시험 결과", "가상 시나리오": "가상 시나리오 결과 (실제 효과 아님)" };
+  // 검증 시나리오의 기본값은 가상 시나리오 — 실제 과거 현장정보 재현은 원자료가 있을 때만 고른다 (0.3.1)
+  const classes = kind === "실제 업무" ? (["실제 업무"] as const) : (["가상 시나리오", "현장정보 재현"] as const);
+  const SECTION: Record<(typeof EVIDENCE_CLASSES)[number], string> = { "실제 업무": "실측 결과 (실제 업무)", "현장정보 재현": "실제 과거 현장정보 재현시험 결과 (원자료 있음)", "가상 시나리오": "가상 시나리오 결과 (실제 효과 아님)" };
   const h2 = "text-[20px] font-extrabold";
   const th = "py-1 pr-2 text-left font-semibold whitespace-nowrap";
   const td = "py-1 pr-2 align-top";
@@ -42,7 +43,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
       <form action="/pilot/admin/measures" className="flex flex-wrap items-center gap-2 print:hidden">
         <select name="kind" defaultValue={kindParam(kind)} className="rounded-xl border border-line bg-white px-3 py-1.5 text-[17px]" aria-label="데이터 구분">
           <option value="real">실제 업무</option>
-          <option value="scenario">검증 시나리오 (현장정보 재현 · 가상)</option>
+          <option value="scenario">검증 시나리오 (실제 과거 현장정보 재현 · 가상)</option>
         </select>
         <input type="date" name="from" defaultValue={from} aria-label="시작 날짜" className="rounded-xl border border-line bg-white px-3 py-1.5 text-[17px]" />
         ~
@@ -58,6 +59,12 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
       <p className="rounded-2xl bg-white px-4 py-2.5 text-[16px] text-ink-2">
         기능이 작동한 것과 업무개선 효과가 생긴 것은 다릅니다. 이 화면은 기록된 측정값만 모으며 개선율·절감효과를 계산해 만들지 않습니다. 기억에 의한 추정 값은 통계에서 빼고 따로 적습니다. 출력 프로그램 {appVersion()}
       </p>
+      {(sum.unclassified.length > 0 || cmp.unclassified > 0) && (
+        <p className="rounded-2xl border border-dashed border-[#8b5cf6] bg-[#f5f0ff] px-4 py-2.5 text-[15px] font-semibold text-[#5b21b6]" aria-label="분류 확인 필요">
+          분류 확인 필요 — 원자료 없이 &apos;현장정보 재현&apos;으로 저장된 기록은 실제 과거 현장정보 재현 집계에서 뺐습니다 (기록은 고치지 않음): 사건 {sum.unclassified.length}건
+          {sum.unclassified.length > 0 && ` (${sum.unclassified.join(", ")})`} · 수기·AX 측정 {cmp.unclassified}건
+        </p>
+      )}
 
       {classes.map((cls) => {
         const x = sum.byClass[cls];
@@ -121,12 +128,12 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
                     {x.c.case_no}
                   </a>
                 </td>
-                <td className={td}>{x.c.evidence_class}</td>
+                <td className={td}>{CLASS_LABEL[classOf(x.c)]}</td>
                 <td className={td}>{names[x.c.worker_id]}</td>
                 <td className={td}>{x.c.status}</td>
                 {x.spans.slice(0, 4).map((sp2) => (
                   <td key={sp2.key} className={td}>
-                    {sp2.minutes === null ? "-" : `${sp2.minutes}분 (${sp2.quality})`}
+                    {sp2.minutes === null ? "-" : fmtSpan(sp2)}
                   </td>
                 ))}
                 <td className={td}>{x.report ? `위험 생김·커짐 ${x.report.worsened} · 시각 바뀐 현장 ${x.report.affectedSites}` : "예상 종료 미확인"}</td>
@@ -197,7 +204,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
             {m.trials.map((t) => (
               <tr key={t.id} className={`border-t border-line ${t.voided_at ? "text-ink-3 line-through" : ""}`}>
                 <td className={td}>{t.trial_no}</td>
-                <td className={td}>{t.evidence_class}</td>
+                <td className={td}>{CLASS_LABEL[classOf(t)]}</td>
                 <td className={`${td} font-bold`}>{t.method}</td>
                 <td className={td}>
                   {t.scenario}

@@ -254,6 +254,33 @@ describe.skipIf(!DB_TEST)("현장 문제 사건 · 조치 · 사진 (로컬 Supa
     expect(psql(`select occurred_mode || '|' || occurred_basis from public.case_steps where case_id = '${id}'`)).toBe("사후 입력|원자료 기록");
   });
 
+  it("0.3.1 자료 구분: 실제 과거 현장정보 재현은 원자료 이름이 있어야 저장 · 원자료 없는 시험은 가상 시나리오", async () => {
+    const sc = await admin.aal2.rpc("save_schedule", {
+      p_op_id: op(), p_schedule_id: null, p_expected_version: null, p_data_kind: "검증 시나리오", p_work_date: D, p_assignee_id: fa.id,
+      p_site_name: "재현 규칙 확인", p_region: "", p_planned_start: "15:00", p_planned_end: "16:00", p_travel_minutes: null, p_priority: "보통", p_note: null,
+    });
+    expect(sc.error).toBeNull();
+    const sid = (sc.data as { schedule_id: string }).schedule_id;
+    // 기존 함수로 재현을 보내면 원자료가 없으므로 거절된다
+    expect(msg((await report(admin.aal2, { p_schedule_id: sid, p_evidence_class: "현장정보 재현", p_info_source: "업무일지" })).error)).toMatch(/원자료/);
+    const withSource = (ref: string | null, p: Record<string, unknown> = {}) =>
+      admin.aal2.rpc("report_case_with_source", {
+        p_source_ref: ref, p_op_id: op(), p_schedule_id: sid, p_issue_type: "예상과 다른 설치환경", p_type_note: null, p_progress: "분해·설치 시작 후", p_needs: ["숙련 기술자 지원"],
+        p_request: null, p_urgency: "보통", p_discovered_basis: "원자료 기록", p_discovered_time: "09:10", p_report_mode: "사후", p_report_time: "09:15", p_report_basis: "원자료 기록",
+        p_expected_end: null, p_info_source: "업무일지", p_evidence_class: "현장정보 재현", p_client_pressed_at: nowIso(), p_client_sent_at: nowIso(), p_app_version: "db-test", ...p,
+      });
+    expect(msg((await withSource("   ")).error)).toMatch(/원자료/);
+    expect(msg((await withSource("시험: 원자료 이름 형식 확인용", { p_info_source: "시험 시나리오" })).error)).toMatch(/원자료/);
+    const ok = await withSource("시험: 원자료 이름 형식 확인용 (실제 원자료 아님)");
+    expect(ok.error).toBeNull();
+    const id = (ok.data as { case_id: string }).case_id;
+    expect(psql(`select evidence_class || '|' || source_ref from public.field_cases where id = '${id}'`)).toBe("현장정보 재현|시험: 원자료 이름 형식 확인용 (실제 원자료 아님)");
+    // 가상 시나리오는 원자료 없이 저장된다
+    const v = await withSource(null, { p_evidence_class: "가상 시나리오", p_info_source: "시험 시나리오" });
+    expect(v.error).toBeNull();
+    expect(psql(`select coalesce(source_ref, '없음') from public.field_cases where id = '${(v.data as { case_id: string }).case_id}'`)).toBe("없음");
+  });
+
   it("기록 보호: 조치 단계는 고치거나 지울 수 없고, 사건·사진 표는 함수로만 바뀐다", async () => {
     expect(() => psql(`update public.case_steps set message = 'x' where case_id = '${caseId}'`)).toThrow(/추가만/);
     expect(() => psql(`delete from public.case_steps where case_id = '${caseId}'`)).toThrow(/추가만/);

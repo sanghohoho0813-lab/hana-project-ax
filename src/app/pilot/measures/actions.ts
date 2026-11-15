@@ -21,6 +21,8 @@ export async function addTrialAction(x: Record<string, string | number | null>):
   const s = await session();
   if (!s || s.profile?.role !== "admin") return fail("[권한] 관리자(2단계 인증 완료)만 측정을 기록할 수 있습니다.");
   if (!UUID_RE.test(String(x.opId)) || !UUID_RE.test(String(x.participantId))) return fail("[입력] 참가자를 고르세요.");
+  if (x.evidenceClass === "현장정보 재현" && !String(x.rawRef ?? "").trim())
+    return fail("[입력] 현장정보 재현 측정은 원자료(과거 기록) 이름이 있어야 합니다. 원자료가 없는 시험은 가상 시나리오로 고르세요.");
   for (const k of ["findSec", "rejudgeSec", "correct", "expected", "missed", "wrong"]) {
     const v = num(x[k]);
     if (v !== null && !(Number.isFinite(v) && v >= 0)) return fail(`[입력] 숫자는 0 이상이거나 비워 두세요.`);

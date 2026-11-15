@@ -62,7 +62,7 @@ await nf.locator('select[aria-label="원래 기록"]').selectOption(opt);
 await nf.locator('input[aria-label="바뀐 날짜"]').fill(D);
 await nf.locator('button:has-text("기록 저장")').click();
 await nf.locator('[role=status]:has-text("기록 #")').waitFor();
-check(psql(`select (ref_note_id = (select id from pilot_notes where text = '사진 버튼을 더 크게 해 주세요 ${RUN}'))::text || '|' || dev_date || '|' || (dev_version like '0.3.0+%')::text from pilot_notes where text = '사진 버튼 크기 키움 ${RUN}';`) === `true|${D}|true`, "개선 반영: 원래 의견 · 반영 날짜 · 프로그램 버전 연결");
+check(psql(`select (ref_note_id = (select id from pilot_notes where text = '사진 버튼을 더 크게 해 주세요 ${RUN}'))::text || '|' || dev_date || '|' || (dev_version ~ '^[0-9]+[.][0-9]+[.][0-9]+[+]')::text from pilot_notes where text = '사진 버튼 크기 키움 ${RUN}';`) === `true|${D}|true`, "개선 반영: 원래 의견 · 반영 날짜 · 프로그램 버전 연결");
 
 // CSV
 for (const t of ["cases", "trials", "notes"]) {

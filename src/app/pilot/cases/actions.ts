@@ -6,6 +6,7 @@ import { processPending, runJudgment } from "@/lib/pilot/judge";
 import { friendlyError, isFinalError } from "@/lib/pilot/errors";
 import { UUID_RE } from "@/lib/pilot/op-id";
 import { appVersion } from "@/lib/pilot/config";
+import type { LinkChange } from "@/lib/risk-engine";
 import { ACTIONS, BASES, EVIDENCE_CLASSES, INFO_SOURCES, ISSUE_TYPES, NEEDS, PROGRESS, RESOLUTIONS } from "@/lib/pilot/cases";
 
 /**
@@ -66,6 +67,8 @@ export interface ReportInput {
   expectedEnd?: string | null;
   infoSource: string;
   evidenceClass: string;
+  /** 원자료 이름 — 실제 과거 현장정보 재현이면 필수 (0.3.1) */
+  sourceRef?: string | null;
 }
 
 export async function reportCaseAction(x: ReportInput): Promise<CaseResult<{ caseId: string; caseNo: string; engine: boolean }>> {
@@ -78,9 +81,14 @@ export async function reportCaseAction(x: ReportInput): Promise<CaseResult<{ cas
   if (x.expectedEnd && !TIME_RE.test(x.expectedEnd)) return fail("[입력] 변경 예상 종료(HH:MM)를 확인해 주세요.");
   if (x.discovered?.basis !== "보고와 같은 시각" && x.discovered?.basis !== "모름" && !TIME_RE.test(x.discovered?.time ?? "")) return fail("[입력] 문제 발견시각을 넣거나 모름을 고르세요.");
   if (!(INFO_SOURCES as readonly string[]).includes(x.infoSource) || !(EVIDENCE_CLASSES as readonly string[]).includes(x.evidenceClass)) return fail("[입력] 자료 출처·구분을 확인해 주세요.");
+  const sourceRef = (x.sourceRef ?? "").trim();
+  if (x.evidenceClass === "현장정보 재현" && (!sourceRef || x.infoSource === "시험 시나리오"))
+    return fail("[입력] 실제 과거 현장정보 재현은 원자료(업무일지·통화기록·메신저·일정표 등)의 이름이 있어야 합니다. 원자료가 없는 시험은 가상 시나리오로 고르세요.");
+  if (sourceRef.length > 200) return fail("[입력] 원자료 이름은 200자까지입니다.");
   const bad = checkMoment(x.report, false);
   if (bad) return fail(bad);
-  const { data, error } = await s.sb.rpc("report_case", {
+  const { data, error } = await s.sb.rpc("report_case_with_source", {
+    p_source_ref: x.evidenceClass === "현장정보 재현" ? sourceRef : null,
     p_op_id: x.opId,
     p_schedule_id: x.scheduleId,
     p_issue_type: x.issueType,
@@ -165,7 +173,7 @@ export async function caseAdjustAction(x: {
   plannedStart: string;
   plannedEnd: string;
   message: string;
-}): Promise<CaseResult<{ seq: number; before: number | null; after: number | null }>> {
+}): Promise<CaseResult<{ seq: number; before: number | null; after: number | null; changes: LinkChange[] }>> {
   const s = await session();
   if (!s || s.profile?.role !== "admin") return fail("[권한] 관리자(2단계 인증 완료)만 일정을 조정할 수 있습니다.");
   if (![x?.opId, x?.caseId, x?.scheduleId].every((v) => UUID_RE.test(v ?? ""))) return fail("[입력] 번호가 올바르지 않습니다.");
@@ -185,7 +193,7 @@ export async function caseAdjustAction(x: {
   const j = await runJudgment(s.sb, r.job_id);
   await processPending(s.sb, 10);
   done();
-  return { ok: true, duplicated: r.duplicated, seq: r.seq, judged: j.ok, before: j.summary?.risky_before ?? null, after: j.summary?.risky_after ?? null };
+  return { ok: true, duplicated: r.duplicated, seq: r.seq, judged: j.ok, before: j.summary?.risky_before ?? null, after: j.summary?.risky_after ?? null, changes: j.changes ?? [] };
 }
 
 /* ── 예상 종료 변경 (현장 직원 · 관리자) ─────────────── */

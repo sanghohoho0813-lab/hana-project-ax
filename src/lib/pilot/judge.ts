@@ -3,6 +3,7 @@ import { createHash, createHmac } from "node:crypto";
 import { appVersion } from "./config";
 import { computeJudgment, type EventRow, type JobRow, type JudgmentSummary, type RevisionRow } from "./core";
 import type { PilotClient } from "./supabase";
+import type { LinkChange } from "@/lib/risk-engine";
 
 /**
  * 위험 판단 전후 기록 — 서버에서 실제 판단엔진으로 계산해 서버 전용 서명(HMAC)과 함께 DB 에 넘긴다.
@@ -32,6 +33,8 @@ export interface JudgeResult {
   duplicated?: boolean;
   /** 판단 전후 요약 (화면 안내용 — 기록된 값과 같은 계산) */
   summary?: JudgmentSummary;
+  /** 판단 전후 연결 변화 (화면 안내용 — 관리자 화면에서 '이 사건 관련'만 골라 보여 준다) */
+  changes?: LinkChange[];
   error?: string;
 }
 
@@ -50,7 +53,7 @@ export async function runJudgment(sb: PilotClient, jobId: string): Promise<Judge
     const done = await sb.rpc("judge_complete", { p_job_id: jobId, p_ts: t2, p_payload: text, p_sig: signJudge("complete", jobId, t2, sha256(text)) });
     if (done.error) throw new Error(done.error.message);
     const r = done.data as { judgment_id: string; duplicated: boolean };
-    return { jobId, ok: true, judgmentId: r.judgment_id, duplicated: r.duplicated, summary: payload.summary };
+    return { jobId, ok: true, judgmentId: r.judgment_id, duplicated: r.duplicated, summary: payload.summary, changes: payload.changes.changes };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     try {

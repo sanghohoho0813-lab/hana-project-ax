@@ -312,4 +312,34 @@ body {
   .print-hide {
     display: none !important;
   }
+  /* 긴 기록(사건 증빙) — 흰 바탕 · 작은 글씨 · 내용 높이만큼만 (마지막 쪽이 빈 회색 칸으로 남지 않게) */
+  html,
+  body {
+    background: #fff !important;
+  }
+  .print-area.print-compact {
+    padding: 0 !important;
+    bottom: auto !important;
+    border: 0 !important;
+  }
+  .print-compact,
+  .print-compact * {
+    font-size: 9.5pt !important;
+    line-height: 1.38 !important;
+  }
+  .print-compact h1 {
+    font-size: 14pt !important;
+  }
+  .print-compact h2 {
+    font-size: 11pt !important;
+    break-after: avoid;
+  }
+  .print-compact li,
+  .print-compact tr,
+  .print-compact .break-inside-avoid {
+    break-inside: avoid;
+  }
+  .print-compact img {
+    max-height: 36mm;
+  }
 }

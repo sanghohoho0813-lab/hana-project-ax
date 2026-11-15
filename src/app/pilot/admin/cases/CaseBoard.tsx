@@ -7,7 +7,7 @@ import { AlertTriangle, FileText, PhoneCall } from "lucide-react";
 import { Badge, type Tone } from "@/components/ui";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
-import { ACTIONS, caseSpans, type CaseRow, type CaseStatus, type Impact, type PhotoRow, type StepRow } from "@/lib/pilot/cases";
+import { ACTIONS, CLASS_LABEL, caseChanges, caseSpans, classOf, fmtSpan, isTestOnly, tally, type CaseRow, type CaseStatus, type Impact, type PhotoRow, type StepRow } from "@/lib/pilot/cases";
 import type { JudgmentBrief } from "@/lib/pilot/case-data";
 import { caseAdjustAction, caseEndAction, caseStepAction, deletePhotoAction } from "../../cases/actions";
 import { Basis, CaseReport } from "../../_ui/CaseReport";
@@ -147,14 +147,17 @@ export function CaseBoard({
   );
 }
 
-function changeText(j: JudgmentBrief, titles: Map<string, string>) {
+function changeText(j: JudgmentBrief, titles: Map<string, string>, schedules: DaySchedule[], c: CaseRow) {
   const t = (key: string) =>
     key
       .split(">")
       .map((id) => titles.get(id) ?? "?")
       .join(" → ");
-  const ch = j.changes?.changes ?? [];
-  return `${ch.length ? ch.map((c) => `${t(c.key)} ${c.kind}(${c.before?.grade ?? c.before?.status ?? "없음"}→${c.after?.grade ?? c.after?.status ?? "없음"})`).join(" · ") : "연결 변화 없음"} (그날 전체 위험 연결 ${j.summary.risky_before} → ${j.summary.risky_after}건)`;
+  // 이 사건(담당 기사 · 사건 현장부터) 연결 변화와 그날 전체 수를 나눠 쓴다 — 전체 수에는 다른 기사·다른 시험 기록이 들어 있다
+  const { mine, others } = caseChanges(j.changes?.changes ?? [], schedules, c.schedule_id, c.worker_id);
+  const n = tally(mine);
+  const list = mine.length ? mine.map((x) => `${t(x.key)} ${x.kind}(${x.before?.grade ?? x.before?.status ?? "없음"}→${x.after?.grade ?? x.after?.status ?? "없음"})`).join(" · ") : "이 사건 관련 연결 변화 없음";
+  return `${list} — 이 사건 관련: 새로 생긴 위험 ${n.newRisk}건 · 커진 위험 ${n.worse}건 · 풀린 위험 ${n.resolved}건 (참고: 그날 전체 위험 연결 ${j.summary.risky_before} → ${j.summary.risky_after}건${others.length ? ` · 무관한 연결 변화 ${others.length}건` : ""})`;
 }
 
 function AdminCase({
@@ -192,7 +195,7 @@ function AdminCase({
         <Badge tone={TONE[c.status]} className="!py-0 !text-[14px]">
           {c.status}
         </Badge>
-        <span className="text-[14px] text-ink-3">{c.evidence_class}</span>
+        <span className={`text-[14px] ${isTestOnly(c) ? "font-semibold text-[#5b21b6]" : "text-ink-3"}`}>{CLASS_LABEL[classOf(c)]}</span>
       </p>
       {x.reasons.length > 0 && <p className="text-[15px] font-semibold text-danger">우선 확인 이유: {x.reasons.join(" · ")}</p>}
       {c.issue_type === "안전 위험" && (
@@ -208,14 +211,14 @@ function AdminCase({
         입력 {names[c.reporter_id]} ({c.source}) · 출처 {c.info_source} · 프로그램 {c.app_version}
       </p>
       <p className={`text-[15.5px] font-semibold ${c.expected_end ? "text-ink" : "text-ink-3"}`}>
-        {c.expected_end ? `변경 예상 종료 ${c.expected_end.slice(0, 5)} → 엔진 판단: ${x.reportJudgment ? changeText(x.reportJudgment, titles) : "판단 대기 (기록·판단 이력에서 다시 처리)"}` : "예상 종료 미확인 — 엔진에 전달하지 않음 (위험 판단 변화 없음)"}
+        {c.expected_end ? `변경 예상 종료 ${c.expected_end.slice(0, 5)} → 엔진 판단: ${x.reportJudgment ? changeText(x.reportJudgment, titles, schedules, c) : "판단 대기 (기록·판단 이력에서 다시 처리)"}` : "예상 종료 미확인 — 엔진에 전달하지 않음 (위험 판단 변화 없음)"}
       </p>
       {x.impact && (
         <p className="text-[15px] text-ink-2">
           지금 기준 후속 현장 영향(계산값): 위험 {x.impact.risky}곳{x.impact.sites.length ? ` (${x.impact.sites.join(", ")})` : ""} · 최대 {x.impact.maxShortfall}분 늦음 · 판단 보류 {x.impact.held}건
         </p>
       )}
-      {x.photos.length > 0 && <Photos photos={x.photos} onNotice={onNotice} />}
+      {x.photos.length > 0 && <Photos photos={x.photos} onNotice={onNotice} testOnly={isTestOnly(c)} />}
       {x.steps.length > 0 && (
         <ol className="space-y-0.5 rounded-xl bg-[#f7f8fa] px-3 py-2 text-[15px]" aria-label="조치 이력">
           {x.steps.map((s) => (
@@ -229,12 +232,12 @@ function AdminCase({
               <span className="text-ink-3">
                 ({hm(s.occurred_at)} · {s.occurred_basis} · {names[s.actor_id]})
               </span>
-              {x.stepJudgments[s.id] && <span className="block pl-3 font-semibold text-primary-dark">재판단: {changeText(x.stepJudgments[s.id]!, titles)}</span>}
+              {x.stepJudgments[s.id] && <span className="block pl-3 font-semibold text-primary-dark">재판단: {changeText(x.stepJudgments[s.id]!, titles, schedules, c)}</span>}
             </li>
           ))}
         </ol>
       )}
-      <p className="text-[14px] text-ink-3">{spans.map((p) => `${p.label} ${p.minutes === null ? "-" : `${p.minutes}분(${p.quality})`}`).join(" · ")}</p>
+      <p className="text-[14px] text-ink-3">{spans.map((p) => `${p.label} ${p.minutes === null ? "-" : fmtSpan(p)}`).join(" · ")}</p>
 
       {!sheet && (
         <div className="flex flex-wrap gap-1.5">
@@ -272,10 +275,12 @@ function AdminCase({
   );
 }
 
-function Photos({ photos, onNotice }: { photos: (PhotoRow & { url: string | null })[]; onNotice: (t: string) => void }) {
+function Photos({ photos, onNotice, testOnly }: { photos: (PhotoRow & { url: string | null })[]; onNotice: (t: string) => void; testOnly: boolean }) {
   const router = useRouter();
   return (
-    <ul className="flex flex-wrap gap-2" aria-label="현장 사진">
+    <>
+      {testOnly && <p className="text-[13.5px] font-semibold text-[#5b21b6]">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
+      <ul className="flex flex-wrap gap-2" aria-label="현장 사진">
       {photos.map((p) => (
         <li key={p.id} className="w-28 text-[12.5px] text-ink-3">
           {p.deleted_at || !p.url ? (
@@ -284,7 +289,7 @@ function Photos({ photos, onNotice }: { photos: (PhotoRow & { url: string | null
             <>
               <a href={p.url} target="_blank" rel="noreferrer">
                 {/* eslint-disable-next-line @next/next/no-img-element -- 비공개 저장소의 서명 주소(10분) */}
-                <img src={p.url} alt={p.caption ?? "현장 사진"} className="h-28 w-28 rounded-lg border border-line object-cover" />
+                <img src={p.url} alt={p.caption ?? (testOnly ? "시험용 이미지" : "현장 사진")} className="h-28 w-28 rounded-lg border border-line object-cover" />
               </a>
               <span className="block">
                 {kst(p.recorded_at).time} · {Math.round(p.size_bytes / 1024)}KB · {p.exif_removed ? "촬영정보 제거" : "원본(촬영정보 남음)"}
@@ -305,7 +310,8 @@ function Photos({ photos, onNotice }: { photos: (PhotoRow & { url: string | null
           )}
         </li>
       ))}
-    </ul>
+      </ul>
+    </>
   );
 }
 
@@ -360,7 +366,10 @@ function StepSheet({
       if (kind === "일정 조정") {
         const r = await caseAdjustAction({ opId, caseId: x.c.id, scheduleId: target!.id, expectedVersion: target!.version, plannedStart: start, plannedEnd: end, message: msg });
         if (!r.ok) return setErr(r.error);
-        return onDone(`일정 조정 (${target!.site} ${start}~${end}) — 재판단: 위험 연결 ${r.before ?? "?"} → ${r.after ?? "?"}건`);
+        const t = tally(caseChanges(r.changes, schedules, x.c.schedule_id, x.c.worker_id).mine);
+        return onDone(
+          `일정 조정 (${target!.site} ${start}~${end}) — 재판단(이 사건 관련): 풀린 위험 ${t.resolved}건 · 새로 생긴 위험 ${t.newRisk}건 · 커진 위험 ${t.worse}건 · 부족시간이 바뀐 위험 ${t.kept}건 · 참고: 그날 전체(모든 기사) 위험 연결 ${r.before ?? "?"} → ${r.after ?? "?"}건`,
+        );
       }
       if (kind === "예상 종료 변경") {
         const r = await caseEndAction({ opId, caseId: x.c.id, expectedEnd: end, moment: moment() });

@@ -6,7 +6,7 @@ import { AlertTriangle, Camera, PhoneCall, Send } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
 import { preparePhoto, uploadPhoto } from "@/lib/pilot/photo";
-import { BASES, EVIDENCE_CLASSES, INFO_SOURCES, ISSUE_TYPES, NEEDS, PROGRESS } from "@/lib/pilot/cases";
+import { BASES, INFO_SOURCES, ISSUE_TYPES, NEEDS, PROGRESS } from "@/lib/pilot/cases";
 import { attachPhotoAction, reportCaseAction } from "../cases/actions";
 
 /**
@@ -46,7 +46,7 @@ export function CaseReport({
 }: {
   userId: string;
   target: CaseTarget;
-  /** 검증 시나리오 날짜 — 자료 구분을 현장정보 재현 / 가상 시나리오 중에서 고른다 */
+  /** 검증 시나리오 날짜 — 자료 구분을 가상 시나리오 / 실제 과거 현장정보 재현(원자료 필수) 중에서 고른다 */
   scenario: boolean;
   proxy?: boolean;
   onDone: (text: string) => void;
@@ -65,6 +65,7 @@ export function CaseReport({
   const [rep, setRep] = useState<{ time: string; basis: string }>({ time: "", basis: "원자료 기록" });
   const [info, setInfo] = useState<string>(proxy ? "전화" : "현장기사 앱");
   const [evidence, setEvidence] = useState<string>(scenario ? "가상 시나리오" : "실제 업무");
+  const [sourceRef, setSourceRef] = useState("");
   const [photos, setPhotos] = useState<PhotoState[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<{ text: string; retry: boolean } | null>(null);
@@ -74,7 +75,8 @@ export function CaseReport({
     !!type &&
     (disc.basis === "보고와 같은 시각" || disc.basis === "모름" || TIME_RE.test(disc.time)) &&
     (!proxy || (TIME_RE.test(rep.time) && (BASES as readonly string[]).includes(rep.basis))) &&
-    (end === null || TIME_RE.test(end));
+    (end === null || TIME_RE.test(end)) &&
+    (evidence !== "현장정보 재현" || sourceRef.trim().length > 0);
   const urgency = urgent || type === "안전 위험" ? "긴급" : "보통";
 
   async function uploadAll(caseId: string, list: PhotoState[]) {
@@ -119,6 +121,7 @@ export function CaseReport({
           expectedEnd: end,
           infoSource: info,
           evidenceClass: evidence,
+          sourceRef: evidence === "현장정보 재현" ? sourceRef : null,
         });
         if (!r.ok) {
           setErr({ text: r.error, retry: r.retry });
@@ -259,12 +262,25 @@ export function CaseReport({
         )}
         {scenario && (
           <Group label="자료 구분 (검증 시나리오)">
-            {EVIDENCE_CLASSES.filter((x) => x !== "실제 업무").map((x) => (
+            {(["가상 시나리오", "현장정보 재현"] as const).map((x) => (
               <button type="button" role="radio" aria-checked={evidence === x} key={x} className={chip(evidence === x)} onClick={() => setEvidence(x)}>
-                {x}
+                {x === "가상 시나리오" ? "가상 시나리오 (시험용 가정값)" : "실제 과거 현장정보 재현 (원자료 있음)"}
               </button>
             ))}
           </Group>
+        )}
+        {scenario && evidence === "현장정보 재현" && (
+          <div className="space-y-1">
+            <input
+              value={sourceRef}
+              onChange={(e) => setSourceRef(e.target.value)}
+              maxLength={200}
+              placeholder="원자료 이름 (예: 10월 2일 업무일지 · A현장 통화기록)"
+              aria-label="원자료 이름"
+              className="min-h-[3rem] w-full rounded-xl border border-line px-3 text-[17px]"
+            />
+            <p className="text-[14px] text-ink-3">실제 과거 현장의 원자료가 있을 때만 고릅니다. 원자료가 없는 시험·연습은 가상 시나리오입니다.</p>
+          </div>
         )}
       </fieldset>
 

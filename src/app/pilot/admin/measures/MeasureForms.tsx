@@ -58,7 +58,7 @@ function TrialForm({ staff, cases, classes }: { staff: { id: string; name: strin
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="자료 구분">
         {classes.map((c) => (
           <button key={c} type="button" role="radio" aria-checked={v.evidenceClass === c} className={chip(v.evidenceClass === c)} onClick={() => set("evidenceClass", c)}>
-            {c}
+            {c === "현장정보 재현" ? "실제 과거 현장정보 재현 (원자료 필수)" : c === "가상 시나리오" ? "가상 시나리오 (시험용 가정값)" : c}
           </button>
         ))}
         {(["수기", "AX"] as const).map((x) => (
@@ -145,7 +145,7 @@ function TrialForm({ staff, cases, classes }: { staff: { id: string; name: strin
           </select>
         </label>
         <label className="sm:col-span-2">
-          <span className={label}>원자료 · 비고</span>
+          <span className={label}>원자료 · 비고{v.evidenceClass === "현장정보 재현" && <b className="text-danger"> (재현은 원자료 이름 필수)</b>}</span>
           <input value={v.rawRef ?? ""} onChange={(e) => set("rawRef", e.target.value)} placeholder="기록지 번호·녹화 파일 이름" className={input} aria-label="원자료" />
         </label>
       </div>

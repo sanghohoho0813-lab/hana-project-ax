@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getPilotSession } from "@/lib/pilot/session";
 import { loadCaseEvidence } from "@/lib/pilot/case-data";
-import { caseSpans } from "@/lib/pilot/cases";
+import { CLASS_LABEL, caseChanges, caseSpans, classOf, isTestOnly, tally } from "@/lib/pilot/cases";
+import type { LinkChange } from "@/lib/risk-engine";
 import { toCsv } from "@/lib/pilot/csv";
 import { appVersion } from "@/lib/pilot/config";
 import { UUID_RE } from "@/lib/pilot/op-id";
@@ -27,6 +28,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         exported_by: s.userId,
         program: appVersion(),
         note: "사건번호 하나로 묶은 원자료 — 사진 파일은 비공개 저장소에 있고 여기에는 지문(SHA-256)·크기·경로만 담는다",
+        classification: {
+          stored: c.evidence_class,
+          label: CLASS_LABEL[classOf(c)],
+          source_ref: c.source_ref ?? null,
+          test_only: isTestOnly(c),
+          note: isTestOnly(c) ? "시험용 기록 — 인물·현장·사진은 실제 참여자·실제 현장사진이 아니다" : null,
+        },
         case: c,
         schedule: ev.schedule,
         steps: ev.steps,
@@ -35,6 +43,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         engine_events: ev.events,
         engine_schedule_revisions: ev.revisions,
         judgments: ev.judgments,
+        // 판단 요약의 위험 연결 수는 그날 전체(모든 기사·모든 일정) 값 — 이 사건 담당 기사의 사건 현장부터의 연결 변화만 따로 묶는다
+        case_related_changes: (ev.judgments as { seq: number; changes: { changes: LinkChange[] }; summary: { risky_before: number; risky_after: number } }[]).map((j) => {
+          const split = caseChanges(j.changes.changes, ev.workerSchedules, c.schedule_id, c.worker_id);
+          return { seq: j.seq, case_links: split.mine, case_tally: tally(split.mine), unrelated_changes: split.others.length, whole_day_risky: [j.summary.risky_before, j.summary.risky_after] };
+        }),
         measures: spans,
       },
       null,
@@ -47,6 +60,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       구분: "사건",
       사건번호: c.case_no,
       자료구분: c.evidence_class,
+      자료구분_표시: CLASS_LABEL[classOf(c)],
+      원자료: c.source_ref ?? "",
       데이터구분: c.data_kind,
       날짜: c.work_date,
       내용: `${c.issue_type} · ${c.progress} · 요청 ${c.needs.join("/")}${c.request ? ` · ${c.request}` : ""}`,
@@ -61,12 +76,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       프로그램버전: c.app_version,
       엔진기록: c.end_event_id ?? "",
       ...Object.fromEntries(spans.map((x) => [`${x.key}_분`, x.minutes ?? ""])),
+      ...Object.fromEntries(spans.map((x) => [`${x.key}_초`, x.precise ? (x.seconds ?? "") : ""])),
       ...Object.fromEntries(spans.map((x) => [`${x.key}_품질`, x.quality ?? x.missing ?? ""])),
     },
     ...ev.steps.map((x) => ({
       구분: `조치 ${x.step_no}`,
       사건번호: c.case_no,
       자료구분: c.evidence_class,
+      자료구분_표시: CLASS_LABEL[classOf(c)],
+      원자료: c.source_ref ?? "",
       데이터구분: c.data_kind,
       날짜: c.work_date,
       내용: `${x.kind}${x.action ? ` · ${x.action}` : ""}${x.resolution ? ` · ${x.resolution}` : ""}${x.message ? ` · ${x.message}` : ""}`,

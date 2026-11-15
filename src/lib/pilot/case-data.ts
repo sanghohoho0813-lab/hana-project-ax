@@ -103,6 +103,8 @@ export interface CaseEvidence extends CaseBundle {
   /** 연결된 판단 전후 기록 (전체) */
   judgments: Record<string, unknown>[];
   schedule: Record<string, unknown> | null;
+  /** 이 사건 담당 기사의 그날 일정 — 판단 변화 중 '이 사건 관련'을 고르고 연결 이름을 붙이는 데 쓴다 */
+  workerSchedules: { id: string; site: string; workerId: string; start: string }[];
 }
 
 /** 사건 하나의 증빙 — 사건 · 사진 · 조치 · 엔진 입력(작업 기록·일정 수정본) · 판단 전후 (관리자 세션) */
@@ -111,21 +113,28 @@ export async function loadCaseEvidence(sb: PilotClient, id: string): Promise<Cas
   const c = b.cases[0];
   if (!c) return null;
   const linked = b.steps.map((s) => s.linked_seq).filter((x): x is number => x !== null);
-  const [ev, sch] = await Promise.all([
+  const [ev, sch, ws] = await Promise.all([
     sb
       .from("work_events")
       .select("seq, id, schedule_id, kind, occurred_at, entered_time, expected_end, entry_mode, recorded_at, client_pressed_at, client_sent_at, send_delay_seconds, source, actor_id, voids_event_id, note")
       .eq("schedule_id", c.schedule_id)
       .order("seq"),
     sb.from("schedules").select("id, site_name, region, work_date, data_kind, assignee_id, planned_start, planned_end, travel_minutes, version, status").eq("id", c.schedule_id).maybeSingle(),
+    sb.from("schedules").select("id, site_name, assignee_id, planned_start").eq("assignee_id", c.worker_id).eq("work_date", c.work_date),
   ]);
+  const workerSchedules = ((ws.data ?? []) as { id: string; site_name: string; assignee_id: string; planned_start: string }[]).map((x) => ({
+    id: x.id,
+    site: x.site_name,
+    workerId: x.assignee_id,
+    start: String(x.planned_start).slice(0, 5),
+  }));
   const events = ((ev.data ?? []) as { id: string; seq: number; voids_event_id: string | null }[]).filter(
     (e) => e.id === c.end_event_id || linked.includes(e.seq) || (e.voids_event_id && e.voids_event_id === c.end_event_id),
   );
   const rev = linked.length ? await sb.from("schedule_revisions").select("seq, schedule_id, revision, change_kind, snapshot, actor_id, recorded_at").in("seq", linked) : { data: [] };
   const seqs = [...events.map((e) => e.seq), ...((rev.data ?? []) as { seq: number }[]).map((r) => r.seq)];
   const j = seqs.length ? await sb.from("risk_judgments").select("*").in("seq", seqs).order("seq") : { data: [] };
-  return { ...b, events, revisions: (rev.data ?? []) as Record<string, unknown>[], judgments: (j.data ?? []) as Record<string, unknown>[], schedule: (sch.data as Record<string, unknown>) ?? null };
+  return { ...b, events, revisions: (rev.data ?? []) as Record<string, unknown>[], judgments: (j.data ?? []) as Record<string, unknown>[], schedule: (sch.data as Record<string, unknown>) ?? null, workerSchedules };
 }
 
 /* ── 안전점검 ─────────────────────────────────────── */

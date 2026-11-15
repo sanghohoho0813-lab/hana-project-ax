@@ -3,10 +3,11 @@
  *  - 실제 업무 · 현장정보 재현 · 가상 시나리오를 따로 집계한다 (섞지 않음).
  *  - 시각 근거가 '기억에 의한 추정'인 소요시간과 '기억 추정' 측정값은 통계에서 빼고 따로 보여 준다.
  *  - 비교값은 같은 자료 구분 안에서 수기·AX 실측이 모두 있을 때만 '이번 측정값'으로 낸다 (통계적 유의성 검정 아님).
+ *  - 원자료 없이 '현장정보 재현'으로 저장된 기록은 재현 집계에 넣지 않고 '분류 확인 필요'로 따로 센다 (0.3.1).
  */
 import type { LinkChange } from "@/lib/risk-engine";
 import type { JudgmentSummary } from "./core";
-import { EVIDENCE_CLASSES, caseSpans, type CaseRow, type Quality, type Span, type StepRow } from "./cases";
+import { EVIDENCE_CLASSES, caseSpans, classOf, type CaseRow, type Quality, type Span, type StepRow } from "./cases";
 
 export interface Stat {
   n: number;
@@ -95,7 +96,7 @@ export function spanSummary(ms: CaseMeasure[]) {
   const keys: Span["key"][] = ["발견→보고", "보고→확인", "확인→지원 결정", "발생→해결", "보고→해결"];
   const byClass = Object.fromEntries(
     EVIDENCE_CLASSES.map((k) => {
-      const mine = ms.filter((m) => m.c.evidence_class === k && m.c.status !== "무효");
+      const mine = ms.filter((m) => classOf(m.c) === k && m.c.status !== "무효");
       const rows: SpanSummary[] = keys.map((key) => {
         const all = mine.map((m) => m.spans.find((s) => s.key === key)!);
         const used = all.filter((s) => s.minutes !== null && s.quality !== "추정");
@@ -117,7 +118,8 @@ export function spanSummary(ms: CaseMeasure[]) {
     }),
   ) as Record<(typeof EVIDENCE_CLASSES)[number], { cases: number; spans: SpanSummary[]; withEngine: number; affected: Stat; actions: (EngineEffect & { kind: string })[] }>;
   const estimates = ms.flatMap((m) => m.spans.filter((s) => s.quality === "추정").map((s) => ({ caseNo: m.c.case_no, cls: m.c.evidence_class, label: s.label, minutes: s.minutes })));
-  return { byClass, estimates };
+  const unclassified = ms.filter((m) => classOf(m.c) === "분류 확인 필요").map((m) => m.c.case_no);
+  return { byClass, estimates, unclassified };
 }
 
 export interface TrialRow {
@@ -156,8 +158,8 @@ const accuracy = (t: TrialRow) => (t.expected && t.correct !== null ? Math.round
 export function trialComparison(trials: TrialRow[]) {
   const ok = trials.filter((t) => !t.voided_at && t.value_basis !== "기억 추정");
   const byClass = EVIDENCE_CLASSES.map((cls) => {
-    const m = ok.filter((t) => t.evidence_class === cls && t.method === "수기");
-    const a = ok.filter((t) => t.evidence_class === cls && t.method === "AX");
+    const m = ok.filter((t) => classOf(t) === cls && t.method === "수기");
+    const a = ok.filter((t) => classOf(t) === cls && t.method === "AX");
     const row = (pick: (t: TrialRow) => number | null) => {
       const x = stat(m.map(pick));
       const y = stat(a.map(pick));
@@ -177,5 +179,10 @@ export function trialComparison(trials: TrialRow[]) {
           : "수기·AX 측정이 모두 있어야 비교합니다 (개선율을 만들지 않음)",
     };
   });
-  return { byClass, estimated: trials.filter((t) => !t.voided_at && t.value_basis === "기억 추정"), voided: trials.filter((t) => t.voided_at).length };
+  return {
+    byClass,
+    estimated: trials.filter((t) => !t.voided_at && t.value_basis === "기억 추정"),
+    voided: trials.filter((t) => t.voided_at).length,
+    unclassified: trials.filter((t) => !t.voided_at && classOf(t) === "분류 확인 필요").length,
+  };
 }

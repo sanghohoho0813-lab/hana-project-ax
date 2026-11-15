@@ -24,6 +24,14 @@ describe.skipIf(!DB_TEST)("성과 측정 기록 (로컬 Supabase)", () => {
   const note = (c = admin.aal2, p: Record<string, unknown> = {}) =>
     c.rpc("add_note", { p_op_id: op(), p_kind: "관리자 의견", p_text: "의견", p_speaker_id: null, p_speaker_name: null, p_confirmation: "입력자 기록 (본인 미확인)", p_case_id: null, p_ref_note_id: null, p_dev_date: null, p_dev_version: null, p_app_version: "db-test", ...p });
 
+  it("0.3.1 자료 구분: 현장정보 재현 측정은 원자료 이름이 있어야 저장 · 원자료 없는 시험은 가상 시나리오", async () => {
+    expect(msg((await trial(admin.aal2, { p_evidence_class: "현장정보 재현", p_raw_ref: null })).error)).toMatch(/원자료/);
+    expect(msg((await trial(admin.aal2, { p_evidence_class: "현장정보 재현", p_raw_ref: "  " })).error)).toMatch(/원자료/);
+    const ok = await trial(admin.aal2, { p_evidence_class: "현장정보 재현", p_raw_ref: "시험: 원자료 이름 형식 확인용 (실제 원자료 아님)" });
+    expect(ok.error).toBeNull();
+    expect((await trial(admin.aal2, { p_evidence_class: "가상 시나리오", p_raw_ref: null })).error).toBeNull();
+  });
+
   it("수기·AX 측정은 관리자만 · 정확 수가 정답보다 많으면 거절 · 같은 요청은 한 번만 · 무효는 사유와 함께", async () => {
     expect(msg((await trial(f.c)).error)).toMatch(/\[권한\]/);
     expect(msg((await trial(admin.aal2, { p_correct: 3 })).error)).toMatch(/정답 위험 수보다/);

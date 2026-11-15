@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/pilot/session";
 import { loadStaff } from "@/lib/pilot/board";
 import { loadCaseEvidence } from "@/lib/pilot/case-data";
-import { caseSpans } from "@/lib/pilot/cases";
+import { CLASS_LABEL, caseChanges, caseSpans, classOf, fmtSpan, isTestOnly, tally } from "@/lib/pilot/cases";
 import { UUID_RE } from "@/lib/pilot/op-id";
 import { kst, kstLabel } from "@/lib/pilot/time";
 import { appVersion } from "@/lib/pilot/config";
@@ -28,6 +28,15 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
   const td = "py-1 pr-2 align-top";
   type J = { seq: number; trigger_kind: string; as_of: string; summary: JudgmentSummary; changes: { changes: LinkChange[] }; rule_version: string; state_version: string; priority_version: string; app_version: string; payload_sha256: string; recorded_at: string };
   const judgments = ev.judgments as unknown as J[];
+  const cls = classOf(c);
+  const testOnly = isTestOnly(c);
+  const siteOf = new Map(ev.workerSchedules.map((x) => [x.id, x.site]));
+  const linkName = (key: string) =>
+    key
+      .split(">")
+      .map((x) => siteOf.get(x) ?? "다른 기사 현장")
+      .join(" → ");
+  const grade = (x: LinkChange["before"]) => x?.grade ?? x?.status ?? "연결 없음";
 
   return (
     <div className="mx-auto max-w-[62rem] space-y-4">
@@ -44,20 +53,32 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
         </a>
       </div>
       {/* print-area: 공용 인쇄 규칙(globals.css)은 이 영역만 인쇄한다 — 없으면 PDF가 빈 쪽으로 나온다 */}
-      <article className="card print-area space-y-4 p-5" aria-label="사건 증빙">
+      <article className="card print-area print-compact space-y-4 p-5" aria-label="사건 증빙">
         <header>
           <h1 className="text-[24px] font-extrabold">
             사건 증빙 {c.case_no} — {site}
           </h1>
           <p className="text-[14.5px] text-ink-3">
-            출력 {kstLabel(new Date())} · 출력 프로그램 {appVersion()} · 자료 구분 <b>{c.evidence_class}</b> ({c.data_kind}) · 서버 기록시각은 DB 서버가 정한 값 · 계산값 = 기존 연쇄위험 엔진 결과
+            출력 {kstLabel(new Date())} · 출력 프로그램 {appVersion()} · 자료 구분 <b>{CLASS_LABEL[cls]}</b> ({c.data_kind}) · 서버 기록시각은 DB 서버가 정한 값 · 계산값 = 기존 연쇄위험 엔진 결과
+          </p>
+          <p
+            aria-label="자료 구분 안내"
+            className={`mt-1.5 rounded-lg border px-3 py-2 text-[15px] font-semibold ${cls === "실제 업무" ? "border-success bg-success-bg text-success" : cls === "현장정보 재현" ? "border-primary bg-primary-light text-primary-dark" : "border-dashed border-[#8b5cf6] bg-[#f5f0ff] text-[#5b21b6]"}`}
+          >
+            {cls === "실제 업무" && "실제 업무 기록 — 그날 실제로 일어난 일을 그때 입력한 기록입니다."}
+            {cls === "현장정보 재현" && `실제 과거 현장정보 재현 — 원자료: ${c.source_ref}. 지난 사례를 원자료·진술로 다시 입력한 기록이며, 시각 근거를 항목마다 따로 표시합니다.`}
+            {cls === "가상 시나리오" && "가상 시나리오 — 시험용 가정값입니다. 인물·현장·사진은 시험용이며 실제 참여자·실제 현장·실제 현장사진이 아닙니다. 업무 효과의 근거로 쓰지 않습니다."}
+            {cls === "분류 확인 필요" &&
+              "분류 확인 필요 — '현장정보 재현'으로 저장됐지만 원자료 기록이 없습니다. 실제 과거 사례 재현으로 인정하지 않고 가상 시나리오와 같이 다룹니다 (기록은 고치지 않음). 인물·현장·사진은 시험용입니다."}
           </p>
         </header>
 
         <section className="space-y-1">
           <h2 className={h2}>1. 사건 · 참가자 · 출처</h2>
           <p className="text-[16px]">
-            날짜 {c.work_date} · 현장 {site} · 현장기사(참가자) {who(c.worker_id)} · 입력자 {who(c.reporter_id)} ({c.source}) · 자료 출처 {c.info_source} · 프로그램 {c.app_version}
+            날짜 {c.work_date} · 현장 {site}
+            {testOnly ? " (시험용 현장)" : ""} · {testOnly ? "시험 계정(현장기사 역할)" : "현장기사(참가자)"} {who(c.worker_id)} · 입력자 {who(c.reporter_id)} ({c.source}) · 자료 출처 {c.info_source}
+            {c.source_ref && ` · 원자료 ${c.source_ref}`} · 프로그램 {c.app_version}
           </p>
           <p className="text-[16px]">
             {c.issue_type} · {c.progress} · {c.urgency} · 요청 {c.needs.join(", ") || "없음"}
@@ -80,14 +101,14 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
         </section>
 
         <section className="space-y-1.5">
-          <h2 className={h2}>3. 현장 사진 ({ev.photos.length}장)</h2>
+          <h2 className={h2}>{testOnly ? `3. 시험용 이미지 (${ev.photos.length}장) — 실제 현장사진 아님` : `3. 현장 사진 (${ev.photos.length}장)`}</h2>
           {ev.photos.length === 0 && <p className="text-[15.5px] text-ink-3">사진 없음</p>}
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 print:grid-cols-4 print:gap-2">
             {ev.photos.map((p) => (
               <li key={p.id} className="text-[13px] text-ink-3">
                 {p.url && !p.deleted_at ? (
                   // eslint-disable-next-line @next/next/no-img-element -- 비공개 저장소의 서명 주소(10분)
-                  <img src={p.url} alt={p.caption ?? "현장 사진"} className="aspect-square w-full rounded-lg border border-line object-cover" />
+                  <img src={p.url} alt={p.caption ?? (testOnly ? "시험용 이미지" : "현장 사진")} className="aspect-square w-full rounded-lg border border-line object-cover" />
                 ) : (
                   <span className="block rounded-lg bg-[#f2f4f6] p-3">삭제됨 · {p.delete_reason}</span>
                 )}
@@ -140,24 +161,36 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
               </li>
             ))}
           </ul>
-          {judgments.map((j) => (
-            <div key={j.seq} className="rounded-xl border border-line p-2.5 text-[15px]">
-              <p className="font-bold">
-                판단 #{j.seq} ({j.trigger_kind}) · 기준시각 {dt(j.as_of)} · 위험 연결 {j.summary.risky_before} → {j.summary.risky_after}건 · 판단 보류 {j.summary.held_before} → {j.summary.held_after} · 예상 시각이 바뀐 현장 {j.summary.affected_sites}곳
-              </p>
-              <ul>
-                {j.changes.changes.map((x) => (
-                  <li key={x.key}>
-                    · {x.kind}: {x.before?.grade ?? x.before?.status ?? "연결 없음"} → {x.after?.grade ?? x.after?.status ?? "연결 없음"}
-                    {x.after?.slack !== null && x.after?.slack !== undefined && (x.after.slack < 0 ? ` (${-x.after.slack}분 늦음)` : ` (여유 ${x.after.slack}분)`)}
-                  </li>
-                ))}
-              </ul>
-              <p className="text-[13px] text-ink-3">
-                {j.rule_version} · {j.state_version} · {j.priority_version} · 계산 프로그램 {j.app_version} · 서명 기록 {dt(j.recorded_at)} · SHA-256 {j.payload_sha256.slice(0, 16)}…
-              </p>
-            </div>
-          ))}
+          {judgments.map((j) => {
+            const split = caseChanges(j.changes.changes, ev.workerSchedules, c.schedule_id, c.worker_id);
+            const t = tally(split.mine);
+            return (
+              <div key={j.seq} className="break-inside-avoid rounded-xl border border-line p-2.5 text-[15px]" aria-label={`판단 ${j.seq}`}>
+                <p className="font-bold">
+                  판단 #{j.seq} ({j.trigger_kind}) · 기준시각 {dt(j.as_of)} · 예상 시각이 바뀐 현장 {j.summary.affected_sites}곳
+                </p>
+                <p className="font-semibold">
+                  이 사건 관련 연결 (담당 기사 · 사건 현장부터): 새로 생긴 위험 {t.newRisk}건 · 커진 위험 {t.worse}건 · 풀린 위험 {t.resolved}건 · 등급은 같고 부족시간이 바뀐 위험 {t.kept}건
+                </p>
+                <ul>
+                  {split.mine.map((x) => (
+                    <li key={x.key}>
+                      · {linkName(x.key)}: {x.kind} ({grade(x.before)} → {grade(x.after)})
+                      {x.after?.slack !== null && x.after?.slack !== undefined && (x.after.slack < 0 ? ` · ${-x.after.slack}분 늦음` : ` · 여유 ${x.after.slack}분`)}
+                    </li>
+                  ))}
+                  {split.mine.length === 0 && <li className="text-ink-3">· 이 사건 관련 연결 변화 없음</li>}
+                </ul>
+                <p className="text-[13.5px] text-ink-3">
+                  참고 — 그날 전체(모든 기사·모든 일정, 같은 날 다른 시험 기록 포함) 위험 연결 {j.summary.risky_before} → {j.summary.risky_after}건 · 판단 보류 {j.summary.held_before} → {j.summary.held_after}건
+                  {split.others.length > 0 && ` · 이 사건과 무관한 연결 변화 ${split.others.length}건`}. 이 수는 이 사건만의 결과가 아닙니다. 바뀌지 않은 연결은 목록에 없습니다.
+                </p>
+                <p className="text-[13px] text-ink-3">
+                  {j.rule_version} · {j.state_version} · {j.priority_version} · 계산 프로그램 {j.app_version} · 서명 기록 {dt(j.recorded_at)} · SHA-256 {j.payload_sha256.slice(0, 16)}…
+                </p>
+              </div>
+            );
+          })}
         </section>
 
         <section className="space-y-1">
@@ -165,11 +198,14 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
           <ul className="text-[16px]">
             {spans.map((x) => (
               <li key={x.key}>
-                · {x.label}: {x.minutes === null ? <span className="text-ink-3">{x.missing}</span> : `${x.minutes}분 (${x.quality})`}
+                · {x.label}: {x.minutes === null ? <span className="text-ink-3">{x.missing}</span> : fmtSpan(x)}
               </li>
             ))}
           </ul>
-          <p className="text-[13.5px] text-ink-3">품질: 실측(두 시각 모두 버튼 시각) · 원자료 · 진술 · 추정(기억 — 비교 통계에서 뺌) · 가상(시험 시나리오). 측정하지 않은 개선율·절감효과는 만들지 않는다.</p>
+          <p className="text-[13.5px] text-ink-3">
+            품질: 실측(두 시각 모두 버튼 시각) · 원자료 · 진술 · 추정(기억 — 비교 통계에서 뺌) · 가상(시험 시나리오). 두 시각이 모두 버튼 누른 시각이면 초 단위까지 표시한다 — 자동 시험처럼 같은 초에 연달아 누르면 0초로 나온다.
+            측정하지 않은 개선율·절감효과는 만들지 않는다.
+          </p>
         </section>
       </article>
     </div>

@@ -3,6 +3,7 @@ import { getPilotSession } from "@/lib/pilot/session";
 import { parseDay } from "@/lib/pilot/board";
 import { loadMeasures } from "@/lib/pilot/measure-data";
 import { toCsv } from "@/lib/pilot/csv";
+import { CLASS_LABEL, classOf } from "@/lib/pilot/cases";
 
 /** 성과 측정 CSV — 사건 측정(1~6) · 수기 vs AX(7) · 의견·오류·개선(8·9). 관리자(2단계 인증)만 · 내보내기 기록 */
 export async function GET(req: Request) {
@@ -20,6 +21,8 @@ export async function GET(req: Request) {
     rows = m.measures.map((x) => ({
       사건번호: x.c.case_no,
       자료구분: x.c.evidence_class,
+      자료구분_표시: CLASS_LABEL[classOf(x.c)],
+      원자료: x.c.source_ref ?? "",
       날짜: x.c.work_date,
       현장기사: x.c.worker_id,
       입력자: x.c.reporter_id,
@@ -31,7 +34,13 @@ export async function GET(req: Request) {
       보고시각: x.c.reported_at,
       보고근거: `${x.c.report_mode} · ${x.c.report_basis}`,
       서버기록시각: x.c.recorded_at,
-      ...Object.fromEntries(x.spans.flatMap((sp) => [[`${sp.key}_분`, sp.minutes ?? ""], [`${sp.key}_품질`, sp.quality ?? sp.missing ?? ""]])),
+      ...Object.fromEntries(
+        x.spans.flatMap((sp) => [
+          [`${sp.key}_분`, sp.minutes ?? ""],
+          [`${sp.key}_초`, sp.precise ? (sp.seconds ?? "") : ""],
+          [`${sp.key}_품질`, sp.quality ?? sp.missing ?? ""],
+        ]),
+      ),
       보고_위험생김커짐_계산값: x.report?.worsened ?? "",
       보고_시각바뀐현장_계산값: x.report?.affectedSites ?? "",
       판단보류_전후: x.report ? `${x.report.heldBefore}→${x.report.heldAfter}` : "",
@@ -43,6 +52,7 @@ export async function GET(req: Request) {
     rows = m.trials.map((t) => ({
       측정번호: t.trial_no,
       자료구분: t.evidence_class,
+      자료구분_표시: CLASS_LABEL[classOf(t)],
       방식: t.method,
       시나리오: t.scenario,
       대응묶음: t.pair_key ?? "",
