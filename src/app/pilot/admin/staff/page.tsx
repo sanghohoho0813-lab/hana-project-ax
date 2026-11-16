@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/pilot/session";
 import { loadStaff } from "@/lib/pilot/board";
 import { kstLabel } from "@/lib/pilot/time";
-import { AdminNav } from "../AdminNav";
+import { PageHead } from "../../_ui/ds";
 import { StaffTable } from "./StaffTable";
 
 export default async function StaffPage() {
@@ -9,11 +9,8 @@ export default async function StaffPage() {
   const staff = await loadStaff(s.sb);
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[28px] font-extrabold">계정</h1>
-        <AdminNav current="staff" />
-      </div>
-      <div className="card space-y-1.5 px-5 py-4 text-[17.5px] text-ink-2">
+      <PageHead eyebrow="더보기" title="계정" sub="직원 활성화 · 이름 · 역할 관리" />
+      <div className="card space-y-1.5 px-5 py-4 text-[15px] text-ink-2">
         <p>
           계정은 Supabase 대시보드 <b>Authentication → Users → Invite user</b>로 초대합니다 (회원가입은 받지 않음). 초대받은 사람은 메일 링크로 비밀번호를 정하고, 여기서 활성화해야 쓸 수 있습니다.
         </p>

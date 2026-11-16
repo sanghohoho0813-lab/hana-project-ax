@@ -9,10 +9,10 @@ import { kst } from "@/lib/pilot/time";
 export function KindBadge({ kind, big = false }: { kind: LabKind; big?: boolean }) {
   const cls =
     kind === "실제 업무"
-      ? "bg-[#e8f1fe] text-[#1b64da] border border-[#1b64da]/30"
+      ? "bg-primary-light text-primary-dark border border-primary/25"
       : kind === "사후 재현"
         ? "bg-[#fdf3e0] text-[#8a4b00] border border-[#b45309]/40"
-        : "bg-[#f5f0ff] text-[#5b21b6] border-2 border-dashed border-[#7c3aed]/50";
+        : "bg-test-bg text-test border-2 border-dashed border-[#94a3b8]";
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-bold whitespace-nowrap ${big ? "text-[17px]" : "text-[14.5px]"} ${cls}`}>{kind}</span>;
 }
 

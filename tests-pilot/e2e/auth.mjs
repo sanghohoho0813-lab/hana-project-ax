@@ -22,7 +22,7 @@ let adminSecret;
   adminSecret = (await p.locator('text=설정 키:').innerText()).replace('설정 키:', '').trim();
   await p.fill('input[name=code]', '000000'); await p.click('button:has-text("확인")'); await p.waitForSelector('text=인증 코드가 맞지 않거나'); check(true, '틀린 인증 코드 거부');
   await p.fill('input[name=code]', totp(adminSecret)); await p.click('button:has-text("확인")');
-  await waitPath(p, '/pilot/admin'); check((await p.locator('h1').innerText()).includes('관리자 일정판'), '인증 코드 확인 → 관리자 일정판');
+  await waitPath(p, '/pilot/admin'); check((await p.locator('h1').innerText()).includes('오늘 운영 현황'), '인증 코드 확인 → 관리자 대시보드 (0.4.0: 일정판은 현장·일정 메뉴로 이동)');
   await shot(p, 'auth_admin');
   // 로그아웃 후 다시 로그인하면 등록된 인증 앱 코드만 묻는다
   await p.click('button:has-text("로그아웃")'); await waitPath(p, '/pilot/login');

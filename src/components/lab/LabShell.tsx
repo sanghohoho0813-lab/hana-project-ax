@@ -13,6 +13,7 @@
  *  - 데이터 동기화: 한쪽에서 저장하면 브라우저 storage 이벤트로 다른 쪽이 다시 읽는다 (다시 쓰지 않음).
  *  - 이 브라우저 안에서만 공유된다 — 다른 기기·다른 브라우저와는 공유되지 않는다.
  */
+import { LabFlow } from "./LabFlow";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -350,12 +351,13 @@ export function LabShell({ children, sidebar }: { children: React.ReactNode; sid
     return (
       <div className="flex h-screen flex-col bg-bg" data-device="both">
         <Header title={title} pathname={pathname} tabs switcher={switcher} />
+        <LabFlow />
         <div className="grid min-h-0 flex-1 grid-cols-[2fr_1fr]">
           <div className="min-w-0 overflow-y-auto px-5 py-5" data-pane="pc">
             {children}
           </div>
           <div className="flex min-w-0 justify-center overflow-y-auto border-l border-line bg-[#e9ecf1] py-3" data-pane="mobile">
-            <PhoneFrame width={width} height="calc(100vh - 175px)" label={`모바일 화면 ${width}px`} />
+            <PhoneFrame width={width} height="calc(100vh - 265px)" label={`모바일 화면 ${width}px`} />
           </div>
         </div>
       </div>

@@ -34,7 +34,7 @@ const { p: admin } = await adminLogin(bro, `본사${RUN}`);
 await activate(admin, fa, NA);
 await activate(admin, fb, NB);
 const A_ID = psql(`select id from auth.users where email = '${fa}';`);
-await admin.goto(`${APP}/pilot/admin?date=${D}&kind=${KIND}`);
+await admin.goto(`${APP}/pilot/admin/schedule?date=${D}&kind=${KIND}`);
 // A는 지금 시작 예정 (늦게 시작하면 엔진의 '작업개시 지연 추정'이 먼저 위험을 잡으므로 보고 효과만 보려고 제때 시작)
 const t0 = kstHHMM(1), aEnd = kstHHMM(20), bStart = kstHHMM(50), bEnd = kstHHMM(110), cStart = kstHHMM(150), cEnd = kstHHMM(200);
 await createSchedule(admin, { who: NA, site: SA, start: t0, end: aEnd });

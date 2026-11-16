@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, FileText, PhoneCall } from "lucide-react";
-import { Badge, type Tone } from "@/components/ui";
+import { AlertTriangle, ArrowRight, FileText, PhoneCall } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
-import { ACTIONS, CLASS_LABEL, caseChanges, caseSpans, classOf, fmtSpan, isTestOnly, tally, type CaseRow, type CaseStatus, type Impact, type PhotoRow, type StepRow } from "@/lib/pilot/cases";
+import { ACTIONS, CLASS_LABEL, NEXT_ADMIN_ACTION, caseChanges, caseSpans, classOf, fmtSpan, isTestOnly, tally, type CaseRow, type CaseStatus, type Impact, type PhotoRow, type StepRow } from "@/lib/pilot/cases";
 import type { JudgmentBrief } from "@/lib/pilot/case-data";
 import { caseAdjustAction, caseEndAction, caseStepAction, deletePhotoAction } from "../../cases/actions";
 import { Basis, CaseReport } from "../../_ui/CaseReport";
+import { cx, More, Notice, Pill, type PillTone } from "../../_ui/ds";
 
 export interface BoardCase {
   c: CaseRow;
@@ -32,9 +32,9 @@ export interface DaySchedule {
   started: boolean;
 }
 
-const TONE: Record<CaseStatus, Tone> = { 보고됨: "danger", 접수됨: "warning", "조치 중": "info", "현장 해결 보고": "info", 미해결: "danger", 해결: "success", 무효: "neutral" };
+const TONE: Record<CaseStatus, PillTone> = { 보고됨: "danger", 접수됨: "warning", "조치 중": "info", "현장 해결 보고": "info", 미해결: "danger", 해결: "success", 무효: "neutral" };
 const hm = (iso: string | null) => (iso ? kst(iso).time : "모름");
-const btn = "min-h-[2.6rem] rounded-xl bg-[#f2f4f6] px-3 text-[15.5px] font-bold text-ink-2 hover:bg-[#e8ebee] disabled:opacity-40";
+const btn = "inline-flex min-h-[2.75rem] items-center justify-center rounded-xl bg-[#eef0f3] px-3.5 text-[15px] font-bold text-ink-2 transition-colors hover:bg-[#e4e7eb] active:scale-[0.985] disabled:opacity-40";
 type Sheet = "접수" | "담당자 배정" | "지원 조치 결정" | "현장 전달" | "일정 조정" | "예상 종료 변경" | "해결 확인" | "미해결 유지" | "무효 처리";
 
 export function CaseBoard({
@@ -66,24 +66,20 @@ export function CaseBoard({
   const fresh = open.filter((x) => x.c.status === "보고됨").length;
   return (
     <div className="space-y-4">
-      <section className={`card space-y-3 p-4 ${open.length ? "border-2 border-danger/40" : ""}`} aria-label="처리 중 지원 요청">
+      <section className="space-y-3" aria-label="처리 중 지원 요청">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="flex items-center gap-1.5 text-[21px] font-extrabold">
-            <AlertTriangle size={21} className={open.length ? "text-danger" : "text-ink-3"} /> 처리 중 {open.length}건
+          <h2 className="flex items-center gap-2 text-[19px] font-extrabold">
+            <AlertTriangle size={20} className={open.length ? "text-danger" : "text-ink-3"} /> 처리 중 {open.length}건
           </h2>
           {fresh > 0 && (
-            <span className="rounded-full bg-danger px-2.5 py-0.5 text-[15px] font-bold text-white" data-new-cases={fresh}>
+            <span className="rounded-full bg-danger px-2.5 py-1 text-[13.5px] font-bold text-white" data-new-cases={fresh}>
               새 보고 {fresh}건 (미접수)
             </span>
           )}
-          <span className="text-[14.5px] text-ink-3">우선 확인 순서: 안전 위험·긴급 → 엔진이 계산한 후속 현장 위험 → 미접수 → 오래 기다린 순 · 기준 {nowLabel}</span>
+          <span className="text-[13px] text-ink-3">기준 {nowLabel}</span>
         </div>
-        {notice && (
-          <p role="status" className="rounded-xl bg-success-bg px-3 py-2 text-[16px] font-semibold text-success">
-            {notice}
-          </p>
-        )}
-        {open.length === 0 && <p className="text-[16px] text-ink-3">처리 중인 지원 요청이 없습니다. 현장기사 휴대폰에서 보고하면 자동 갱신으로 여기에 나타납니다.</p>}
+        {notice && <Notice kind="success">{notice}</Notice>}
+        {open.length === 0 && <p className="card px-5 py-6 text-[15px] text-ink-3">처리 중인 지원 요청이 없습니다. 현장기사 휴대폰에서 보고하면 자동 갱신으로 여기에 나타납니다.</p>}
         <ol className="space-y-3">
           {open.map((x, i) => (
             <AdminCase key={x.c.id} rank={i + 1} x={x} staff={staff} names={names} schedules={schedules[x.c.work_date] ?? []} kindParam={kindParam} onNotice={setNotice} />
@@ -91,10 +87,13 @@ export function CaseBoard({
         </ol>
       </section>
 
-      <section className="card space-y-2 p-4" aria-label="대리 보고">
+      <section className="card space-y-3 p-5" aria-label="대리 보고">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="flex-1 text-[19px] font-extrabold">대리 보고 — 전화·메신저·업무일지로 받은 문제 (사후 입력)</h2>
-          <select value={proxy ?? ""} onChange={(e) => setProxy(e.target.value || null)} aria-label="대리 보고할 일정" className="rounded-xl border border-line px-2 py-2 text-[16px]">
+          <div className="flex-1">
+            <h2 className="text-[17px] font-extrabold">대리 보고</h2>
+            <p className="text-[13.5px] text-ink-3">전화 · 메신저 · 업무일지로 받은 문제를 사후 입력합니다.</p>
+          </div>
+          <select value={proxy ?? ""} onChange={(e) => setProxy(e.target.value || null)} aria-label="대리 보고할 일정" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px]">
             <option value="">일정 고르기 ({date})</option>
             {daySchedules.map((x) => (
               <option key={x.id} value={x.id}>
@@ -124,18 +123,16 @@ export function CaseBoard({
       </section>
 
       {closed.length > 0 && (
-        <section className="card space-y-1.5 p-4" aria-label="끝난 사건">
-          <h2 className="text-[19px] font-extrabold">
+        <section id="closed" className="card space-y-2 p-5" aria-label="끝난 사건">
+          <h2 className="text-[17px] font-extrabold">
             {date} 끝난 사건 {closed.length}건
           </h2>
-          <ul className="divide-y divide-line text-[16px]">
+          <ul className="divide-y divide-line text-[15px]">
             {closed.map((x) => (
-              <li key={x.c.id} className="flex flex-wrap items-center gap-2 py-1.5">
+              <li key={x.c.id} className="flex flex-wrap items-center gap-2 py-2.5">
                 <b className="tabular-nums">{x.c.case_no}</b> {x.site} · {names[x.c.worker_id]} · {x.c.issue_type}
-                <Badge tone={TONE[x.c.status]} className="!py-0 !text-[14px]">
-                  {x.c.status}
-                </Badge>
-                <Link href={`/pilot/admin/cases/${x.c.id}`} className="ml-auto font-bold text-primary-dark underline">
+                <Pill tone={TONE[x.c.status]}>{x.c.status}</Pill>
+                <Link href={`/pilot/admin/cases/${x.c.id}`} className="ml-auto inline-flex min-h-[2.5rem] items-center gap-1 rounded-xl bg-primary-light px-3 text-[14px] font-bold text-primary-dark">
                   사건 증빙
                 </Link>
               </li>
@@ -184,43 +181,62 @@ function AdminCase({
   const accepted = c.status !== "보고됨";
   const router = useRouter();
   return (
-    <li className={`space-y-2 rounded-2xl border px-3.5 py-3 ${c.issue_type === "안전 위험" || c.urgency === "긴급" ? "border-danger bg-danger-bg/30" : "border-line bg-white"}`} aria-label={`사건 ${c.case_no}`}>
-      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[17px]">
-        <span className="rounded-lg bg-ink px-2 py-0.5 text-[14px] font-bold text-white">{rank}순위</span>
-        <b className="tabular-nums">{c.case_no}</b>
-        <b>{x.site}</b>
-        <span>{names[c.worker_id]}</span>
-        <span className={`rounded-full px-2 py-0.5 text-[14px] font-bold ${c.issue_type === "안전 위험" ? "bg-danger text-white" : "bg-danger-bg text-danger"}`}>{c.issue_type}</span>
-        {c.urgency === "긴급" && <Badge tone="danger" className="!py-0 !text-[14px]">긴급</Badge>}
-        <Badge tone={TONE[c.status]} className="!py-0 !text-[14px]">
-          {c.status}
-        </Badge>
-        <span className={`text-[14px] ${isTestOnly(c) ? "font-semibold text-[#5b21b6]" : "text-ink-3"}`}>{CLASS_LABEL[classOf(c)]}</span>
-      </p>
-      {x.reasons.length > 0 && <p className="text-[15px] font-semibold text-danger">우선 확인 이유: {x.reasons.join(" · ")}</p>}
+    <li
+      id={`case-${c.case_no}`}
+      className={cx("card scroll-mt-20 space-y-3 p-5", (c.issue_type === "안전 위험" || c.urgency === "긴급") && "ring-2 ring-danger/50")}
+      aria-label={`사건 ${c.case_no}`}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full bg-ink px-2.5 py-1 text-[13px] leading-none font-bold text-white">{rank}순위</span>
+        <Pill tone={TONE[c.status]}>{c.status}</Pill>
+        {c.urgency === "긴급" && <Pill tone="danger">긴급</Pill>}
+        <Pill tone={c.issue_type === "안전 위험" ? "danger" : "neutral"} dot={false}>
+          {c.issue_type}
+        </Pill>
+        <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
+        <Pill tone={isTestOnly(c) ? "test" : "neutral"} dot={false} className="ml-auto !text-[12.5px]">
+          {CLASS_LABEL[classOf(c)]}
+        </Pill>
+      </div>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <p className="text-[19px] font-extrabold">
+          {x.site} <span className="text-[15px] font-semibold text-ink-3">· {names[c.worker_id]}</span>
+        </p>
+        <p className="flex items-center gap-1.5 rounded-xl bg-primary-light px-3 py-1.5 text-[14px] font-bold text-primary-dark">
+          다음 조치 <ArrowRight size={14} /> {NEXT_ADMIN_ACTION[c.status]}
+        </p>
+      </div>
+      {x.reasons.length > 0 && <p className="rounded-xl bg-danger-bg px-3 py-2 text-[14.5px] font-semibold text-danger">우선 확인 이유: {x.reasons.join(" · ")}</p>}
       {c.issue_type === "안전 위험" && (
         <p className="flex items-center gap-1.5 text-[15px] font-bold text-danger">
           <PhoneCall size={16} /> 안전 위험 — 화면 확인만 하지 말고 현장기사에게 직접 전화해 작업 중지 여부를 확인하세요.
         </p>
       )}
-      <p className="text-[15px] text-ink-2">
-        발견 {hm(c.discovered_at)} ({c.discovered_basis}) · 보고 {hm(c.reported_at)} ({c.report_mode} · {c.report_basis}) · 서버 기록 {kst(c.recorded_at).seconds} · {c.progress} · 요청 {c.needs.join(", ") || "없음"}
-        {c.request && ` · "${c.request}"`}
-      </p>
-      <p className="text-[14px] text-ink-3">
-        입력 {names[c.reporter_id]} ({c.source}) · 출처 {c.info_source} · 프로그램 {c.app_version}
-      </p>
-      <p className={`text-[15.5px] font-semibold ${c.expected_end ? "text-ink" : "text-ink-3"}`}>
+      <dl className="grid grid-cols-2 gap-2 text-[14px] md:grid-cols-4">
+        {[
+          ["발견", `${hm(c.discovered_at)} · ${c.discovered_basis}`],
+          ["보고", `${hm(c.reported_at)} · ${c.report_mode}`],
+          ["진행상황", c.progress],
+          ["요청 지원", c.needs.join(", ") || "없음"],
+        ].map(([k, v]) => (
+          <div key={k} className="rounded-xl bg-[#f7f8fa] px-3 py-2">
+            <dt className="text-[12px] font-bold text-ink-3">{k}</dt>
+            <dd className="font-semibold">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      {c.request && <p className="text-[14.5px] text-ink-2">요청 내용: &ldquo;{c.request}&rdquo;</p>}
+      <p className={`rounded-xl px-3 py-2 text-[14.5px] font-semibold ${c.expected_end ? "bg-[#f7f8fa] text-ink" : "bg-[#f7f8fa] text-ink-3"}`}>
         {c.expected_end ? `변경 예상 종료 ${c.expected_end.slice(0, 5)} → 엔진 판단: ${x.reportJudgment ? changeText(x.reportJudgment, titles, schedules, c) : "판단 대기 (기록·판단 이력에서 다시 처리)"}` : "예상 종료 미확인 — 엔진에 전달하지 않음 (위험 판단 변화 없음)"}
       </p>
       {x.impact && (
-        <p className="text-[15px] text-ink-2">
+        <p className="text-[14px] text-ink-2">
           지금 기준 후속 현장 영향(계산값): 위험 {x.impact.risky}곳{x.impact.sites.length ? ` (${x.impact.sites.join(", ")})` : ""} · 최대 {x.impact.maxShortfall}분 늦음 · 판단 보류 {x.impact.held}건
         </p>
       )}
       {x.photos.length > 0 && <Photos photos={x.photos} onNotice={onNotice} testOnly={isTestOnly(c)} />}
       {x.steps.length > 0 && (
-        <ol className="space-y-0.5 rounded-xl bg-[#f7f8fa] px-3 py-2 text-[15px]" aria-label="조치 이력">
+        <ol className="space-y-1 rounded-xl bg-[#f7f8fa] px-3.5 py-2.5 text-[14.5px]" aria-label="조치 이력">
           {x.steps.map((s) => (
             <li key={s.id}>
               <b>{s.kind}</b>
@@ -237,11 +253,16 @@ function AdminCase({
           ))}
         </ol>
       )}
-      <p className="text-[14px] text-ink-3">{spans.map((p) => `${p.label} ${p.minutes === null ? "-" : fmtSpan(p)}`).join(" · ")}</p>
+      <More summary="기록 근거 · 소요시간">
+        <p>
+          보고 근거 {c.report_basis} · 서버 기록 {kst(c.recorded_at).seconds} · 입력 {names[c.reporter_id]} ({c.source}) · 출처 {c.info_source} · 프로그램 {c.app_version}
+        </p>
+        <p className="mt-1 text-ink-3">{spans.map((p) => `${p.label} ${p.minutes === null ? "-" : fmtSpan(p)}`).join(" · ")}</p>
+      </More>
 
       {!sheet && (
         <div className="flex flex-wrap gap-1.5">
-          <button className={`${btn} ${!accepted ? "!bg-danger !text-white" : ""}`} disabled={accepted} onClick={() => setSheet("접수")}>
+          <button className={`${btn} ${!accepted ? "!bg-primary !text-white" : ""}`} disabled={accepted} onClick={() => setSheet("접수")}>
             접수
           </button>
           {(["담당자 배정", "지원 조치 결정", "현장 전달", "일정 조정", "예상 종료 변경", "해결 확인", "미해결 유지"] as Sheet[]).map((k) => (
@@ -252,7 +273,7 @@ function AdminCase({
           <button className={`${btn} text-danger`} onClick={() => setSheet("무효 처리")}>
             무효
           </button>
-          <Link href={`/pilot/admin/cases/${c.id}?kind=${kindParam}`} className={`${btn} inline-flex items-center gap-1`}>
+          <Link href={`/pilot/admin/cases/${c.id}?kind=${kindParam}`} className={`${btn} ml-auto gap-1 !bg-primary-light !text-primary-dark`}>
             <FileText size={15} /> 사건 증빙
           </Link>
         </div>
@@ -279,7 +300,7 @@ function Photos({ photos, onNotice, testOnly }: { photos: (PhotoRow & { url: str
   const router = useRouter();
   return (
     <>
-      {testOnly && <p className="text-[13.5px] font-semibold text-[#5b21b6]">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
+      {testOnly && <p className="text-[13px] font-semibold text-test">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
       <ul className="flex flex-wrap gap-2" aria-label="현장 사진">
       {photos.map((p) => (
         <li key={p.id} className="w-28 text-[12.5px] text-ink-3">
@@ -387,11 +408,11 @@ function StepSheet({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-line bg-white p-3" aria-label={`${kind} 입력`}>
+    <div className="space-y-3 rounded-2xl bg-[#f7f8fa] p-4 ring-1 ring-primary/20" aria-label={`${kind} 입력`}>
       <p className="text-[17px] font-extrabold">{kind}</p>
       {kind === "담당자 배정" && (
         <div className="grid gap-2 sm:grid-cols-2">
-          <select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="담당자 (계정)" className="rounded-xl border border-line px-2 py-2 text-[16px]">
+          <select value={assignee} onChange={(e) => setAssignee(e.target.value)} aria-label="담당자 (계정)" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary">
             <option value="">계정에서 고르기</option>
             {staff.map((p) => (
               <option key={p.id} value={p.id}>
@@ -399,7 +420,7 @@ function StepSheet({
               </option>
             ))}
           </select>
-          <input value={assigneeName} onChange={(e) => setAssigneeName(e.target.value)} placeholder="또는 이름 (계정 없는 기술자)" aria-label="담당자 이름" className="rounded-xl border border-line px-3 py-2 text-[16px]" />
+          <input value={assigneeName} onChange={(e) => setAssigneeName(e.target.value)} placeholder="또는 이름 (계정 없는 기술자)" aria-label="담당자 이름" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary" />
         </div>
       )}
       {kind === "지원 조치 결정" && (
@@ -422,7 +443,7 @@ function StepSheet({
               setEnd(t?.end ?? "");
             }}
             aria-label="조정할 일정"
-            className="rounded-xl border border-line px-2 py-2 text-[16px] sm:col-span-2"
+            className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary sm:col-span-2"
           >
             {later.map((s) => (
               <option key={s.id} value={s.id}>
@@ -430,11 +451,11 @@ function StepSheet({
               </option>
             ))}
           </select>
-          <input type="time" value={start} onChange={(e) => setStart(e.target.value)} aria-label="새 예정 시작" className="rounded-xl border border-line px-2 py-2 text-[16px]" />
-          <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="새 예정 종료" className="rounded-xl border border-line px-2 py-2 text-[16px]" />
+          <input type="time" value={start} onChange={(e) => setStart(e.target.value)} aria-label="새 예정 시작" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary" />
+          <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="새 예정 종료" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary" />
         </div>
       )}
-      {kind === "예상 종료 변경" && <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="변경 예상 종료" className="rounded-xl border border-line px-2 py-2 text-[16px]" />}
+      {kind === "예상 종료 변경" && <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="변경 예상 종료" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary" />}
       {kind !== "일정 조정" && (
         <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="실제 시각">
           <button role="radio" aria-checked={mode === "즉시"} onClick={() => setMode("즉시")} className={`rounded-lg px-2.5 py-1.5 text-[15px] font-bold ${mode === "즉시" ? "bg-ink text-white" : "bg-[#f2f4f6]"}`}>
@@ -445,7 +466,7 @@ function StepSheet({
           </button>
           {mode === "사후" && (
             <>
-              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="실제 시각 입력" className="rounded-lg border border-line px-2 py-1 text-[16px]" />
+              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="실제 시각 입력" className="min-h-[2.5rem] rounded-lg bg-[#f5f6f8] px-2 text-[15px]" />
               <Basis value={basis} onChange={setBasis} />
             </>
           )}
@@ -457,7 +478,7 @@ function StepSheet({
         maxLength={500}
         aria-label="내용"
         placeholder={kind === "현장 전달" ? "현장기사에게 보낼 내용 (예: 숙련 기술자 10:00 도착)" : kind === "일정 조정" ? "조정 사유 (고객 연락 등)" : needMsg ? "사유 (필수)" : "내용 (선택)"}
-        className="w-full rounded-xl border border-line px-3 py-2 text-[16px]"
+        className="w-full min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary"
       />
       {kind === "일정 조정" && <p className="text-[13.5px] text-ink-3">시스템이 일정을 정하지 않습니다 — 관리자가 넣은 시작·종료만 저장하고, 기존 엔진으로 판단 전후를 기록합니다.</p>}
       {err && (
@@ -466,10 +487,10 @@ function StepSheet({
         </p>
       )}
       <div className="flex gap-2">
-        <button disabled={!ok || busy} onClick={() => void send()} className="min-h-[2.8rem] rounded-xl bg-primary px-4 text-[16.5px] font-bold text-white disabled:opacity-40">
+        <button disabled={!ok || busy} onClick={() => void send()} className="min-h-[2.75rem] rounded-xl bg-primary px-5 text-[15.5px] font-bold text-white shadow-[0_6px_16px_-6px_rgba(79,70,229,0.55)] disabled:opacity-40">
           {busy ? "저장 중…" : "기록"}
         </button>
-        <button onClick={onCancel} className="min-h-[2.8rem] rounded-xl bg-[#f2f4f6] px-4 text-[16.5px] font-bold text-ink-2">
+        <button onClick={onCancel} className="min-h-[2.75rem] rounded-xl bg-[#eef0f3] px-4 text-[15.5px] font-bold text-ink-2">
           닫기
         </button>
       </div>

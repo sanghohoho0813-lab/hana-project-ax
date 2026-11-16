@@ -5,7 +5,8 @@ import { fmtStat, spanSummary, trialComparison } from "@/lib/pilot/measures";
 import { CLASS_LABEL, EVIDENCE_CLASSES, classOf, fmtSpan } from "@/lib/pilot/cases";
 import { appVersion } from "@/lib/pilot/config";
 import { kst } from "@/lib/pilot/time";
-import { AdminNav, KindBanner } from "../AdminNav";
+import { KindBanner } from "../AdminNav";
+import { PageHead } from "../../_ui/ds";
 import { MeasureForms, VoidTrialButton } from "./MeasureForms";
 
 const D_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,21 +37,18 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[28px] font-extrabold">성과 측정</h1>
-        <AdminNav current="measures" />
-      </div>
-      <form action="/pilot/admin/measures" className="flex flex-wrap items-center gap-2 print:hidden">
-        <select name="kind" defaultValue={kindParam(kind)} className="rounded-xl border border-line bg-white px-3 py-1.5 text-[17px]" aria-label="데이터 구분">
+      <PageHead eyebrow="성과·증빙" title="성과 측정" sub="사건별 소요시간 · 수기와 AX 비교 · 현장 의견과 개선 반영 — 기록된 값만 보여 줍니다 (추정 개선율 없음)" />
+      <form action="/pilot/admin/measures" className="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-2 shadow-[var(--shadow-card)] print:hidden">
+        <select name="kind" defaultValue={kindParam(kind)} className="min-h-[2.5rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px]" aria-label="데이터 구분">
           <option value="real">실제 업무</option>
           <option value="scenario">검증 시나리오 (실제 과거 현장정보 재현 · 가상)</option>
         </select>
-        <input type="date" name="from" defaultValue={from} aria-label="시작 날짜" className="rounded-xl border border-line bg-white px-3 py-1.5 text-[17px]" />
+        <input type="date" name="from" defaultValue={from} aria-label="시작 날짜" className="min-h-[2.5rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px]" />
         ~
-        <input type="date" name="to" defaultValue={to} aria-label="끝 날짜" className="rounded-xl border border-line bg-white px-3 py-1.5 text-[17px]" />
-        <button className="rounded-xl bg-white px-3 py-1.5 text-[17px] font-semibold text-ink-2">보기</button>
+        <input type="date" name="to" defaultValue={to} aria-label="끝 날짜" className="min-h-[2.5rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px]" />
+        <button className="min-h-[2.5rem] rounded-xl bg-ink px-4 text-[15px] font-bold text-white">보기</button>
         {(["cases", "trials", "notes"] as const).map((t) => (
-          <a key={t} href={`/pilot/admin/measures/export?type=${t}&${q}`} className="rounded-xl bg-white px-3 py-1.5 text-[16px] font-semibold text-primary-dark underline">
+          <a key={t} href={`/pilot/admin/measures/export?type=${t}&${q}`} className="min-h-[2.5rem] content-center rounded-xl bg-primary-light px-3 text-[14.5px] font-bold text-primary-dark">
             CSV {t === "cases" ? "사건 측정" : t === "trials" ? "수기·AX" : "의견·개선"}
           </a>
         ))}
@@ -60,7 +58,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
         기능이 작동한 것과 업무개선 효과가 생긴 것은 다릅니다. 이 화면은 기록된 측정값만 모으며 개선율·절감효과를 계산해 만들지 않습니다. 기억에 의한 추정 값은 통계에서 빼고 따로 적습니다. 출력 프로그램 {appVersion()}
       </p>
       {(sum.unclassified.length > 0 || cmp.unclassified > 0) && (
-        <p className="rounded-2xl border border-dashed border-[#8b5cf6] bg-[#f5f0ff] px-4 py-2.5 text-[15px] font-semibold text-[#5b21b6]" aria-label="분류 확인 필요">
+        <p className="rounded-2xl border-2 border-dashed border-[#94a3b8] bg-test-bg px-4 py-2.5 text-[14.5px] font-semibold text-test" aria-label="분류 확인 필요">
           분류 확인 필요 — 원자료 없이 &apos;현장정보 재현&apos;으로 저장된 기록은 실제 과거 현장정보 재현 집계에서 뺐습니다 (기록은 고치지 않음): 사건 {sum.unclassified.length}건
           {sum.unclassified.length > 0 && ` (${sum.unclassified.join(", ")})`} · 수기·AX 측정 {cmp.unclassified}건
         </p>

@@ -14,6 +14,8 @@ await activate(admin, fa, `측정기사${RUN}`);
 const f = await mobilePage(bro);
 await loginAs(f, fa);
 await waitPath(f, "/pilot/field");
+// 0.4.0: 의견 보내기는 현장 하단 메뉴 '내 기록' 탭에 있다
+await f.locator('nav[aria-label="현장 메뉴"] button:has-text("내 기록")').click();
 const fb = f.locator('[aria-label="의견·오류 보내기"]');
 await fb.locator('button:has-text("프로그램 의견 · 오류 보내기")').click();
 await fb.locator('textarea[aria-label="의견 내용"]').fill(`사진 버튼을 더 크게 해 주세요 ${RUN}`);

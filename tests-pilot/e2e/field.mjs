@@ -22,12 +22,12 @@ const { p: admin } = await adminLogin(bro);
 await activate(admin, f1, P1);
 await activate(admin, f2, P2);
 const F1 = q(`select id from auth.users where email = '${f1}';`);
-await admin.goto(`${APP}/pilot/admin?date=${TODAY}&kind=real`);
+await admin.goto(`${APP}/pilot/admin/schedule?date=${TODAY}&kind=real`);
 await createSchedule(admin, { who: P1, site: A, start: kstHHMM(-200), end: kstHHMM(-140) });
 await createSchedule(admin, { who: P1, site: B, start: kstHHMM(-60), end: kstHHMM(20), travel: "10" });
 await createSchedule(admin, { who: P1, site: C, start: kstHHMM(45), end: kstHHMM(120), travel: "20", prio: "긴급" });
 await createSchedule(admin, { who: P2, site: E, start: kstHHMM(30), end: kstHHMM(90) });
-await admin.goto(`${APP}/pilot/admin?date=${TODAY}&kind=scenario`);
+await admin.goto(`${APP}/pilot/admin/schedule?date=${TODAY}&kind=scenario`);
 await createSchedule(admin, { who: P1, site: V, start: kstHHMM(60), end: kstHHMM(100) });
 check(true, "준비: 오늘 실제 업무 일정 4건 · 검증 시나리오 1건");
 
@@ -153,7 +153,7 @@ check(q(`select count(*) from risk_judgments where data_kind = '실제 업무' a
 check(m.errs.length === 0, "현장 화면 오류 없음", m.errs.join(" | "));
 
 // ── 8) 관리자: 재계산된 판단 · 기록 · 판단 상세 ──
-await admin.goto(`${APP}/pilot/admin?date=${TODAY}&kind=real`);
+await admin.goto(`${APP}/pilot/admin/schedule?date=${TODAY}&kind=real`);
 check((await admin.locator(`text=[연쇄위험 감지]`).count()) >= 1 && (await admin.locator(`text=${C}`).count()) >= 1, "관리자 일정판: 현장 입력 반영 → 연쇄위험 표시");
 await admin.goto(`${APP}/pilot/admin/records?date=${TODAY}&kind=real`);
 const rows = await admin.locator(`section[aria-label="작업 기록"] tr:has-text("${B}")`).count();

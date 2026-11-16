@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { CalendarPlus, Pencil, RotateCw, XCircle } from "lucide-react";
 import { Badge, Field, GhostButton, PrimaryButton, inputClass, type Tone } from "@/components/ui";
+import { btn } from "../_ui/ds";
 import type { DataKind, ScheduleProgress } from "@/lib/pilot/core";
 import type { ScheduleView } from "@/lib/pilot/board";
 import { cancelScheduleAction, reprocessAction, saveScheduleAction, type OpResult } from "./actions";
@@ -163,8 +164,8 @@ export function ScheduleBoard({ date, kind, staff, names, rows, pending }: Props
   return (
     <section className="space-y-3" aria-label="일정">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-[24px] font-extrabold">
-          {date} 일정 <span className="text-[18px] font-semibold text-ink-3">{rows.filter((r) => r.s.status === "예정").length}건 · 취소 {rows.filter((r) => r.s.status === "취소").length}건</span>
+        <h2 className="text-[19px] font-extrabold">
+          {date} 일정 <span className="text-[15px] font-semibold text-ink-3">{rows.filter((r) => r.s.status === "예정").length}건 · 취소 {rows.filter((r) => r.s.status === "취소").length}건</span>
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {pending > 0 && (
@@ -176,14 +177,14 @@ export function ScheduleBoard({ date, kind, staff, names, rows, pending }: Props
               <RotateCw size={17} /> 기록 대기 판단 {pending}건 다시 처리
             </button>
           )}
-          <GhostButton onClick={() => setAdding((v) => !v)}>
-            <CalendarPlus size={20} /> {adding ? "등록 닫기" : "일정 등록"}
-          </GhostButton>
+          <button onClick={() => setAdding((v) => !v)} className={btn(adding ? "ghost" : "primary", "md")}>
+            <CalendarPlus size={19} /> {adding ? "등록 닫기" : "일정 등록"}
+          </button>
         </div>
       </div>
       <Feedback result={last} />
       {recheck.length > 0 && (
-        <div className="rounded-2xl border border-warning/40 bg-warning-bg/50 px-4 py-3 text-[17px]">
+        <div className="rounded-2xl bg-warning-bg px-4 py-3 text-[15px]">
           <p className="font-bold text-warning">이동 기준 재확인 필요 {recheck.length}건</p>
           <ul className="mt-0.5 text-ink-2">
             {recheck.map((r) => (
@@ -209,13 +210,13 @@ export function ScheduleBoard({ date, kind, staff, names, rows, pending }: Props
       )}
 
       {rows.length === 0 ? (
-        <p className="card px-5 py-5 text-[18.5px] text-ink-3">이 날짜에 등록된 일정이 없습니다.</p>
+        <p className="card px-5 py-6 text-[15.5px] text-ink-3">이 날짜에 등록된 일정이 없습니다. 위의 &lsquo;일정 등록&rsquo;으로 추가하세요.</p>
       ) : (
         workers.map((w) => (
-          <div key={w} className="card overflow-x-auto p-4">
-            <p className="mb-2 text-[20px] font-bold">{names[w] ?? "알 수 없는 직원"}</p>
-            <table className="w-full min-w-[46rem] text-left text-[17px]">
-              <thead className="text-[15.5px] text-ink-3">
+          <div key={w} className="card overflow-x-auto p-5">
+            <p className="mb-2 text-[17px] font-extrabold">{names[w] ?? "알 수 없는 직원"}</p>
+            <table className="w-full min-w-[46rem] text-left text-[15.5px]">
+              <thead className="text-[13px] text-ink-3">
                 <tr>
                   <th className="py-1 pr-3 font-semibold">예정</th>
                   <th className="py-1 pr-3 font-semibold">현장</th>

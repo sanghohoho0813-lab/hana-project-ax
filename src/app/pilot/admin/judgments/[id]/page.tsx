@@ -9,7 +9,8 @@ import type { PipelineInput, PipelineResult } from "@/lib/state-events";
 import type { RiskDiff } from "@/lib/risk-engine";
 import type { PriorityChange } from "@/lib/priority-engine";
 import { Badge } from "@/components/ui";
-import { AdminNav, KindBanner } from "../../AdminNav";
+import { KindBanner } from "../../AdminNav";
+import { btn } from "../../../_ui/ds";
 import { JudgmentFocus } from "../../../_ui/JudgmentFocus";
 import { PrintButton } from "../../../_ui/PrintButton";
 
@@ -81,18 +82,18 @@ export default async function JudgmentPage({ params }: { params: Promise<{ id: s
   return (
     // print-area: 공용 인쇄 규칙(globals.css)은 이 영역만 인쇄한다 — 없으면 PDF가 빈 쪽으로 나온다
     <div className="print-area space-y-5" aria-label="위험 판단 기록">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[27px] font-extrabold">
-          위험 판단 번호 {j.seq} <span className="text-[19px] font-semibold text-ink-3">{j.work_date} · {j.data_kind}</span>
+      <div>
+        <p className="text-[13.5px] font-bold tracking-wide text-primary print:hidden">기록·판단 이력</p>
+        <h1 className="text-[26px] leading-tight font-extrabold">
+          위험 판단 번호 {j.seq} <span className="text-[17px] font-semibold text-ink-3">{j.work_date} · {j.data_kind}</span>
         </h1>
-        <AdminNav current="records" />
       </div>
       <div className="flex flex-wrap gap-2 print:hidden">
-        <Link href={back} className="rounded-xl bg-white px-3.5 py-1.5 text-[17px] font-bold text-ink-2 hover:bg-[#e8ebee]">
+        <Link href={back} className={btn("outline", "md")}>
           ← 기록·판단 이력
         </Link>
         <PrintButton />
-        <a href={`/pilot/admin/judgments/${j.id}/json`} className="rounded-xl bg-white px-3.5 py-1.5 text-[17px] font-bold text-ink-2 hover:bg-[#e8ebee]">
+        <a href={`/pilot/admin/judgments/${j.id}/json`} className={btn("outline", "md")}>
           원본 JSON 내려받기
         </a>
       </div>

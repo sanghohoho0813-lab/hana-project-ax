@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, HardHat, PhoneCall } from "lucide-react";
+import { HardHat, PhoneCall } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
 import { preparePhoto, uploadPhoto } from "@/lib/pilot/photo";
 import { SAFETY_ITEMS, SAFETY_STAGES, STAGE_LABEL, itemLabel, type ReviewStatus, type SafetyAnswer, type SafetyCheckRow, type SafetyReviewRow, type SafetyStage } from "@/lib/pilot/safety";
 import type { PhotoRow } from "@/lib/pilot/cases";
 import { attachSafetyPhotoAction, safetyReviewAction, submitSafetyAction } from "../safety/actions";
+import { btn, cx, Notice, Pill, type PillTone } from "../_ui/ds";
+import { PhotoPicker, uploadEach, usePhotos, type PhotoItem } from "../_ui/PhotoPicker";
 
 export interface FieldSafety {
   c: SafetyCheckRow;
@@ -16,34 +18,45 @@ export interface FieldSafety {
   photos: (PhotoRow & { url: string | null })[];
 }
 
-const TONE: Record<ReviewStatus, string> = {
-  "확인 대기": "bg-warning-bg text-warning",
-  "적합(육안 확인)": "bg-success-bg text-success",
-  "보완 요청": "bg-danger text-white",
-  "보완 제출": "bg-[#e8f1fe] text-[#1b64da]",
-  "조치 완료": "bg-success-bg text-success",
+const TONE: Record<ReviewStatus, PillTone> = {
+  "확인 대기": "warning",
+  "적합(육안 확인)": "success",
+  "보완 요청": "danger",
+  "보완 제출": "info",
+  "조치 완료": "success",
 };
 
-async function uploadAll(userId: string, checkId: string, files: File[]) {
-  for (const f of files) {
+/** 대기·실패 사진만 올린다 — 실패하면 오류를 던져 '다시 올리기'를 안내한다 */
+async function uploadAll(userId: string, checkId: string, items: PhotoItem[], patch: (key: string, p: Partial<PhotoItem>) => void) {
+  const r = await uploadEach(items, patch, async (f) => {
     const p = await preparePhoto(f);
     const up = await uploadPhoto(userId, `safety-${checkId}`, p);
-    const r = await attachSafetyPhotoAction({ opId: newOpId(), checkId, path: up.path, mime: p.mime, size: up.size, sha256: up.sha256, exifRemoved: p.exifRemoved });
-    if (!r.ok) throw new Error(r.error);
-  }
+    const a = await attachSafetyPhotoAction({ opId: newOpId(), checkId, path: up.path, mime: p.mime, size: up.size, sha256: up.sha256, exifRemoved: p.exifRemoved });
+    if (!a.ok) throw new Error(a.error);
+    return { exifRemoved: p.exifRemoved };
+  });
+  if (r.failed > 0) throw new Error(`사진 ${r.failed}장 실패`);
 }
 
 /** 현장기사 카드 안 — 작업 전 · 작업 중 · 작업 종료 안전점검 (착용 사진 + 필수 항목) · 관리자 보완 요청에 보완 제출 */
-export function SafetyPanel({ userId, scheduleId, checks, canCheck }: { userId: string; scheduleId: string; checks: FieldSafety[]; canCheck: boolean }) {
+export function SafetyPanel({ userId, scheduleId, checks, canCheck, openSignal = 0 }: { userId: string; scheduleId: string; checks: FieldSafety[]; canCheck: boolean; openSignal?: number }) {
   const [stage, setStage] = useState<SafetyStage | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [seen, setSeen] = useState(0);
   const latest = (s: SafetyStage) => checks.filter((x) => x.c.stage === s).at(-1);
+  // 첫 화면 '안전점검' 버튼 — 아직 안 한 첫 단계를 바로 연다
+  if (openSignal > 0 && openSignal !== seen) {
+    setSeen(openSignal);
+    const next = SAFETY_STAGES.find((s) => !latest(s));
+    if (canCheck && next) setStage(next);
+  }
   return (
-    <div className="space-y-2 rounded-2xl bg-[#f7f8fa] p-3" aria-label="안전점검">
-      <p className="flex items-center gap-1.5 text-[17px] font-extrabold">
-        <HardHat size={20} /> 안전점검
+    <div className="space-y-3 rounded-2xl bg-[#f7f8fa] p-3.5" aria-label="안전점검">
+      <p className="flex items-center gap-2 text-[16px] font-extrabold">
+        <HardHat size={19} className="text-primary" /> 안전점검
+        <span className="ml-auto text-[13px] font-semibold text-ink-3">{SAFETY_STAGES.filter((s) => latest(s)).length}/3 단계</span>
       </p>
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-2">
         {SAFETY_STAGES.map((s) => {
           const l = latest(s);
           return (
@@ -52,10 +65,13 @@ export function SafetyPanel({ userId, scheduleId, checks, canCheck }: { userId: 
               disabled={!canCheck && !l}
               onClick={() => (setNotice(null), setStage(stage === s ? null : s))}
               aria-pressed={stage === s}
-              className={`flex min-h-[3.6rem] flex-col items-center justify-center rounded-xl border px-1 text-[15.5px] font-bold ${stage === s ? "border-ink bg-white" : "border-line bg-white"} disabled:opacity-40`}
+              className={cx(
+                "flex min-h-[4.25rem] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white px-1 text-[14.5px] font-bold transition-shadow disabled:opacity-40",
+                stage === s ? "ring-2 ring-primary" : "ring-1 ring-line",
+              )}
             >
               {STAGE_LABEL[s]}
-              <span className={`mt-0.5 rounded-full px-1.5 text-[12.5px] ${l ? TONE[l.c.review_status] : "bg-[#f2f4f6] text-ink-3"}`}>{l ? l.c.review_status : "미점검"}</span>
+              {l ? <Pill tone={TONE[l.c.review_status]} className="!text-[11.5px]">{l.c.review_status}</Pill> : <Pill tone="neutral" dot={false} className="!text-[11.5px]">미점검</Pill>}
             </button>
           );
         })}
@@ -65,17 +81,13 @@ export function SafetyPanel({ userId, scheduleId, checks, canCheck }: { userId: 
         .map((x) => (
           <Supplement key={x.c.id} userId={userId} x={x} onDone={setNotice} />
         ))}
-      {notice && (
-        <p role="status" className="rounded-xl bg-success-bg px-3 py-2 text-[16px] font-semibold text-success">
-          {notice}
-        </p>
-      )}
+      {notice && <Notice kind="success">{notice}</Notice>}
       {stage && (
         <div className="space-y-2">
           {checks
             .filter((x) => x.c.stage === stage)
             .map((x) => (
-              <p key={x.c.id} className="text-[14.5px] text-ink-2">
+              <p key={x.c.id} className="rounded-xl bg-white px-3 py-2 text-[13.5px] text-ink-2">
                 {x.c.check_no} · {kst(x.c.recorded_at).time} 제출 · {x.c.review_status}
                 {x.c.deficient.length > 0 && ` · 미흡 ${x.c.deficient.map(itemLabel).join(", ")}`}
                 {x.reviews.filter((r) => r.source === "관리자").map((r) => ` · 본사 ${r.kind}${r.result ? ` ${r.result}` : ""}${r.message ? `: ${r.message}` : ""}`)}
@@ -105,13 +117,13 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
   const [opId] = useState(newOpId);
   const items = SAFETY_ITEMS.filter((x) => x.stages.includes(stage));
   const [answers, setAnswers] = useState<Record<string, SafetyAnswer>>({});
-  const [files, setFiles] = useState<File[]>([]);
+  const photos = usePhotos(4);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState<{ checkId: string; checkNo: string } | null>(null);
   const deficient = Object.entries(answers).filter(([, a]) => a === "미흡");
-  const ready = items.filter((x) => x.required).every((x) => answers[x.key]) && files.length > 0;
+  const ready = items.filter((x) => x.required).every((x) => answers[x.key]) && photos.items.length > 0;
 
   async function send() {
     setBusy(true);
@@ -125,9 +137,9 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
         s = { checkId: r.checkId, checkNo: r.checkNo };
         setSaved(s);
       }
-      await uploadAll(userId, s.checkId, files);
+      await uploadAll(userId, s.checkId, photos.items, photos.patch);
       router.refresh();
-      onDone(`${STAGE_LABEL[stage]} ${s.checkNo} 제출 · 사진 ${files.length}장 — 관리자가 사진을 눈으로 확인한 뒤 결과를 보냅니다.`);
+      onDone(`${STAGE_LABEL[stage]} ${s.checkNo} 제출 · 사진 ${photos.items.length}장 — 관리자가 사진을 눈으로 확인한 뒤 결과를 보냅니다.`);
     } catch {
       setErr(saved ? "점검은 저장됐지만 사진을 올리지 못했습니다 — 다시 눌러 사진을 올리세요." : "보내지 못했습니다 — 연결을 확인하고 다시 누르세요 (같은 점검으로 한 번만 저장).");
     } finally {
@@ -136,49 +148,46 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
   }
 
   return (
-    <div className="space-y-2 rounded-xl border-2 border-ink/20 bg-white p-3" aria-label={STAGE_LABEL[stage]}>
-      <ul className="space-y-1.5">
+    <div className="space-y-3 rounded-2xl bg-white p-3.5" aria-label={STAGE_LABEL[stage]}>
+      <ul className="divide-y divide-line">
         {items.map((it) => (
-          <li key={it.key} className="flex flex-wrap items-center gap-1.5" aria-label={it.label}>
-            <span className="min-w-[8.5rem] flex-1 text-[16px] font-semibold">
+          <li key={it.key} className="space-y-2 py-2.5 first:pt-0" aria-label={it.label}>
+            <span className="block text-[15.5px] font-bold">
               {it.label}
-              {it.required && <span className="text-danger"> *</span>}
+              {it.required && <span className="ml-1 text-[12.5px] text-danger">필수</span>}
             </span>
-            {(["확인", "해당 없음", "미흡"] as SafetyAnswer[]).map((a) => (
-              <button
-                key={a}
-                disabled={!!saved || (it.required && a === "해당 없음")}
-                onClick={() => setAnswers((v) => ({ ...v, [it.key]: a }))}
-                aria-pressed={answers[it.key] === a}
-                className={`min-h-[2.7rem] rounded-lg px-2.5 text-[15px] font-bold disabled:opacity-30 ${answers[it.key] === a ? (a === "미흡" ? "bg-danger text-white" : "bg-ink text-white") : "bg-[#f2f4f6] text-ink-2"}`}
-              >
-                {a}
-              </button>
-            ))}
+            <div className="grid grid-cols-3 gap-1.5">
+              {(["확인", "해당 없음", "미흡"] as SafetyAnswer[]).map((a) => (
+                <button
+                  key={a}
+                  disabled={!!saved || (it.required && a === "해당 없음")}
+                  onClick={() => setAnswers((v) => ({ ...v, [it.key]: a }))}
+                  aria-pressed={answers[it.key] === a}
+                  className={cx(
+                    "min-h-[2.9rem] rounded-xl text-[15px] font-bold transition-colors disabled:opacity-30",
+                    answers[it.key] === a ? (a === "미흡" ? "bg-danger text-white" : a === "확인" ? "bg-success text-white" : "bg-ink text-white") : "bg-[#eef0f3] text-ink-2",
+                  )}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
           </li>
         ))}
       </ul>
       {deficient.length > 0 && (
-        <p role="alert" className="flex items-start gap-2 rounded-xl bg-danger px-3 py-2.5 text-[16px] font-bold text-white">
+        <p role="alert" className="flex items-start gap-2 rounded-2xl bg-danger px-4 py-3 text-[15px] font-bold text-white">
           <PhoneCall size={19} className="mt-0.5 shrink-0" /> 미흡 항목이 있습니다 — 프로그램 확인을 기다리지 말고 작업을 멈추고 관리자·안전 책임자에게 직접 전화하세요. 이 점검은 기록용입니다.
         </p>
       )}
-      <label className="inline-flex min-h-[3rem] cursor-pointer items-center gap-2 rounded-xl bg-[#e8f1fe] px-4 text-[16.5px] font-bold text-primary-dark">
-        <Camera size={20} /> 착용 사진 {files.length > 0 ? `${files.length}장` : "(1장 이상 필수)"}
-        <input type="file" accept="image/*" capture="environment" multiple className="sr-only" aria-label="안전점검 사진" disabled={busy} onChange={(e) => setFiles([...(e.target.files ?? [])].slice(0, 4))} />
-      </label>
-      <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} disabled={!!saved} placeholder="메모 (선택)" aria-label="점검 메모" className="min-h-[2.8rem] w-full rounded-xl border border-line px-3 text-[16px]" />
-      <p className="text-[13px] text-ink-3">사진은 관리자가 눈으로 확인합니다 — 사진만으로 적합 처리되지 않습니다. 얼굴이 나오지 않게 착용 부위 위주로 찍어 주세요. * 필수 항목</p>
-      {err && (
-        <p role="alert" className="rounded-xl bg-danger-bg px-3 py-2 text-[15px] font-bold text-danger">
-          {err}
-        </p>
-      )}
-      <div className="grid grid-cols-[1fr_auto] gap-1.5">
-        <button disabled={!ready || busy} onClick={() => void send()} className="min-h-[3.2rem] rounded-xl bg-primary text-[18px] font-extrabold text-white disabled:opacity-40">
+      <PhotoPicker items={photos.items} onAdd={photos.add} onRemove={photos.remove} max={4} disabled={busy} inputLabel="안전점검 사진" title="착용 사진" required hint="관리자가 사진을 눈으로 확인합니다 — 사진만으로 적합 처리되지 않습니다. 얼굴이 나오지 않게 착용 부위 위주로 찍어 주세요." />
+      <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} disabled={!!saved} placeholder="메모 (선택)" aria-label="점검 메모" className="min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[15.5px] outline-none focus:ring-2 focus:ring-primary" />
+      {err && <Notice kind="error">{err}</Notice>}
+      <div className="grid grid-cols-[1fr_auto] gap-2">
+        <button disabled={!ready || busy} onClick={() => void send()} className={btn("primary", "lg", true)}>
           {busy ? "보내는 중…" : saved ? "사진 다시 올리기" : `${STAGE_LABEL[stage]} 제출`}
         </button>
-        <button onClick={onCancel} disabled={busy} className="rounded-xl bg-[#f2f4f6] px-3.5 text-[16px] font-bold text-ink-2">
+        <button onClick={onCancel} disabled={busy} className={btn("ghost", "lg")}>
           닫기
         </button>
       </div>
@@ -190,28 +199,25 @@ function Supplement({ userId, x, onDone }: { userId: string; x: FieldSafety; onD
   const router = useRouter();
   const [opId] = useState(newOpId);
   const [note, setNote] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const photos = usePhotos(4);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const req = x.reviews.filter((r) => r.source === "관리자" && r.message).at(-1);
   return (
-    <div className="space-y-1.5 rounded-xl border-2 border-danger/50 bg-white p-2.5" aria-label={`보완 요청 ${x.c.check_no}`}>
-      <p className="text-[16px] font-bold text-danger">
+    <div className="space-y-3 rounded-2xl bg-white p-3.5 ring-2 ring-danger/40" aria-label={`보완 요청 ${x.c.check_no}`}>
+      <p className="text-[15.5px] font-bold text-danger">
         본사 보완 요청 ({STAGE_LABEL[x.c.stage]}): {req?.message}
       </p>
-      <label className="inline-flex min-h-[2.9rem] cursor-pointer items-center gap-2 rounded-xl bg-[#e8f1fe] px-3 text-[15.5px] font-bold text-primary-dark">
-        <Camera size={18} /> 보완 사진 {files.length > 0 && `${files.length}장`}
-        <input type="file" accept="image/*" capture="environment" multiple className="sr-only" aria-label="보완 사진" onChange={(e) => setFiles([...(e.target.files ?? [])].slice(0, 4))} />
-      </label>
-      <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="보완한 내용 (필수)" aria-label="보완한 내용" className="min-h-[2.8rem] w-full rounded-xl border border-line px-3 text-[16px]" />
-      {err && <p className="text-[14.5px] font-bold text-danger">{err}</p>}
+      <PhotoPicker items={photos.items} onAdd={photos.add} onRemove={photos.remove} max={4} disabled={busy} inputLabel="보완 사진" title="보완 사진" />
+      <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="보완한 내용 (필수)" aria-label="보완한 내용" className="min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[15.5px] outline-none focus:ring-2 focus:ring-primary" />
+      {err && <Notice kind="error">{err}</Notice>}
       <button
         disabled={!note.trim() || busy}
         onClick={async () => {
           setBusy(true);
           setErr(null);
           try {
-            await uploadAll(userId, x.c.id, files);
+            await uploadAll(userId, x.c.id, photos.items, photos.patch);
             const r = await safetyReviewAction({ opId, checkId: x.c.id, kind: "보완 제출", message: note });
             if (!r.ok) return setErr(r.error);
             router.refresh();
@@ -222,7 +228,7 @@ function Supplement({ userId, x, onDone }: { userId: string; x: FieldSafety; onD
             setBusy(false);
           }
         }}
-        className="min-h-[3rem] w-full rounded-xl bg-primary text-[17px] font-extrabold text-white disabled:opacity-40"
+        className={btn("primary", "lg", true)}
       >
         {busy ? "보내는 중…" : "보완 제출"}
       </button>

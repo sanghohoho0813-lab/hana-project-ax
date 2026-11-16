@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════
--- 하나 프로젝트 AX 0.3.2 — 운영 Supabase 최초 적용용 (자동 생성 · 직접 고치지 마세요)
+-- 하나 프로젝트 AX 0.4.0 — 운영 Supabase 최초 적용용 (자동 생성 · 직접 고치지 마세요)
 -- 사용: Supabase 대시보드 → SQL Editor → New query → 이 파일 전체를 붙여 넣고 Run (한 번만).
 -- 전체가 하나의 트랜잭션입니다: 중간에 오류가 나면 아무것도 적용되지 않습니다. 오류 문구를 그대로 알려 주세요.
 -- 개발용 seed.sql 은 들어 있지 않습니다. 판단 서명키는 02_set_judge_secret.sql 로 따로 만듭니다.
@@ -2258,7 +2258,7 @@ grant execute on function public.report_case_with_source(text, uuid, uuid, text,
 -- └── 20261115010000_evidence_class_rules.sql 끝
 
 -- 적용 표시 — 04_verify_setup.sql 이 어떤 묶음이 적용됐는지 보여 준다
-insert into pilot_private.settings (key, value) values ('schema_bundle', '0.3.2 · 마이그레이션 6개 · 마지막 20261115010000_evidence_class_rules.sql')
+insert into pilot_private.settings (key, value) values ('schema_bundle', '0.4.0 · 마이그레이션 6개 · 마지막 20261115010000_evidence_class_rules.sql')
 on conflict (key) do update set value = excluded.value;
 
 commit;

@@ -3,7 +3,8 @@ import { loadDay, loadStaff, parseDay } from "@/lib/pilot/board";
 import { loadSafetyInbox } from "@/lib/pilot/case-data";
 import { PENDING_REVIEW } from "@/lib/pilot/safety";
 import { kst } from "@/lib/pilot/time";
-import { AdminNav, DayBar, KindBanner } from "../AdminNav";
+import { DayBar, KindBanner } from "../AdminNav";
+import { PageHead } from "../../_ui/ds";
 import { AutoRefresh } from "../../_ui/AutoRefresh";
 import { SafetyBoard } from "./SafetyBoard";
 
@@ -32,16 +33,10 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[28px] font-extrabold">안전점검 확인</h1>
-        <AdminNav current="safety" />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <DayBar path="/pilot/admin/safety" date={date} kind={kind} today={kst(new Date()).date} />
-        <AutoRefresh seconds={10} label="새 점검 확인" />
-      </div>
+      <PageHead eyebrow="안전관리" title="안전점검 확인" sub="시작 전 · 진행 중 · 마친 뒤 착용 사진을 눈으로 확인하고 결과를 보냅니다" right={<AutoRefresh seconds={10} label="새 점검 확인" />} />
+      <DayBar path="/pilot/admin/safety" date={date} kind={kind} today={kst(new Date()).date} />
       <KindBanner kind={kind} />
-      <p className="rounded-2xl bg-white px-4 py-2.5 text-[16px] text-ink-2">
+      <p className="rounded-2xl bg-warning-bg px-4 py-3 text-[14.5px] text-ink-2">
         사진만으로 안전장구 착용·기준 충족을 판정하지 않습니다 — 관리자가 사진과 체크 내용을 <b>눈으로 확인한 결과</b>만 기록합니다. 위험한 상황이면 화면 확인을 기다리지 말고 현장에 직접 전화해 작업을 멈추게 하세요.
       </p>
       {noPre.length > 0 && (

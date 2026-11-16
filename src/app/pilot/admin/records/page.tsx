@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/pilot/session";
 import { loadDay, loadRecords, loadStaff, parseDay } from "@/lib/pilot/board";
 import { kst, kstLabel } from "@/lib/pilot/time";
-import { AdminNav, DayBar, KindBanner } from "../AdminNav";
+import { DayBar, KindBanner } from "../AdminNav";
+import { PageHead } from "../../_ui/ds";
 
 /** 입력 기록과 위험 판단 전후 — 실증 자료 확인용 (보고서 작성 시 이 화면과 판단 상세를 근거로 쓴다) */
 export default async function RecordsPage({ searchParams }: { searchParams: Promise<{ date?: string; kind?: string }> }) {
@@ -24,10 +25,7 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[28px] font-extrabold">기록·판단 이력</h1>
-        <AdminNav current="records" />
-      </div>
+      <PageHead eyebrow="더보기" title="기록·판단 이력" sub="작업 기록과 위험 판단 기록은 지우지 않고 덧붙입니다" />
       <DayBar path="/pilot/admin/records" date={date} kind={kind} today={kst(new Date()).date} />
       <KindBanner kind={kind} />
       <p className="text-[16px] text-ink-3">

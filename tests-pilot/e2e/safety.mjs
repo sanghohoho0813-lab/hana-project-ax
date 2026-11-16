@@ -29,7 +29,7 @@ const { p: admin } = await adminLogin(bro, `안전관리${RUN}`);
 await activate(admin, fa, NA);
 await activate(admin, fb, NB);
 const A_ID = psql(`select id from auth.users where email = '${fa}';`);
-await admin.goto(`${APP}/pilot/admin?date=${D}&kind=scenario`);
+await admin.goto(`${APP}/pilot/admin/schedule?date=${D}&kind=scenario`);
 await createSchedule(admin, { who: NA, site: SA, start: kstHHMM(5), end: kstHHMM(60) });
 await createSchedule(admin, { who: NB, site: SX, start: kstHHMM(5), end: kstHHMM(60) });
 const PHOTO = join(tmpdir(), `safety-photo-${RUN}.jpg`);

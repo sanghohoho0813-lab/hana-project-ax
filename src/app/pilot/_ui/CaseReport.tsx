@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Camera, PhoneCall, Send } from "lucide-react";
+import { AlertTriangle, PhoneCall, Send, X } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
 import { preparePhoto, uploadPhoto } from "@/lib/pilot/photo";
 import { BASES, INFO_SOURCES, ISSUE_TYPES, NEEDS, PROGRESS } from "@/lib/pilot/cases";
 import { attachPhotoAction, reportCaseAction } from "../cases/actions";
+import { btn, chip, cx, Steps } from "./ds";
+import { PhotoPicker, uploadEach, usePhotos } from "./PhotoPicker";
 
 /**
- * 현장 문제 보고 · 지원 요청 — 큰 버튼과 간단한 선택만으로 보낸다.
- * 보고 시각(버튼 누른 시각)과 실제 문제 발견시각을 따로 기록한다. 발견시각을 모르면 '모름'(추정하지 않음).
- * 보고가 먼저 저장되고, 사진은 그 뒤에 올라간다 — 사진 때문에 보고가 늦어지지 않는다.
- * proxy(관리자 대리 입력): 지난 현장정보를 전화·메신저·업무일지 근거로 사후 입력할 때.
+ * 현장 문제 보고 · 지원 요청 — 단계별 입력 (문제 유형 → 현재 상태 → 필요한 지원 → 예상 종료 → 사진 → 보내기).
+ * 현장(모바일)은 화면 전체를 덮는 시트로 열고, 보내기 버튼은 아래에 고정한다. 관리자 대리 입력(proxy)은 화면 안에 펼친다.
+ * 기록 원칙은 그대로: 보고 시각(버튼 누른 시각)과 발견시각을 따로 남기고, 모르면 '모름'. 보고가 먼저 저장되고 사진은 그 뒤에 올라간다.
+ * 연결이 끊기면 입력한 내용을 그대로 두고 '다시 보내기' — 같은 요청 번호라 한 번만 저장된다.
  */
 
-const chip = (on: boolean, tone: "ink" | "danger" = "ink") =>
-  `min-h-[3rem] rounded-xl px-3.5 text-[17px] font-bold ${on ? (tone === "danger" ? "bg-danger text-white" : "bg-ink text-white") : "bg-[#f2f4f6] text-ink-2"}`;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const addMin = (hhmm: string, m: number) => {
   const t = Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5)) + m;
@@ -26,7 +26,6 @@ const addMin = (hhmm: string, m: number) => {
 const minutesAgo = (n: number) => kst(new Date(Date.now() - n * 60_000)).time;
 
 type Disc = { basis: "보고와 같은 시각" | "현장 직원 진술" | "원자료 기록" | "기억에 의한 추정" | "모름"; time: string };
-type PhotoState = { file: File; preview: string; status: "대기" | "올리는 중" | "완료" | "실패"; error?: string; exifRemoved?: boolean };
 
 export interface CaseTarget {
   scheduleId: string;
@@ -35,6 +34,8 @@ export interface CaseTarget {
   currentEnd: string;
   started: boolean;
 }
+
+const STEP_NAMES = ["유형", "상태", "지원", "예상 종료", "사진", "보내기"];
 
 export function CaseReport({
   userId,
@@ -60,46 +61,39 @@ export function CaseReport({
   const [urgent, setUrgent] = useState(false);
   const [request, setRequest] = useState("");
   const [end, setEnd] = useState<string | null>(null);
+  const [endTouched, setEndTouched] = useState(false);
   const [typingEnd, setTypingEnd] = useState(false);
   const [disc, setDisc] = useState<Disc>({ basis: proxy ? "원자료 기록" : "보고와 같은 시각", time: "" });
   const [rep, setRep] = useState<{ time: string; basis: string }>({ time: "", basis: "원자료 기록" });
   const [info, setInfo] = useState<string>(proxy ? "전화" : "현장기사 앱");
   const [evidence, setEvidence] = useState<string>(scenario ? "가상 시나리오" : "실제 업무");
   const [sourceRef, setSourceRef] = useState("");
-  const [photos, setPhotos] = useState<PhotoState[]>([]);
+  const photos = usePhotos(6);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<{ text: string; retry: boolean } | null>(null);
   const [saved, setSaved] = useState<{ caseId: string; caseNo: string; engine: boolean } | null>(null);
+  const stateRef = useRef<HTMLDivElement>(null);
 
+  // 현장 시트가 열려 있는 동안 뒤 화면이 스크롤되지 않게
+  useEffect(() => {
+    if (proxy) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [proxy]);
+
+  const discOk = disc.basis === "보고와 같은 시각" || disc.basis === "모름" || TIME_RE.test(disc.time);
   const ready =
     !!type &&
-    (disc.basis === "보고와 같은 시각" || disc.basis === "모름" || TIME_RE.test(disc.time)) &&
+    discOk &&
     (!proxy || (TIME_RE.test(rep.time) && (BASES as readonly string[]).includes(rep.basis))) &&
     (end === null || TIME_RE.test(end)) &&
     (evidence !== "현장정보 재현" || sourceRef.trim().length > 0);
   const urgency = urgent || type === "안전 위험" ? "긴급" : "보통";
-
-  async function uploadAll(caseId: string, list: PhotoState[]) {
-    let ok = 0;
-    for (let i = 0; i < list.length; i++) {
-      if (list[i].status === "완료") {
-        ok++;
-        continue;
-      }
-      setPhotos((p) => p.map((x, k) => (k === i ? { ...x, status: "올리는 중", error: undefined } : x)));
-      try {
-        const prepared = await preparePhoto(list[i].file);
-        const up = await uploadPhoto(userId, caseId, prepared);
-        const r = await attachPhotoAction({ opId: newOpId(), caseId, path: up.path, mime: prepared.mime, size: up.size, sha256: up.sha256, exifRemoved: prepared.exifRemoved });
-        if (!r.ok) throw new Error(r.error);
-        ok++;
-        setPhotos((p) => p.map((x, k) => (k === i ? { ...x, status: "완료", exifRemoved: prepared.exifRemoved } : x)));
-      } catch (e) {
-        setPhotos((p) => p.map((x, k) => (k === i ? { ...x, status: "실패", error: e instanceof Error ? e.message : String(e) } : x)));
-      }
-    }
-    return ok;
-  }
+  const done = [!!type, !!type && discOk, needs.length > 0 || urgent, endTouched, photos.items.length > 0, !!saved];
+  const current = Math.max(0, done.findIndex((d) => !d));
 
   async function send() {
     setBusy(true);
@@ -130,13 +124,22 @@ export function CaseReport({
         s = { caseId: r.caseId, caseNo: r.caseNo, engine: r.engine };
         setSaved(s);
       }
-      const n = await uploadAll(s.caseId, photos);
+      const caseId = s.caseId;
+      const res = await uploadEach(photos.items, photos.patch, async (file) => {
+        const prepared = await preparePhoto(file);
+        const up = await uploadPhoto(userId, caseId, prepared);
+        const r = await attachPhotoAction({ opId: newOpId(), caseId, path: up.path, mime: prepared.mime, size: up.size, sha256: up.sha256, exifRemoved: prepared.exifRemoved });
+        if (!r.ok) throw new Error(r.error);
+        return { exifRemoved: prepared.exifRemoved };
+      });
       router.refresh();
-      if (n < photos.length) {
-        setErr({ text: `사건 ${s.caseNo} 보고는 저장됐습니다. 사진 ${photos.length - n}장을 올리지 못했습니다 — '사진 다시 올리기'를 누르세요.`, retry: true });
+      if (res.failed > 0) {
+        setErr({ text: `사건 ${s.caseNo} 보고는 저장됐습니다. 사진 ${res.failed}장을 올리지 못했습니다 — '사진 다시 올리기'를 누르세요.`, retry: true });
         return;
       }
-      onDone(`사건 ${s.caseNo} 보고됨${photos.length ? ` · 사진 ${n}장` : ""} · ${s.engine ? `예상 종료 ${end} → 후속 현장 위험 다시 계산` : "예상 종료 미확인 — 위험 판단 변화 없음"}`);
+      onDone(
+        `사건 ${s.caseNo} 보고됨${photos.items.length ? ` · 사진 ${res.ok}장` : ""} · ${s.engine ? `예상 종료 ${end} → 후속 현장 위험 다시 계산` : "예상 종료 미확인 — 위험 판단 변화 없음"}`,
+      );
     } catch (e) {
       void e;
       setErr({ text: "보내지 못했습니다 — 연결을 확인하고 '다시 보내기'를 누르세요. 입력한 내용은 그대로 있고, 같은 보고로 한 번만 저장됩니다.", retry: true });
@@ -145,205 +148,272 @@ export function CaseReport({
     }
   }
 
-  return (
-    <div className="space-y-3 rounded-2xl border-2 border-danger/40 bg-white p-3.5" aria-label="현장 문제 보고">
-      <p className="flex items-center gap-1.5 text-[20px] font-extrabold text-danger">
-        <AlertTriangle size={23} /> 현장 문제 보고 · 지원 요청 — {target.siteName}
-      </p>
-      {saved && <p className="rounded-xl bg-success-bg px-3 py-2 text-[16px] font-bold text-success">사건 {saved.caseNo} 저장됨 — 남은 사진만 올리면 됩니다.</p>}
+  const sendLabel = busy ? "보내는 중…" : saved ? "사진 다시 올리기" : err?.retry ? "다시 보내기" : "보고 보내기";
 
+  const body = (
+    <>
+      {saved && (
+        <p className="rounded-2xl bg-success-bg px-4 py-3 text-[15.5px] font-bold text-success">사건 {saved.caseNo} 저장됨 — 남은 사진만 올리면 됩니다.</p>
+      )}
       <fieldset disabled={!!saved} className="space-y-3">
-        <Group label="문제 유형">
-          {ISSUE_TYPES.map((t) => (
-            <button type="button" role="radio" aria-checked={type === t} key={t} className={chip(type === t, t === "안전 위험" ? "danger" : "ink")} onClick={() => setType(t)}>
-              {t}
-            </button>
-          ))}
-        </Group>
-        {type === "안전 위험" && (
-          <p role="alert" className="flex items-start gap-2 rounded-xl bg-danger px-3 py-2.5 text-[16.5px] font-bold text-white">
-            <PhoneCall size={20} className="mt-0.5 shrink-0" /> 위험하면 프로그램 판단을 기다리지 말고 즉시 작업을 멈추고, 관리자·안전 책임자에게 직접 전화하세요. 이 보고는 기록용입니다.
-          </p>
-        )}
-        <Group label="지금 작업 진행상황">
-          {PROGRESS.map((t) => (
-            <button type="button" role="radio" aria-checked={progress === t} key={t} className={chip(progress === t)} onClick={() => setProgress(t)}>
-              {t}
-            </button>
-          ))}
-        </Group>
-        <Group label="요청 (여러 개 가능)" multi>
-          {NEEDS.map((t) => (
-            <button type="button" aria-pressed={needs.includes(t)} key={t} className={chip(needs.includes(t))} onClick={() => setNeeds((v) => (v.includes(t) ? v.filter((o) => o !== t) : [...v, t]))}>
-              {t}
-            </button>
-          ))}
-          <button type="button" aria-pressed={urgency === "긴급"} className={chip(urgency === "긴급", "danger")} onClick={() => setUrgent((v) => !v)} disabled={type === "안전 위험"}>
-            긴급
-          </button>
-        </Group>
-        <input value={request} onChange={(e) => setRequest(e.target.value)} maxLength={500} placeholder="설명 (선택 · 말한 그대로)" aria-label="문제 설명" className="min-h-[3rem] w-full rounded-xl border border-line px-3 text-[17px]" />
-
-        <div className="space-y-1.5" role="group" aria-label="변경 예상 종료">
-          <span className="block text-[15.5px] font-semibold text-ink-2">변경된 예상 작업 종료 (지금 예상 {target.currentEnd})</span>
-          <div className="flex flex-wrap gap-1.5">
-            {[30, 60, 120].map((m) => {
-              const t = addMin(target.currentEnd, m);
-              return (
-                <button type="button" key={m} disabled={!t} className={chip(end === t && !typingEnd)} onClick={() => (setTypingEnd(false), setEnd(t))}>
-                  +{m >= 60 ? `${m / 60}시간` : `${m}분`}
-                </button>
-              );
-            })}
-            <button type="button" className={chip(typingEnd)} onClick={() => setTypingEnd(true)}>
-              직접 입력
-            </button>
-            <button type="button" className={chip(end === null && !typingEnd)} onClick={() => (setTypingEnd(false), setEnd(null))}>
-              아직 모름
-            </button>
-          </div>
-          {typingEnd && <input type="time" aria-label="변경 예상 종료 직접 입력" value={end ?? ""} onChange={(e) => setEnd(e.target.value || null)} className="min-h-[3rem] w-full rounded-xl border border-line px-3 text-[20px]" />}
-          <p className={`text-[15px] font-bold ${end ? "text-danger" : "text-ink-3"}`}>
-            {end ? `→ ${end} 종료 예상 · 이 값으로 다음 현장 도착·위험을 다시 계산합니다` : "예상 종료를 모르면 보고만 남고 위험 판단은 바뀌지 않습니다"}
-          </p>
-        </div>
-
-        <div className="space-y-1.5" role="group" aria-label="문제 발견시각">
-          <span className="block text-[15.5px] font-semibold text-ink-2">문제를 처음 발견한 시각</span>
-          <div className="flex flex-wrap gap-1.5">
-            {!proxy && (
-              <button type="button" className={chip(disc.basis === "보고와 같은 시각")} onClick={() => setDisc({ basis: "보고와 같은 시각", time: "" })}>
-                방금
-              </button>
-            )}
-            {!proxy &&
-              [10, 30, 60].map((n) => (
-                <button type="button" key={n} className={chip(false)} onClick={() => setDisc({ basis: "현장 직원 진술", time: minutesAgo(n) })}>
-                  {n === 60 ? "1시간 전" : `${n}분 전`}
-                </button>
-              ))}
-            <input
-              type="time"
-              aria-label="문제 발견시각 직접 입력"
-              value={disc.basis === "보고와 같은 시각" || disc.basis === "모름" ? "" : disc.time}
-              onChange={(e) => setDisc({ basis: disc.basis === "보고와 같은 시각" || disc.basis === "모름" ? "현장 직원 진술" : disc.basis, time: e.target.value })}
-              className="min-h-[3rem] rounded-xl border border-line px-2 text-[19px]"
-            />
-            <button type="button" className={chip(disc.basis === "모름")} onClick={() => setDisc({ basis: "모름", time: "" })}>
-              모름
-            </button>
-          </div>
-          {(proxy || (disc.basis !== "보고와 같은 시각" && disc.basis !== "모름")) && (
-            <Basis value={disc.basis} onChange={(b) => setDisc({ ...disc, basis: b as Disc["basis"] })} />
-          )}
-        </div>
-
-        {proxy ? (
-          <div className="grid gap-2 rounded-xl bg-[#f7f8fa] p-2.5 sm:grid-cols-2">
-            <label>
-              <span className="block text-[15px] font-semibold text-ink-2">현장에서 본사에 보고한 시각</span>
-              <input type="time" aria-label="보고 시각" value={rep.time} onChange={(e) => setRep({ ...rep, time: e.target.value })} className="min-h-[2.8rem] w-full rounded-xl border border-line px-2 text-[18px]" />
-            </label>
-            <div>
-              <span className="block text-[15px] font-semibold text-ink-2">보고 시각 근거</span>
-              <Basis value={rep.basis} onChange={(b) => setRep({ ...rep, basis: b })} />
-            </div>
-            <label>
-              <span className="block text-[15px] font-semibold text-ink-2">자료 출처</span>
-              <select value={info} onChange={(e) => setInfo(e.target.value)} aria-label="자료 출처" className="min-h-[2.8rem] w-full rounded-xl border border-line px-2 text-[17px]">
-                {INFO_SOURCES.filter((x) => x !== "현장기사 앱").map((x) => (
-                  <option key={x}>{x}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-        ) : (
-          <p className="text-[14.5px] text-ink-3">보고 시각: 보내는 지금 (버튼 누른 시각) · 서버 기록시각은 서버가 따로 남깁니다.</p>
-        )}
-        {scenario && (
-          <Group label="자료 구분 (검증 시나리오)">
-            {(["가상 시나리오", "현장정보 재현"] as const).map((x) => (
-              <button type="button" role="radio" aria-checked={evidence === x} key={x} className={chip(evidence === x)} onClick={() => setEvidence(x)}>
-                {x === "가상 시나리오" ? "가상 시나리오 (시험용 가정값)" : "실제 과거 현장정보 재현 (원자료 있음)"}
+        <Step n={1} title="어떤 문제인가요?" done={done[0]}>
+          <Group label="문제 유형" grid>
+            {ISSUE_TYPES.map((t) => (
+              <button
+                type="button"
+                role="radio"
+                aria-checked={type === t}
+                key={t}
+                className={cx(chip(type === t, t === "안전 위험" ? "danger" : "primary"), "min-h-[3.25rem] w-full rounded-2xl text-[16px]")}
+                onClick={() => {
+                  setType(t);
+                  if (!proxy && !type) window.setTimeout(() => stateRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }), 60);
+                }}
+              >
+                {t}
               </button>
             ))}
           </Group>
-        )}
-        {scenario && evidence === "현장정보 재현" && (
-          <div className="space-y-1">
-            <input
-              value={sourceRef}
-              onChange={(e) => setSourceRef(e.target.value)}
-              maxLength={200}
-              placeholder="원자료 이름 (예: 10월 2일 업무일지 · A현장 통화기록)"
-              aria-label="원자료 이름"
-              className="min-h-[3rem] w-full rounded-xl border border-line px-3 text-[17px]"
-            />
-            <p className="text-[14px] text-ink-3">실제 과거 현장의 원자료가 있을 때만 고릅니다. 원자료가 없는 시험·연습은 가상 시나리오입니다.</p>
+          {type === "안전 위험" && (
+            <p role="alert" className="mt-2 flex items-start gap-2 rounded-2xl bg-danger px-4 py-3 text-[15.5px] font-bold text-white">
+              <PhoneCall size={20} className="mt-0.5 shrink-0" /> 위험하면 프로그램 판단을 기다리지 말고 즉시 작업을 멈추고, 관리자·안전 책임자에게 직접 전화하세요. 이 보고는 기록용입니다.
+            </p>
+          )}
+        </Step>
+
+        <Step n={2} title="지금 상태" done={done[1]} anchor={stateRef}>
+          <Group label="지금 작업 진행상황">
+            {PROGRESS.map((t) => (
+              <button type="button" role="radio" aria-checked={progress === t} key={t} className={chip(progress === t)} onClick={() => setProgress(t)}>
+                {t}
+              </button>
+            ))}
+          </Group>
+          <div className="mt-3 space-y-2" role="group" aria-label="문제 발견시각">
+            <span className="block text-[14px] font-bold text-ink-3">문제를 처음 발견한 시각</span>
+            <div className="flex flex-wrap gap-2">
+              {!proxy && (
+                <button type="button" className={chip(disc.basis === "보고와 같은 시각")} onClick={() => setDisc({ basis: "보고와 같은 시각", time: "" })}>
+                  방금
+                </button>
+              )}
+              {!proxy &&
+                [10, 30, 60].map((n) => (
+                  <button type="button" key={n} className={chip(false)} onClick={() => setDisc({ basis: "현장 직원 진술", time: minutesAgo(n) })}>
+                    {n === 60 ? "1시간 전" : `${n}분 전`}
+                  </button>
+                ))}
+              <button type="button" className={chip(disc.basis === "모름")} onClick={() => setDisc({ basis: "모름", time: "" })}>
+                모름
+              </button>
+              <input
+                type="time"
+                aria-label="문제 발견시각 직접 입력"
+                value={disc.basis === "보고와 같은 시각" || disc.basis === "모름" ? "" : disc.time}
+                onChange={(e) => setDisc({ basis: disc.basis === "보고와 같은 시각" || disc.basis === "모름" ? "현장 직원 진술" : disc.basis, time: e.target.value })}
+                className="min-h-[2.75rem] rounded-full bg-[#eef0f3] px-4 text-[16px] font-semibold tabular-nums"
+              />
+            </div>
+            {(proxy || (disc.basis !== "보고와 같은 시각" && disc.basis !== "모름")) && <Basis value={disc.basis} onChange={(b) => setDisc({ ...disc, basis: b as Disc["basis"] })} />}
           </div>
-        )}
+        </Step>
+
+        <Step n={3} title="어떤 지원이 필요한가요?" hint="여러 개 고를 수 있어요" done={done[2]}>
+          <Group label="요청 (여러 개 가능)" multi>
+            {NEEDS.map((t) => (
+              <button type="button" aria-pressed={needs.includes(t)} key={t} className={chip(needs.includes(t))} onClick={() => setNeeds((v) => (v.includes(t) ? v.filter((o) => o !== t) : [...v, t]))}>
+                {t}
+              </button>
+            ))}
+            <button type="button" aria-pressed={urgency === "긴급"} className={chip(urgency === "긴급", "danger")} onClick={() => setUrgent((v) => !v)} disabled={type === "안전 위험"}>
+              긴급
+            </button>
+          </Group>
+          <input
+            value={request}
+            onChange={(e) => setRequest(e.target.value)}
+            maxLength={500}
+            placeholder="설명 (선택 · 말한 그대로)"
+            aria-label="문제 설명"
+            className="mt-3 min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[16px] outline-none focus:bg-white focus:ring-2 focus:ring-primary"
+          />
+        </Step>
+
+        <Step n={4} title="예상 종료가 바뀌나요?" hint={`지금 예상 ${target.currentEnd}`} done={done[3]}>
+          <div className="space-y-2" role="group" aria-label="변경 예상 종료">
+            <div className="flex flex-wrap gap-2">
+              {[30, 60, 120].map((m) => {
+                const t = addMin(target.currentEnd, m);
+                return (
+                  <button type="button" key={m} disabled={!t} className={chip(end === t && !typingEnd)} onClick={() => (setTypingEnd(false), setEnd(t), setEndTouched(true))}>
+                    +{m >= 60 ? `${m / 60}시간` : `${m}분`}
+                  </button>
+                );
+              })}
+              <button type="button" className={chip(typingEnd)} onClick={() => (setTypingEnd(true), setEndTouched(true))}>
+                직접 입력
+              </button>
+              <button type="button" className={chip(end === null && !typingEnd && endTouched)} onClick={() => (setTypingEnd(false), setEnd(null), setEndTouched(true))}>
+                아직 모름
+              </button>
+            </div>
+            {typingEnd && (
+              <input
+                type="time"
+                aria-label="변경 예상 종료 직접 입력"
+                value={end ?? ""}
+                onChange={(e) => setEnd(e.target.value || null)}
+                className="min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[19px] tabular-nums outline-none focus:ring-2 focus:ring-primary"
+              />
+            )}
+            <p className={cx("rounded-xl px-3 py-2 text-[14.5px] font-semibold", end ? "bg-danger-bg text-danger" : "bg-[#f3f4f6] text-ink-3")}>
+              {end ? `→ ${end} 종료 예상 · 이 값으로 다음 현장 도착·위험을 다시 계산합니다` : "예상 종료를 모르면 보고만 남고 위험 판단은 바뀌지 않습니다"}
+            </p>
+          </div>
+        </Step>
       </fieldset>
 
-      <div className="space-y-1.5">
-        <label className="inline-flex min-h-[3rem] cursor-pointer items-center gap-2 rounded-xl bg-[#e8f1fe] px-4 text-[17px] font-bold text-primary-dark">
-          <Camera size={21} /> 사진 찍기 · 고르기
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            multiple
-            className="sr-only"
-            aria-label="현장 사진"
-            onChange={(e) => {
-              const files = [...(e.target.files ?? [])].slice(0, 6);
-              setPhotos((p) => [...p, ...files.map((f) => ({ file: f, preview: URL.createObjectURL(f), status: "대기" as const }))].slice(0, 6));
-              e.target.value = "";
-            }}
-          />
-        </label>
-        {photos.length > 0 && (
-          <ul className="grid grid-cols-3 gap-1.5" aria-label="첨부할 사진">
-            {photos.map((p, i) => (
-              <li key={p.preview} className="relative overflow-hidden rounded-xl border border-line">
-                {/* eslint-disable-next-line @next/next/no-img-element -- 휴대폰에서 고른 실제 파일의 미리보기 */}
-                <img src={p.preview} alt={`첨부 사진 ${i + 1}`} className="aspect-square w-full object-cover" />
-                <span className={`absolute right-0 bottom-0 left-0 px-1 py-0.5 text-center text-[12.5px] font-bold text-white ${p.status === "실패" ? "bg-danger" : p.status === "완료" ? "bg-success" : "bg-ink/70"}`}>
-                  {p.status}
-                </span>
-                {p.status === "대기" && !busy && (
-                  <button type="button" aria-label={`사진 ${i + 1} 빼기`} onClick={() => setPhotos((x) => x.filter((_, k) => k !== i))} className="absolute top-0.5 right-0.5 rounded-full bg-white/90 px-1.5 text-[13px] font-bold">
-                    ✕
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="text-[13.5px] text-ink-3">사진은 휴대폰에서 줄여 촬영 정보(위치 등)를 지운 뒤 비공개 저장소에 올립니다. 관리자와 본인만 볼 수 있습니다. 얼굴·개인정보가 나오지 않게 찍어 주세요.</p>
-      </div>
+      <Step n={5} title="사진 첨부" hint="선택 · 최대 6장" done={done[4]}>
+        <PhotoPicker
+          items={photos.items}
+          onAdd={photos.add}
+          onRemove={photos.remove}
+          disabled={busy}
+          title="현장 사진"
+          hint="휴대폰에서 줄여 촬영 정보(위치 등)를 지운 뒤 비공개로 올립니다. 관리자와 본인만 봅니다. 얼굴·개인정보가 나오지 않게 찍어 주세요."
+        />
+      </Step>
+
+      <Step n={6} title="확인하고 보내기" done={done[5]}>
+        <fieldset disabled={!!saved} className="space-y-3">
+          <dl className="grid grid-cols-[5.5rem_1fr] gap-x-2 gap-y-1 text-[14.5px]">
+            <dt className="text-ink-3">현장</dt>
+            <dd className="font-semibold">{target.siteName}</dd>
+            <dt className="text-ink-3">문제</dt>
+            <dd className="font-semibold">{type ?? "고르지 않음"}</dd>
+            <dt className="text-ink-3">지원</dt>
+            <dd className="font-semibold">{[...needs, urgency === "긴급" ? "긴급" : null].filter(Boolean).join(" · ") || "없음"}</dd>
+            <dt className="text-ink-3">예상 종료</dt>
+            <dd className="font-semibold">{end ?? "모름"}</dd>
+            <dt className="text-ink-3">보고 시각</dt>
+            <dd className="font-semibold">{proxy ? "아래에 입력" : "보내는 지금 (버튼 누른 시각)"}</dd>
+          </dl>
+          {proxy && (
+            <div className="grid gap-2 rounded-2xl bg-[#f7f8fa] p-3 sm:grid-cols-2">
+              <label>
+                <span className="block text-[14px] font-bold text-ink-3">현장에서 본사에 보고한 시각</span>
+                <input type="time" aria-label="보고 시각" value={rep.time} onChange={(e) => setRep({ ...rep, time: e.target.value })} className="min-h-[2.8rem] w-full rounded-xl bg-white px-3 text-[17px] ring-1 ring-line" />
+              </label>
+              <div>
+                <span className="block text-[14px] font-bold text-ink-3">보고 시각 근거</span>
+                <Basis value={rep.basis} onChange={(b) => setRep({ ...rep, basis: b })} />
+              </div>
+              <label>
+                <span className="block text-[14px] font-bold text-ink-3">자료 출처</span>
+                <select value={info} onChange={(e) => setInfo(e.target.value)} aria-label="자료 출처" className="min-h-[2.8rem] w-full rounded-xl bg-white px-2 text-[16px] ring-1 ring-line">
+                  {INFO_SOURCES.filter((x) => x !== "현장기사 앱").map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
+          {scenario && (
+            <Group label="자료 구분 (검증 시나리오)">
+              {(["가상 시나리오", "현장정보 재현"] as const).map((x) => (
+                <button type="button" role="radio" aria-checked={evidence === x} key={x} className={chip(evidence === x)} onClick={() => setEvidence(x)}>
+                  {x === "가상 시나리오" ? "가상 시나리오 (시험용 가정값)" : "실제 과거 현장정보 재현 (원자료 있음)"}
+                </button>
+              ))}
+            </Group>
+          )}
+          {scenario && evidence === "현장정보 재현" && (
+            <div className="space-y-1">
+              <input
+                value={sourceRef}
+                onChange={(e) => setSourceRef(e.target.value)}
+                maxLength={200}
+                placeholder="원자료 이름 (예: 10월 2일 업무일지 · A현장 통화기록)"
+                aria-label="원자료 이름"
+                className="min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[16px] outline-none focus:ring-2 focus:ring-primary"
+              />
+              <p className="text-[13.5px] text-ink-3">실제 과거 현장의 원자료가 있을 때만 고릅니다. 원자료가 없는 시험·연습은 가상 시나리오입니다.</p>
+            </div>
+          )}
+        </fieldset>
+      </Step>
 
       {err && (
-        <p role="alert" className="rounded-xl bg-danger-bg px-3 py-2 text-[16px] font-bold text-danger">
+        <p role="alert" className="rounded-2xl bg-danger-bg px-4 py-3 text-[15px] font-bold text-danger">
           {err.text}
         </p>
       )}
-      <div className="grid grid-cols-[1fr_auto] gap-2">
-        <button disabled={(!ready && !saved) || busy} onClick={() => void send()} className="inline-flex min-h-[3.6rem] items-center justify-center gap-2 rounded-2xl bg-danger text-[20px] font-extrabold text-white disabled:opacity-40">
-          <Send size={21} /> {busy ? "보내는 중…" : saved ? "사진 다시 올리기" : err?.retry ? "다시 보내기" : "보고 보내기"}
-        </button>
-        <button onClick={onCancel} disabled={busy} className="rounded-2xl bg-[#f2f4f6] px-4 text-[17px] font-bold text-ink-2">
-          닫기
-        </button>
+    </>
+  );
+
+  const actions = (
+    <div className="grid grid-cols-[1fr_auto] gap-2">
+      <button disabled={(!ready && !saved) || busy} onClick={() => void send()} className={btn("primary", "xl", true)}>
+        <Send size={20} /> {sendLabel}
+      </button>
+      <button onClick={onCancel} disabled={busy} className={btn("ghost", "xl")}>
+        닫기
+      </button>
+    </div>
+  );
+
+  if (proxy) {
+    return (
+      <div className="space-y-3 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="현장 문제 보고">
+        <p className="flex items-center gap-2 text-[18px] font-extrabold text-ink">
+          <AlertTriangle size={20} className="text-danger" /> 대리 보고 — {target.siteName}
+        </p>
+        {body}
+        {actions}
       </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#f5f6f8]" aria-label="현장 문제 보고" role="dialog" aria-modal="true">
+      <header className="shrink-0 space-y-3 bg-white px-4 pt-[max(12px,env(safe-area-inset-top))] pb-3 shadow-[0_1px_0_#e7e9ee]">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold text-danger">현장 문제 보고 · 지원 요청</p>
+            <p className="truncate text-[19px] font-extrabold">{target.siteName}</p>
+          </div>
+          <button onClick={onCancel} disabled={busy} aria-label="보고 닫기" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef0f3] text-ink-2">
+            <X size={22} />
+          </button>
+        </div>
+        <Steps items={STEP_NAMES} current={current} label="보고 단계" />
+      </header>
+      <div className="mx-auto w-full max-w-[40rem] flex-1 space-y-3 overflow-y-auto px-4 py-4">{body}</div>
+      <footer className="safe-bottom mx-auto w-full max-w-[40rem] shrink-0 bg-white px-4 pt-3 shadow-[0_-1px_0_#e7e9ee]">{actions}</footer>
     </div>
   );
 }
 
-function Group({ label, children, multi = false }: { label: string; children: React.ReactNode; multi?: boolean }) {
+function Step({ n, title, hint, done, children, anchor }: { n: number; title: string; hint?: string; done: boolean; children: React.ReactNode; anchor?: React.Ref<HTMLDivElement> }) {
   return (
-    <div className="space-y-1.5" role={multi ? "group" : "radiogroup"} aria-label={label}>
-      <span className="block text-[15.5px] font-semibold text-ink-2">{label}</span>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+    <section ref={anchor} className="scroll-mt-4 rounded-[20px] bg-white p-4" aria-label={`${n}단계 ${title}`}>
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className={cx("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] font-extrabold", done ? "bg-primary text-white" : "bg-[#eef0f3] text-ink-2")}>
+          {done ? "✓" : n}
+        </span>
+        <h3 className="text-[17px] font-extrabold">{title}</h3>
+        {hint && <span className="ml-auto text-[13px] font-semibold text-ink-3">{hint}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Group({ label, children, multi = false, grid = false }: { label: string; children: React.ReactNode; multi?: boolean; grid?: boolean }) {
+  return (
+    <div role={multi ? "group" : "radiogroup"} aria-label={label}>
+      <span className="sr-only">{label}</span>
+      <div className={grid ? "grid grid-cols-2 gap-2" : "flex flex-wrap gap-2"}>{children}</div>
     </div>
   );
 }
@@ -352,7 +422,14 @@ export function Basis({ value, onChange }: { value: string; onChange: (b: string
   return (
     <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="시각 근거">
       {BASES.map((b) => (
-        <button type="button" role="radio" aria-checked={value === b} key={b} onClick={() => onChange(b)} className={`rounded-lg px-2.5 py-1.5 text-[14.5px] font-bold ${value === b ? "bg-primary text-white" : "bg-[#f2f4f6] text-ink-2"}`}>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={value === b}
+          key={b}
+          onClick={() => onChange(b)}
+          className={cx("min-h-[2.5rem] rounded-full px-3 text-[14px] font-bold", value === b ? "bg-ink text-white" : "bg-[#eef0f3] text-ink-2")}
+        >
           {b}
         </button>
       ))}

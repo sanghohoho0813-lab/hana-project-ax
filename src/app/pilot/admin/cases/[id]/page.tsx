@@ -10,6 +10,11 @@ import { appVersion } from "@/lib/pilot/config";
 import type { JudgmentSummary } from "@/lib/pilot/core";
 import type { LinkChange, RiskLink } from "@/lib/risk-engine";
 import { PrintButton } from "../../../_ui/PrintButton";
+import { btn, More, Pill, type PillTone } from "../../../_ui/ds";
+import { outcome, RiskChain, type ChainLink } from "../../../_ui/RiskChain";
+import { NEXT_ADMIN_ACTION, type CaseStatus } from "@/lib/pilot/cases";
+
+const STATUS_TONE: Record<CaseStatus, PillTone> = { 보고됨: "danger", 접수됨: "warning", "조치 중": "info", "현장 해결 보고": "info", 미해결: "danger", 해결: "success", 무효: "neutral" };
 
 /**
  * 사건 증빙 — 사건번호 하나로 현장 사진 · 입력 기록 · 관리자 조치 · 엔진 입력 · 위험 판단 전후를 묶는다 (인쇄 → PDF)
@@ -95,22 +100,157 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
   const tallyAction = actionJs.map((j) => tally(caseChanges(j.changes.changes, ev.workerSchedules, c.schedule_id, c.worker_id).mine));
   const versions = [...new Set(ev.steps.map((x) => x.app_version))];
   const box = "rounded-xl border border-line p-3 print:p-2";
+
+  // ── 화면용 '사건 한눈에' — 연쇄 영향 그림 (인쇄 증빙과 같은 판단 기록에서 읽음) ──
+  const chainState = (l?: RiskLink) => (l ? { grade: l.status !== "판정" ? l.status : (l.grade ?? "없음"), slack: l.slack } : null);
+  const chain: ChainLink[] = keys.map((k) => {
+    const [a, b] = k.split(">");
+    return { key: k, from: siteOf.get(a) ?? "다른 기사 현장", to: siteOf.get(b) ?? "다른 기사 현장", report: chainState(afterReport.get(k)), action: lastJ ? chainState(afterAction.get(k)) : null };
+  });
+  const remaining = chain.filter((l) => {
+    const g = (l.action ?? l.report)?.grade ?? "";
+    return ["중간", "높음", "매우 높음"].includes(g);
+  }).length;
+  const solved = chain.filter((l) => outcome(l).text === "해소").length;
+  const adminSteps = ev.steps.filter((x) => x.source === "관리자");
   const th = "py-1 pr-2 text-left text-[13.5px] font-semibold text-ink-3";
 
   return (
     <div className="mx-auto max-w-[62rem] space-y-4">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <Link href="/pilot/admin/cases" className="rounded-xl bg-white px-3 py-1.5 text-[17px] font-semibold text-ink-2">
-          ← 현장 문제·지원
+        <Link href="/pilot/admin/cases" className={btn("outline", "md")}>
+          ← 문제·지원
         </Link>
         <PrintButton />
-        <a href={`/pilot/admin/cases/${c.id}/export?format=json`} className="rounded-xl bg-white px-3 py-1.5 text-[17px] font-semibold text-ink-2">
+        <a href={`/pilot/admin/cases/${c.id}/export?format=json`} className={btn("outline", "md")}>
           JSON 내려받기
         </a>
-        <a href={`/pilot/admin/cases/${c.id}/export?format=csv`} className="rounded-xl bg-white px-3 py-1.5 text-[17px] font-semibold text-ink-2">
+        <a href={`/pilot/admin/cases/${c.id}/export?format=csv`} className={btn("outline", "md")}>
           CSV 내려받기
         </a>
       </div>
+
+      {/* ── 화면 전용: 사건 한눈에 (문제 개요 → 현장사진 → 지원 요청 → 관리자 조치 → 후속 현장 위험 → 조치 전후) — 인쇄 증빙은 아래 그대로 ── */}
+      <section aria-label="사건 한눈에" className="space-y-4 print:hidden">
+        <div className="card space-y-4 p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Pill tone={STATUS_TONE[c.status]}>{c.status}</Pill>
+            {c.urgency === "긴급" && <Pill tone="danger">긴급</Pill>}
+            <Pill tone={testOnly ? "test" : cls === "실제 업무" ? "success" : "info"} dot={false}>
+              {CLASS_LABEL[cls]}
+            </Pill>
+            <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
+          </div>
+          <div>
+            <p className="text-[13.5px] font-bold text-primary">문제 개요</p>
+            <h2 className="text-[24px] leading-tight font-extrabold">
+              {site} · {c.issue_type}
+            </h2>
+            <p className="text-[15px] text-ink-3">
+              {who(c.worker_id)} · {c.progress}
+              {c.request && ` · "${c.request}"`}
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[
+              ["발견", `${c.discovered_at ? kst(c.discovered_at).time : "모름"} (${c.discovered_basis})`],
+              ["보고", `${kst(c.reported_at).time} (${c.report_mode})`],
+              ["요청 지원", c.needs.join(", ") || "없음"],
+              ["다음 조치", NEXT_ADMIN_ACTION[c.status]],
+            ].map(([k, v]) => (
+              <div key={k} className="rounded-2xl bg-[#f7f8fa] px-3.5 py-3">
+                <dt className="text-[12.5px] font-bold text-ink-3">{k}</dt>
+                <dd className="mt-0.5 text-[15px] font-bold">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="card space-y-3 p-5">
+            <h2 className="text-[17px] font-extrabold">현장 사진 · {ev.photos.length}장</h2>
+            {testOnly && ev.photos.length > 0 && <p className="text-[13px] font-semibold text-test">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
+            {ev.photos.length === 0 ? (
+              <p className="text-[14.5px] text-ink-3">첨부된 사진이 없습니다.</p>
+            ) : (
+              <ul className="grid grid-cols-3 gap-2">
+                {ev.photos.map((ph) => (
+                  <li key={ph.id}>
+                    {ph.deleted_at || !ph.url ? (
+                      <span className="flex aspect-square items-center justify-center rounded-2xl bg-[#eef0f3] p-2 text-center text-[12px] text-ink-3">삭제됨</span>
+                    ) : (
+                      <a href={ph.url} target="_blank" rel="noreferrer">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- 비공개 저장소의 서명 주소(10분) */}
+                        <img src={ph.url} alt={testOnly ? "시험용 이미지" : "현장 사진"} className="aspect-square w-full rounded-2xl object-cover" />
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="card space-y-3 p-5">
+            <h2 className="text-[17px] font-extrabold">관리자 조치 · {adminSteps.length}건</h2>
+            {adminSteps.length === 0 ? (
+              <p className="text-[14.5px] text-ink-3">아직 조치 기록이 없습니다.</p>
+            ) : (
+              <ol className="relative space-y-3 border-l-2 border-line pl-4">
+                {adminSteps.map((x) => (
+                  <li key={x.id} className="relative">
+                    <span className="absolute top-1.5 -left-[1.4rem] h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-white" />
+                    <p className="text-[15px] font-bold">
+                      {x.kind}
+                      {x.action && ` — ${x.action}`}
+                      {x.assignee_name && ` — ${x.assignee_name}`}
+                    </p>
+                    {x.message && <p className="text-[14px] text-ink-2">{x.message}</p>}
+                    <p className="text-[12.5px] text-ink-3 tabular-nums">
+                      {x.occurred_at ? kst(x.occurred_at).time : "모름"} · {since(x.occurred_at)} · {who(x.actor_id)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+
+        <div className="card space-y-4 p-5">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h2 className="text-[17px] font-extrabold">후속 현장 위험 · 조치 전후</h2>
+              <p className="text-[13.5px] text-ink-3">이 사건(담당 기사 · 사건 현장부터)의 연결만 그립니다. 그날 전체 수는 아래에 참고로 따로 둡니다.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { k: "이 사건으로 새로 생긴 위험", v: tallyReport ? tallyReport.newRisk + tallyReport.worse : 0, t: "text-danger" },
+              { k: "조치로 풀린 위험", v: solved, t: "text-success" },
+              { k: "남은 위험", v: remaining, t: remaining ? "text-danger" : "text-ink" },
+            ].map((x) => (
+              <div key={x.k} className="rounded-2xl bg-[#f7f8fa] px-3 py-3 text-center">
+                <p className={`text-[24px] leading-none font-extrabold tabular-nums ${x.t}`}>{x.v}</p>
+                <p className="mt-1.5 text-[12.5px] font-semibold text-ink-3">{x.k}</p>
+              </div>
+            ))}
+          </div>
+          <RiskChain links={chain} caseSite={site} hasAction={!!lastJ} />
+          <More summary="계산 근거 펼쳐보기">
+            <ul className="list-disc space-y-1 pl-5">
+              <li>보고 직후 = 사건의 변경 예상 종료{c.expected_end ? ` ${c.expected_end.slice(0, 5)}` : " (미확인 — 엔진에 넣지 않음)"}를 기존 연쇄위험 엔진에 넣은 판단 결과{reportJ ? ` (판단 번호 ${reportJ.seq})` : ""}</li>
+              <li>조치 후 = 마지막 관리자 조치(일정 조정 · 예상 종료 변경)의 재판단 결과{lastJ ? ` (판단 번호 ${lastJ.seq} · ${lastJ.trigger_kind})` : " — 아직 없음"}</li>
+              <li>여유 · 늦음(분)은 엔진이 계산한 도착 예상값입니다. 실제 도착 시각이 아닙니다.</li>
+              {reportJ && (
+                <li>
+                  참고 — 그날 전체(모든 기사 · 모든 일정) 위험 연결 {reportJ.summary.risky_before} → {reportJ.summary.risky_after}건{lastJ ? ` · 마지막 조치 후 ${lastJ.summary.risky_after}건` : ""}
+                </li>
+              )}
+              <li>
+                규칙 {(lastJ ?? reportJ)?.rule_version ?? "-"} · 상태 {(lastJ ?? reportJ)?.state_version ?? "-"} — 전체 입력과 서명은 아래 증빙 5번 · 판단 상세에서 확인합니다.
+              </li>
+            </ul>
+          </More>
+        </div>
+      </section>
       {/* print-area: 공용 인쇄 규칙(globals.css)은 이 영역만 인쇄한다 — 없으면 PDF가 빈 쪽으로 나온다 */}
       <article className="card print-area print-compact space-y-4 p-5" aria-label="사건 증빙">
         <header>
@@ -122,7 +262,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
           </p>
           <p
             aria-label="자료 구분 안내"
-            className={`mt-1.5 rounded-lg border px-3 py-2 text-[15px] font-semibold ${cls === "실제 업무" ? "border-success bg-success-bg text-success" : cls === "현장정보 재현" ? "border-primary bg-primary-light text-primary-dark" : "border-dashed border-[#8b5cf6] bg-[#f5f0ff] text-[#5b21b6]"}`}
+            className={`mt-1.5 rounded-lg border px-3 py-2 text-[15px] font-semibold ${cls === "실제 업무" ? "border-success bg-success-bg text-success" : cls === "현장정보 재현" ? "border-primary bg-primary-light text-primary-dark" : "border-dashed border-[#94a3b8] bg-test-bg text-test"}`}
           >
             {cls === "실제 업무" && "실제 업무 기록 — 그날 실제로 일어난 일을 그때 입력한 기록입니다."}
             {cls === "현장정보 재현" && `실제 과거 현장정보 재현 — 원자료: ${c.source_ref}. 지난 사례를 원자료·진술로 다시 입력한 기록이며, 시각 근거를 항목마다 따로 표시합니다.`}

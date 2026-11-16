@@ -6,7 +6,7 @@ const bro = await newBrowser();
 const RUN = String(Date.now()).slice(-5);
 const D = kstDate(2 + (Number(RUN) % 300));
 const P1 = `박현장${RUN}`, P2 = `이현장${RUN}`;
-const BOARD = `${APP}/pilot/admin?date=${D}&kind=scenario`;
+const BOARD = `${APP}/pilot/admin/schedule?date=${D}&kind=scenario`;
 
 // 현장 직원 2명 (초대 대신 발급 · 비활성으로 시작)
 const f1 = uniq("field"), f2 = uniq("field");
@@ -153,7 +153,7 @@ await p.locator("text=1건 중 1건을 기록했습니다").waitFor();
 check(true, "다시 처리로 기록");
 
 // 9) 데이터 구분: 실제 업무 화면에는 검증 시나리오 일정이 보이지 않는다
-await p.goto(`${APP}/pilot/admin?date=${D}&kind=real`);
+await p.goto(`${APP}/pilot/admin/schedule?date=${D}&kind=real`);
 check((await p.locator("text=실제 업무 데이터 — 실제 현장 업무로 입력된").count()) === 1 && (await p.locator("tr:has-text('A현장')").count()) === 0, "실제 업무 화면에는 검증 시나리오 일정 없음");
 await p.goto(BOARD);
 await shot(p, "admin_board");

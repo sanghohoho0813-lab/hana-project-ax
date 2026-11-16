@@ -1,0 +1,73 @@
+import { requireAdmin } from "@/lib/pilot/session";
+import { loadDay, loadStaff, parseDay, pendingJobs } from "@/lib/pilot/board";
+import { cancelledBetween, judgeAt, progressOf, travelBasisStale } from "@/lib/pilot/core";
+import { kst, kstLabel } from "@/lib/pilot/time";
+import { DayBar, KindBanner } from "../AdminNav";
+import { ScheduleBoard, type BoardRow } from "../ScheduleBoard";
+import { JudgmentNow } from "../../_ui/JudgmentNow";
+import { AutoRefresh } from "../../_ui/AutoRefresh";
+import { PageHead } from "../../_ui/ds";
+import Link from "next/link";
+import { AlertTriangle, HardHat } from "lucide-react";
+import { OPEN } from "@/lib/pilot/cases";
+import { kindParam } from "@/lib/pilot/board";
+
+/** 현장·일정 — 일정 등록 · 수정 · 취소 + 지금 시각 기준 위험 판단 (0.3까지의 '관리자 일정판') */
+export default async function SchedulePage({ searchParams }: { searchParams: Promise<{ date?: string; kind?: string }> }) {
+  const s = await requireAdmin();
+  const { date, kind } = parseDay(await searchParams);
+  const [day, staff, pending, openCases, safetyPending] = await Promise.all([
+    loadDay(s.sb, date, kind),
+    loadStaff(s.sb),
+    pendingJobs(s.sb),
+    s.sb.from("field_cases").select("status, urgency, issue_type").eq("data_kind", kind).in("status", OPEN),
+    s.sb.from("safety_checks").select("review_status, deficient").eq("data_kind", kind).in("review_status", ["확인 대기", "보완 제출"]),
+  ]);
+  const safetyWait = (safetyPending.data ?? []) as { review_status: string; deficient: string[] }[];
+  const open = (openCases.data ?? []) as { status: string; urgency: string; issue_type: string }[];
+  const now = new Date();
+  const result = judgeAt(day.schedules, day.events, now.toISOString());
+
+  const names = Object.fromEntries(staff.map((p) => [p.id, p.display_name]));
+  const titles = Object.fromEntries(day.schedules.map((x) => [x.id, x.site_name]));
+  const rows: BoardRow[] = day.schedules
+    .slice()
+    .sort((a, b) => (a.planned_start < b.planned_start ? -1 : a.planned_start > b.planned_start ? 1 : 0))
+    .map((x) => ({
+      s: x,
+      phase: progressOf(x, day.events).phase,
+      travelFromTitle: x.travel_from_id ? (titles[x.travel_from_id] ?? null) : null,
+      stale: travelBasisStale(x, day.schedules),
+      cancelledBefore: cancelledBetween(x, day.schedules).map((c) => c.site_name),
+      events: day.events.filter((e) => e.schedule_id === x.id).length,
+    }));
+  const fieldStaff = staff.filter((p) => p.role === "field" && p.active).map((p) => ({ id: p.id, name: p.display_name }));
+
+  return (
+    <div className="space-y-5">
+      <PageHead eyebrow="현장·일정" title={`관리자 일정판 · ${s.profile?.display_name ?? ""}`} sub="일정 등록 · 수정 · 취소와 지금 시각 기준 연쇄 위험 판단" right={<AutoRefresh seconds={15} />} />
+      <DayBar path="/pilot/admin/schedule" date={date} kind={kind} today={kst(now).date} />
+      <KindBanner kind={kind} />
+      {open.length > 0 && (
+        <Link
+          href={`/pilot/admin/cases?date=${date}&kind=${kindParam(kind)}`}
+          className="flex flex-wrap items-center gap-2 rounded-2xl bg-danger-bg px-4 py-3 text-[15.5px] font-bold text-danger"
+          aria-label="미처리 지원 요청"
+        >
+          <AlertTriangle size={18} /> 미처리 지원 요청 {open.length}건 — 새 보고 {open.filter((x) => x.status === "보고됨").length}건 · 긴급·안전 {open.filter((x) => x.urgency === "긴급").length}건 → 현장 문제·지원 화면
+        </Link>
+      )}
+      {safetyWait.length > 0 && (
+        <Link
+          href={`/pilot/admin/safety?date=${date}&kind=${kindParam(kind)}`}
+          className="flex flex-wrap items-center gap-2 rounded-2xl bg-warning-bg px-4 py-3 text-[15.5px] font-bold text-warning"
+          aria-label="안전점검 확인 대기"
+        >
+          <HardHat size={18} /> 안전점검 확인 대기 {safetyWait.length}건 — 미흡 포함 {safetyWait.filter((x) => x.deficient.length > 0).length}건 → 안전점검 화면
+        </Link>
+      )}
+      <ScheduleBoard date={date} kind={kind} staff={fieldStaff} names={names} rows={rows} pending={pending} />
+      <JudgmentNow result={result} names={names} titles={titles} asOfLabel={`${kstLabel(now)} (지금)`} deviationsOpen={day.events.length > 0} />
+    </div>
+  );
+}

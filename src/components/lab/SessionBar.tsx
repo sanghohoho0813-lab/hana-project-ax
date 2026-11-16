@@ -137,7 +137,7 @@ export function SessionBar({ compact = false }: { compact?: boolean }) {
             </select>
           </label>
           {session.kind === "실제 업무" ? (
-            <span className="font-semibold text-[#1b64da]">판단 기준: 실제 현재 시각</span>
+            <span className="font-semibold text-primary-dark">판단 기준: 실제 현재 시각</span>
           ) : (
             <label className="inline-flex items-center gap-1.5 font-semibold text-[#8a4b00]">
               재현 기준시각(가정값)
@@ -351,8 +351,8 @@ function ScenarioCard({ id, compact = false }: { id: string; compact?: boolean }
   const [answer, setAnswer] = useState(false);
   if (!sc) return null;
   return (
-    <div className={`rounded-2xl border-2 border-dashed border-[#7c3aed]/40 bg-[#faf7ff] ${compact ? "px-3 py-2" : "px-4 py-3"}`} aria-label="시나리오 카드">
-      <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="w-full text-left text-[15.5px] font-extrabold text-[#5b21b6]">
+    <div className={`rounded-2xl border-2 border-dashed border-[#94a3b8] bg-test-bg ${compact ? "px-3 py-2" : "px-4 py-3"}`} aria-label="시나리오 카드">
+      <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="w-full text-left text-[15.5px] font-extrabold text-test">
         시나리오 카드 {sc.id} · {sc.name} (가상 · 시험용 가정값) {open ? "▲" : "▼"}
       </button>
       {open && (
@@ -365,7 +365,7 @@ function ScenarioCard({ id, compact = false }: { id: string; compact?: boolean }
           {!compact && (
             <>
               <p className="mt-1 text-[13.5px] text-ink-3">근거: {sc.basis}</p>
-              <button onClick={() => setAnswer((v) => !v)} className="mt-1 text-[14.5px] font-bold text-[#5b21b6] underline">
+              <button onClick={() => setAnswer((v) => !v)} className="mt-1 text-[14.5px] font-bold text-test underline">
                 {answer ? "정답 숨기기" : "정답 보기 (진행요원)"}
               </button>
               {answer && (

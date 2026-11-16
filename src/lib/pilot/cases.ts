@@ -328,3 +328,14 @@ export const STATUS_TEXT: Record<CaseStatus, string> = {
   해결: "해결 확인됨",
   무효: "무효 처리",
 };
+
+/** 관리자가 다음에 할 일 (대시보드 · 사건 카드 표시용 문장 — 처리 규칙은 바꾸지 않음) */
+export const NEXT_ADMIN_ACTION: Record<CaseStatus, string> = {
+  보고됨: "접수하고 담당자 배정",
+  접수됨: "지원 조치 결정",
+  "조치 중": "현장 전달 · 일정 조정 확인",
+  "현장 해결 보고": "해결 확인 후 종결",
+  미해결: "후속 조치 결정",
+  해결: "처리 끝",
+  무효: "처리 끝",
+};
