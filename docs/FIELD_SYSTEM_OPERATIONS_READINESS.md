@@ -90,6 +90,7 @@
 - **바꾸지 않은 것**: 엔진 · DB 스키마 · RLS · 인증 · 기록. 새 마이그레이션은 없다. 운영 SQL 묶음은 버전 글자만 0.6.0이다.
 - **내용**: [`docs/SAFETY_FIRST_0.6.0.md`](SAFETY_FIRST_0.6.0.md)
 - **관련 법령 정리** (법률 자문 아님): [`docs/SAFETY_LAW_NOTES.md`](SAFETY_LAW_NOTES.md)
+- **전체 회귀**: 685 / 685 통과 (`docs/evidence/ui-0.6.0/test-run-0.6.0.txt`).
 
 ## 0.5.0 방향 조정 (2026-11-16) — 현장 책임자 통화 반영
 
