@@ -22,8 +22,8 @@ export const FLOW_PLANNED: SiteInput[] = [
   site({ id: "A", title: "A현장", region: "충남 서천", workerId: "W1", plannedStart: "09:00", plannedEnd: "11:00", travelMinutes: 0 }),
   site({ id: "B", title: "B현장", region: "충남 보령", workerId: "W1", plannedStart: "11:40", plannedEnd: "12:30", travelMinutes: 30 }),
   site({ id: "C", title: "C현장", region: "충남 홍성", workerId: "W1", plannedStart: "12:55", plannedEnd: "14:00", travelMinutes: 20 }),
-  site({ id: "D", title: "D현장", region: "전북 군산", workerId: "W2", plannedStart: "09:30", plannedEnd: "11:30", travelMinutes: 0 }),
-  site({ id: "E", title: "E현장", region: "전북 익산", workerId: "W2", plannedStart: "12:00", plannedEnd: "13:00", travelMinutes: 35 }),
+  site({ id: "D", title: "D현장", region: "충북 청주", workerId: "W2", plannedStart: "09:30", plannedEnd: "11:30", travelMinutes: 0 }),
+  site({ id: "E", title: "E현장", region: "충북 진천", workerId: "W2", plannedStart: "12:00", plannedEnd: "13:00", travelMinutes: 35 }),
 ];
 
 /** 일정별 업무 정보 (가상) — C현장은 연결 업무가 없다 */

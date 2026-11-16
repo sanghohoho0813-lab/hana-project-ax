@@ -246,7 +246,7 @@ export default function ServiceDetailPage() {
                 ))}
               </div>
               <p className="mt-5 border-t border-line pt-4 text-[17.5px] leading-relaxed text-ink-3">
-                보령·서천·홍성·서산·태안·논산, 전북 군산·익산 지역은 빠른 현장 확인이
+                보령·서천·홍성·서산·태안·논산, 충북 청주·진천 지역은 빠른 현장 확인이
                 가능합니다.
               </p>
             </div>

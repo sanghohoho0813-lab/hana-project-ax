@@ -333,11 +333,11 @@ describe("보조: 기존 일정 화면과 일관성 (데모 일정 데이터)", 
 });
 
 describe("보조: 판단 이력 기록 (데모 세션)", () => {
-  it("데모 일정에서 군산 현장 예상 종료를 13:40으로 바꾸면 홍성 현장 '신규 위험'과 영향 일정이 기록된다", async () => {
+  it("데모 일정에서 청주 현장 예상 종료를 13:40으로 바꾸면 홍성 현장 '신규 위험'과 영향 일정이 기록된다", async () => {
     const { buildRiskLogEntry } = await import("@/lib/risk-log");
     const before = SCHEDULES;
     const after = SCHEDULES.map((s) => (s.id === "s3" ? { ...s, expectedEnd: "13:40", expectedEndSource: "현장 보고" as const } : s));
-    const e = buildRiskLogEntry(1, { kind: "예상 종료 입력", scheduleId: "s3", title: "군산", field: "예상 종료", before: "12:00 (예정)", after: "13:40 (현장 보고)", actorId: "u2" }, before, after);
+    const e = buildRiskLogEntry(1, { kind: "예상 종료 입력", scheduleId: "s3", title: "청주", field: "예상 종료", before: "12:00 (예정)", after: "13:40 (현장 보고)", actorId: "u2" }, before, after);
     expect(e.demoAt).toBe("2026-07-28T10:40");
     expect(e.scope).toBe("데모 세션");
     expect(e.ruleVersion).toBe(RISK_RULE_VERSION);

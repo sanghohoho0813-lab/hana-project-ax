@@ -39,16 +39,16 @@ export const EXAMPLE_CASES: ExampleCase[] = [
     worker: "김현장 (예시)",
     clock: "09:00",
     sites: [
-      { title: "서초 지사", start: "09:00", end: "10:00", travel: null },
-      { title: "강남 물류센터", start: "10:30", end: "11:30", travel: 20 },
-      { title: "송파 매장", start: "12:00", end: "12:50", travel: 25 },
+      { title: "보령 지사", start: "09:00", end: "10:00", travel: null },
+      { title: "홍성 물류센터", start: "10:30", end: "11:30", travel: 20 },
+      { title: "예산 매장", start: "12:00", end: "12:50", travel: 25 },
     ],
     script: [
       { do: "start", site: 0, at: "09:00" },
       { do: "report", site: 0, discovered: "09:15", reported: "09:20", type: "예상과 다른 현장상황", progress: "분해·설치 시작 후", needs: ["숙련 기술자"], request: "분해해 보니 배선 경로가 도면과 다름", expectedEnd: "11:00" },
       { do: "receive", at: "09:23" },
       { do: "decide", at: "09:25", action: "숙련 기술자 파견", text: "숙련 기술자 30분 안에 도착" },
-      { do: "adjust", at: "09:30", site: 1, start: "11:25", end: "12:25", reason: "서초 지원으로 강남 시작 조정 (고객 연락 완료)" },
+      { do: "adjust", at: "09:30", site: 1, start: "11:25", end: "12:25", reason: "보령 지원으로 홍성 시작 조정 (고객 연락 완료)" },
       { do: "finish", site: 0, at: "10:55" },
       { do: "resolve", at: "10:58", resolution: "해결", text: "배선 경로 변경 후 설치 완료" },
     ],
@@ -58,8 +58,8 @@ export const EXAMPLE_CASES: ExampleCase[] = [
     worker: "이현장 (예시)",
     clock: "13:00",
     sites: [
-      { title: "판교 사옥", start: "13:00", end: "14:00", travel: null },
-      { title: "분당 매장", start: "14:30", end: "15:30", travel: 15 },
+      { title: "청주 사옥", start: "13:00", end: "14:00", travel: null },
+      { title: "증평 매장", start: "14:30", end: "15:30", travel: 15 },
     ],
     script: [
       { do: "start", site: 0, at: "13:00" },

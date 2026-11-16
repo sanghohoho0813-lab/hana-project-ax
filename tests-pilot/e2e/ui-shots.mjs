@@ -10,7 +10,7 @@ const OUT = process.env.UI_SHOTS_OUT ?? "docs/evidence/ui-0.4.0";
 mkdirSync(OUT, { recursive: true });
 const RUN = String(Date.now()).slice(-4);
 const D = kstDate(0);
-const SA = `서초 지사 ${RUN}`, SB = `강남 물류센터 ${RUN}`, SC = `송파 매장 ${RUN}`;
+const SA = `보령 지사 ${RUN}`, SB = `홍성 물류센터 ${RUN}`, SC = `예산 매장 ${RUN}`;
 const NA = `박현장${RUN}`;
 const snap = async (p, name, full = false) => {
   await p.waitForTimeout(450);

@@ -732,7 +732,7 @@ export function ReportModal({
             className={`${inputClass} min-h-[8rem] resize-y leading-relaxed`}
             value={raw}
             onChange={(e) => setRaw(e.target.value)}
-            placeholder="예: 오늘 군산 현장 CCTV 4대 배선 끝냄. 위치 2개 바뀌어서 내일 다시 잡아야 함. 케이블 30m 정도 더 필요."
+            placeholder="예: 오늘 청주 현장 CCTV 4대 배선 끝냄. 위치 2개 바뀌어서 내일 다시 잡아야 함. 케이블 30m 정도 더 필요."
           />
         </Field>
       </div>

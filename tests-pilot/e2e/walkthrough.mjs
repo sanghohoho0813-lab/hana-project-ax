@@ -41,7 +41,7 @@ async function nextMinute() {
 
 const bro = await newBrowser();
 const NAME = { admin: "김관리", w1: "김현장", w2: "이현장" };
-const S = { A: "서초 지사", B: "강남 물류센터", C: "송파 매장", D: "판교 사옥", E: "분당 매장" };
+const S = { A: "보령 지사", B: "홍성 물류센터", C: "예산 매장", D: "청주 사옥", E: "증평 매장" };
 
 // ── 준비: 관리자 계정(2단계 인증) · 현장기사 2명 활성화 ──
 const e1 = uniq("walk1"), e2 = uniq("walk2");
@@ -170,16 +170,16 @@ await act(
     await f.locator('select[aria-label="조정할 일정"]').selectOption(opt);
     await f.locator('input[aria-label="새 예정 시작"]').fill(kstHHMM(150));
     await f.locator('input[aria-label="새 예정 종료"]').fill(kstHHMM(210));
-    await f.locator('input[aria-label="내용"]').fill("서초 지원으로 강남 시작 조정 (고객 연락 완료)");
+    await f.locator('input[aria-label="내용"]').fill("보령 지원으로 홍성 시작 조정 (고객 연락 완료)");
   },
-  { scenario: T1, who: "관리자 PC", title: "현장 전달 → 다음 현장 일정 조정", action: "'현장 전달'(기사에게 보낼 말) → '일정 조정' → 강남 물류센터 시작을 늦춤", result: "조정하면 엔진이 바로 다시 판단합니다." },
+  { scenario: T1, who: "관리자 PC", title: "현장 전달 → 다음 현장 일정 조정", action: "'현장 전달'(기사에게 보낼 말) → '일정 조정' → 홍성 물류센터 시작을 늦춤", result: "조정하면 엔진이 바로 다시 판단합니다." },
 );
-await step(admin, { scenario: T1, who: "관리자 PC", title: "재판단 결과", action: "(일정 조정 '기록' 직후)", result: "이 사건 관련 위험 중 풀린 것과 남은 것이 따로 나옵니다. 서초→강남은 해소, 강남→송파는 여전히 늦어 '남음'입니다. 남은 위험을 숨기지 않습니다." }, { el: admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first() });
+await step(admin, { scenario: T1, who: "관리자 PC", title: "재판단 결과", action: "(일정 조정 '기록' 직후)", result: "이 사건 관련 위험 중 풀린 것과 남은 것이 따로 나옵니다. 보령→홍성은 해소, 홍성→예산는 여전히 늦어 '남음'입니다. 남은 위험을 숨기지 않습니다." }, { el: admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first() });
 
 // 기사: 본사 소식
 await m1.goto(fieldUrl);
 await m1.locator('section[aria-label="본사 메시지"]').waitFor({ timeout: 30000 });
-await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "기사 휴대폰에 본사 조치 도착", action: "(자동 갱신 — 누를 것 없음)", result: "'본사에서 온 소식'에 마지막 조치가 뜹니다. 조정된 강남 물류센터 시각도 카드에 바로 반영됩니다." }, { el: m1.locator('section[aria-label="본사 메시지"]') });
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "기사 휴대폰에 본사 조치 도착", action: "(자동 갱신 — 누를 것 없음)", result: "'본사에서 온 소식'에 마지막 조치가 뜹니다. 조정된 홍성 물류센터 시각도 카드에 바로 반영됩니다." }, { el: m1.locator('section[aria-label="본사 메시지"]') });
 const my1 = card1.locator('section[aria-label^="사건 "]').first();
 await my1.locator('button:has-text("해결 보고")').click();
 await my1.locator('[aria-label="해결 여부"] button:text-is("해결")').click();
@@ -291,7 +291,7 @@ await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "연결 회�
 await admin.goto(casesUrl);
 const c2 = caseCard(S.D);
 await c2.waitFor();
-await step(admin, { scenario: T2, who: "관리자 PC", title: "두 번째 사건 도착", action: "'문제·지원'", result: "판교 사옥 30분 지연 → 분당 매장 도착이 늦어지는지 엔진이 계산해 우선 확인 이유에 붙입니다." }, { el: c2, top: true });
+await step(admin, { scenario: T2, who: "관리자 PC", title: "두 번째 사건 도착", action: "'문제·지원'", result: "청주 사옥 30분 지연 → 증평 매장 도착이 늦어지는지 엔진이 계산해 우선 확인 이유에 붙입니다." }, { el: c2, top: true });
 await act(c2, "접수");
 await act(c2, "지원 결정", (f) => f.locator('[aria-label="지원 조치"] button:text-is("장비 지원")').click());
 await nextMinute();
@@ -303,7 +303,7 @@ await act(c2, "예상 종료 변경", (f) => f.locator('input[aria-label="변경
   result: "다음 현장 일정은 옮기지 않고 예상 종료만 고쳐 엔진이 다시 판단합니다. 사례 1(일정 조정)과 다른 대응입니다.",
 });
 await c2.locator('[aria-label="조치 이력"]').waitFor();
-await step(admin, { scenario: T2, who: "관리자 PC", title: "재판단 — 위험 해소", action: "(예상 종료 변경 '기록' 직후)", result: "장비가 빨리 와서 판교 사옥이 일찍 끝나면 분당 매장에 제때 도착합니다. 조치 이력에 '재판단: 판교 사옥 → 분당 매장 해소'가 붙습니다(계산값)." }, { el: c2.locator('[aria-label="조치 이력"]') });
+await step(admin, { scenario: T2, who: "관리자 PC", title: "재판단 — 위험 해소", action: "(예상 종료 변경 '기록' 직후)", result: "장비가 빨리 와서 청주 사옥이 일찍 끝나면 증평 매장에 제때 도착합니다. 조치 이력에 '재판단: 청주 사옥 → 증평 매장 해소'가 붙습니다(계산값)." }, { el: c2.locator('[aria-label="조치 이력"]') });
 
 await m2.goto(fieldUrl);
 const my2 = card2.locator('section[aria-label^="사건 "]').first();

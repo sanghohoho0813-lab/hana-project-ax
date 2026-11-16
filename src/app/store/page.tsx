@@ -25,8 +25,8 @@ const REGIONS = [
   "충남 서산",
   "충남 태안",
   "충남 논산",
-  "전북 군산",
-  "전북 익산",
+  "충북 청주",
+  "충북 진천",
 ];
 
 export default function StoreHome() {
@@ -40,7 +40,7 @@ export default function StoreHome() {
         <div className="mx-auto grid w-full max-w-[1500px] items-center gap-10 px-4 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-20">
           <div>
             <span className="inline-block rounded-full bg-primary-light px-4 py-2 text-[18px] font-bold text-primary-dark">
-              보령·충남·전북 지역 대응
+              보령·충남·충북 지역 대응
             </span>
             <h1 className="mt-5 text-[38px] leading-[1.28] font-extrabold lg:text-[46px]">
               전기·통신공사부터
@@ -239,7 +239,7 @@ export default function StoreHome() {
             <MapPin size={26} className="text-primary" /> 대응 지역
           </h2>
           <p className="mt-3 text-[19.5px] leading-relaxed text-ink-2">
-            보령·충남·전북 지역을 중심으로 전기·통신공사와 현장 맞춤형 서비스를
+            보령·충남·충북 지역을 중심으로 전기·통신공사와 현장 맞춤형 서비스를
             제공합니다. 아래 지역은 당일 또는 다음 날 현장 확인이 가능합니다.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">

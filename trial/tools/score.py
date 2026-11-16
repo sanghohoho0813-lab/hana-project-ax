@@ -272,7 +272,7 @@ def selftest():
         assert r["after_tp"] == r["after_key"] and r["res_tp"] == r["res_key"] and r["new_tp"] == r["new_key"] and r["new_flag_fp"] == 0, (sid, r)
     assert not errors, errors
     # 2) 일부러 틀린 답안 — A2: 위험 1건 빠뜨림, '주의' 연결을 위험으로 적음, 부족 분 틀림, 방향 거꾸로
-    rows = [r for r in perfect("A2") if not (r["item"] == "risk" and r["from"] == "세종")]
+    rows = [r for r in perfect("A2") if not (r["item"] == "risk" and r["from"] == "금산")]
     rows.append({"participant": "T", "scenario": "A2", "item": "risk", "from": "부여", "to": "청양", "minutes": "3"})
     for r in rows:
         if r["item"] == "risk" and r["from"] == "공주":
@@ -285,13 +285,13 @@ def selftest():
     rows = perfect("A4")
     for x in rows:
         if x["item"] == "after_risk":
-            x["new"] = "" if x["from"] == "평택" else "1"
+            x["new"] = "" if x["from"] == "성환" else "1"
     r = score_trial(scen["A4"], key["A4"], rows, errors)
     assert (r["new_tp"], r["new_flag_fp"], r["after_tp"]) == (0, 1, 2), r
     # 4) 없는 현장 이름은 오류로 알린다
     e2 = []
-    score_trial(scen["A1"], key["A1"], [{"participant": "T", "scenario": "A1", "item": "risk", "from": "천안", "to": "부산", "minutes": "15"}], e2)
-    assert e2 and "부산" in e2[0], e2
+    score_trial(scen["A1"], key["A1"], [{"participant": "T", "scenario": "A1", "item": "risk", "from": "천안", "to": "단양", "minutes": "15"}], e2)
+    assert e2 and "단양" in e2[0], e2
     # 5) 기록지에 없는 답안은 집계하지 않는다 · 연습 문제는 채점하지 않는다
     e3 = []
     tr = build_trials([{"participant": "T", "method": "AX", "set": "A", "scenario": "R2", "practice": "1", "t1_sec": "5"}],
