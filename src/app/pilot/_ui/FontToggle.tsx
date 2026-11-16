@@ -1,7 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { FONT_SCALE_KEY } from "@/components/FontScale";
+
+/** 기존 화면 글자 크기 설정과 같은 저장 이름 (src/components/FontScale.tsx 의 FONT_SCALE_KEY) — 실증 화면은 데모 부품을 가져오지 않으므로 값만 같게 둔다 */
+const FONT_SCALE_KEY = "hana-ax-font-scale";
 
 /**
  * 글자 크기 — 기본 → 크게(120%) → 매우 크게(140%) 를 차례로 바꾼다.
