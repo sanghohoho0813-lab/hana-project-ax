@@ -121,10 +121,16 @@ wt = (await w.innerText()).replace(/\s+/g, " ");
 await shot(admin, "w04_admin_watch_overdue");
 check(wt.includes(O) && /예정 넘김 (69|70|71)분/.test(wt), "관리자 대시보드 '연락 없이 늦어짐'에 O (예정 넘김 70분)", wt.slice(0, 200));
 check(/다음 현장 .*(계산값)|다음 현장 영향 없음 \(계산값\)/.test(wt), "2순위 연결: 예정을 넘긴 O — '지금 끝나도' 다음 현장 영향 (엔진 계산값 · 저장 안 함)", wt.match(/(다음 현장[^·]*(계산값)[^·]*)/)?.[0] ?? wt.slice(0, 200));
-const safe = admin.locator('section[aria-label="안전 확인 필요"]');
-const sft = (await safe.innerText()).replace(/\s+/g, " ");
-check(sft.includes(O) && sft.includes(M) && sft.includes("점검 전 시작"), "안전 1순위: 시작 전 점검 없이 시작한 O · M → '점검 전 시작'", sft.slice(0, 200));
-check(!(await safe.locator(`li[aria-label="안전 ${S}"]`).allInnerTexts()).some((t) => t.includes("점검 전 시작")), "점검을 먼저 낸 S는 '점검 전 시작'이 아님");
+// 대시보드 목록은 10건까지라 다른 시험 기록이 많으면 밀릴 수 있다 — 숫자 칸으로 확인하고, 현장별 판정은 전체가 나오는 안전관리 표에서 본다
+const dangerN = Number(((await admin.locator('[aria-label="오늘 핵심 숫자"]').innerText()).match(/즉시 확인 (\d+)/) ?? [])[1] ?? -1);
+check(dangerN >= 2, "대시보드 숫자: 안전 '즉시 확인' 2건 이상 (O · M 점검 전 시작 포함)", String(dangerN));
+const wnow = admin.url();
+await admin.goto(`${APP}/pilot/admin/safety?date=${TODAY}&kind=real`);
+const rowOf = async (site) => (await admin.locator(`section[aria-label="현장별 3단계 현황"] tr:has-text("${site}")`).innerText()).replace(/\s+/g, " ");
+const [ro, rm, rs] = [await rowOf(O), await rowOf(M), await rowOf(S)];
+check(ro.includes("없이 시작") && rm.includes("없이 시작"), "안전 1순위: 시작 전 점검 없이 시작한 O · M → '없이 시작' (안전관리 표)", `${ro} / ${rm}`);
+check(!rs.includes("없이 시작") && !rs.includes("시작 뒤 제출"), "점검을 먼저 낸 S는 '없이 시작' · '시작 뒤 제출'이 아님", rs);
+await admin.goto(wnow);
 const pos = await admin.evaluate(() => ["안전 확인 필요", "연락 없이 늦어지는 현장", "우선 처리할 사건", "다음 현장 지연 위험"].map((l) => document.querySelector(`section[aria-label="${l}"]`)?.getBoundingClientRect().top ?? -1));
 // 넓은 화면에서는 안전 · 연락 없이 늦어짐이 나란히(같은 줄), 그 아래 줄에 우선 처리할 사건 · 다음 현장 지연(오른쪽)이 온다
 check(pos.every((y) => y >= 0) && pos[0] <= pos[1] && pos[1] < pos[2] && pos[2] <= pos[3], "대시보드 순서: 안전(1순위) · 연락 없이 늦어짐(공동 1순위) → 우선 처리할 사건 → 다음 현장 지연(2순위)", pos.map(Math.round).join(" / "));
@@ -145,9 +151,12 @@ check(await until(async () => (await ask.count()) === 0), "휴대폰: 보고 뒤
 w = await dash();
 wt = (await w.innerText()).replace(/\s+/g, " ");
 check(!wt.includes(O), "관리자 대시보드: 보고된 O는 확인 필요에서 빠지고 '우선 처리할 사건'으로", wt.slice(0, 160));
-const pri = (await admin.locator('section[aria-label="우선 처리할 사건"]').innerText()).replace(/\s+/g, " ");
 await shot(admin, "w05_admin_after_report");
-check(pri.includes(O) && pri.includes("숙련 기술자 지원"), "우선 처리할 사건에 O · 요청 지원(숙련 기술자)", pri.slice(0, 200));
+// 대시보드는 앞 6건만 보여 준다 — 처리 중 요청 전체는 '문제·지원' 화면에서 확인
+await admin.goto(`${APP}/pilot/admin/cases?date=${TODAY}&kind=real`);
+const oCase = admin.locator(`section[aria-label="처리 중 지원 요청"] li:has-text("${O}")`).first();
+const pri = (await oCase.innerText().catch(() => "")).replace(/\s+/g, " ");
+check(pri.includes(O) && pri.includes("숙련 기술자 지원"), "처리 중 지원 요청에 O · 요청 지원(숙련 기술자)", pri.slice(0, 200));
 
 // ── 5) M 작업 종료 (안전점검 없이) → 빠진 단계 표시 ──
 await card(M).locator('button:has-text("작업 종료")').first().click();
