@@ -297,6 +297,26 @@ await p.click('[aria-label="화면 보기"] button >> text="PC"');
 check((await p.locator("aside").count()) >= 1 && (await p.locator('iframe[title^="모바일 화면"]').count()) === 0, "12 PC 보기로 돌리면 기존 화면은 원래 틀");
 check(p.errs.length === 0, "화면 오류 없음", p.errs.join(" | "));
 
+// ── 0.4.3 실증 홈 '예시 기록 2건' — 이 브라우저에 만들고 · 홈에 보이고 · 예시만 지운다 ──
+{
+  const h = await context({ width: 1280, height: 900 });
+  await h.goto(APP + "/");
+  await h.click('button:has-text("예시 기록 2건 만들기")');
+  await h.waitForURL(/\/field/);
+  await h.goto(APP + "/");
+  const today = async () => Number(await h.locator('section[aria-label="오늘의 실증 상황"] p').first().innerText());
+  const made = await today();
+  const ex = await h.evaluate(() => JSON.parse(localStorage.getItem("hana-ax-lab:v1")));
+  check(made > 0 && ex.sessions.length === 2 && ex.sessions.every((x) => x.kind === "가상 시나리오") && ex.issues.length === 2, "예시 기록: 실증 홈 버튼 한 번 → 가상 시나리오 세트 2개 · 현장 문제 2건 · 오늘 입력 기록 표시", `오늘 ${made}건`);
+  check((await h.locator("text=가상 시각").count()) >= 1 && (await h.locator('section[aria-label="최근 입력기록"] >> text=· 실제 ').count()) === 0, "예시 기록: 최근 입력기록은 '가상 시각'으로 표시 ('실제' 아님)");
+  await h.click('button:has-text("예시 기록 지우기")');
+  await h.click('section[aria-label="예시 기록"] button:text-is("지우기")');
+  await h.locator("text=예시 기록을 지웠습니다").waitFor();
+  const after = await h.evaluate(() => JSON.parse(localStorage.getItem("hana-ax-lab:v1")));
+  check(after.sessions.length === 0 && after.issues.length === 0 && after.entries.length === 0 && (await today()) === 0, "예시 기록 지우기: 예시 세트 · 입력 · 현장 문제만 빠짐");
+  await h.context().close();
+}
+
 // ── 실제 휴대폰 크기(390·430)에서 현장기사 화면 ──
 for (const w of [390, 430]) {
   const m = await context({ width: w, height: 844 }, { isMobile: true, hasTouch: true, deviceScaleFactor: 2 });

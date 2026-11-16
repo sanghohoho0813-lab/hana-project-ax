@@ -1,8 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ClipboardList, Database, FlaskConical, ShieldCheck } from "lucide-react";
-import { useLab } from "@/lib/lab/store";
+import { useRouter } from "next/navigation";
+import { ArrowRight, ClipboardList, Database, FlaskConical, PlayCircle, ShieldCheck, Trash2 } from "lucide-react";
+import { commit, setPref, useLab } from "@/lib/lab/store";
+import { EXAMPLE_CASES, hasExamples, loadExamples, removeExamples } from "@/lib/lab/examples";
+import { useOperator } from "@/components/lab/LabShell";
 import { currentSchedules, personName, sessionEvents, type LabState } from "@/lib/lab/model";
 import { kst } from "@/lib/pilot/time";
 import { LabAlerts } from "@/components/lab/LabAlerts";
@@ -46,6 +50,8 @@ export default function LabHome() {
           <p className="text-[16px] text-ink-3">아직 실증 세트가 없습니다. 아래 &lsquo;현장 실증 기록 시작&rsquo;에서 만드세요.</p>
         )}
       </section>
+
+      <ExampleCard s={state} />
 
       <section className="grid gap-2.5 sm:grid-cols-3" aria-label="기록 시작">
         {[
@@ -101,7 +107,10 @@ function Recent({ s }: { s: LabState }) {
     const site = currentSchedules(s, x.id).find((o) => o.id === e.scheduleId)?.siteName ?? "";
     rows.push({
       at: e.enteredAt,
-      text: e.type === "schedule" ? `${site} 일정 ${e.changeKind}` : `${site} ${e.kind}${e.type === "event" && e.expectedEnd ? ` ${e.expectedEnd}` : ""}${e.type === "event" ? ` · 실제 ${e.occurredAt ? kst(e.occurredAt).time : "시각 모름"}` : ""}`,
+      text:
+        e.type === "schedule"
+          ? `${site} 일정 ${e.changeKind}`
+          : `${site} ${e.kind}${e.expectedEnd ? ` ${e.expectedEnd}` : ""} · ${x.kind === "가상 시나리오" ? "가상 시각" : "실제"} ${e.occurredAt ? kst(e.occurredAt).time : "시각 모름"}`,
       who: `입력 ${personName(s, e.enteredBy)} · 제공 ${personName(s, e.informantId)}`,
       kind: <KindBadge kind={x.kind} />,
     });
@@ -123,3 +132,89 @@ function Recent({ s }: { s: LabState }) {
     </ul>
   );
 }
+
+/**
+ * 예시 기록 2건 — 이 브라우저에 가상 시나리오 세트 2개를 만들어 화면이 어떻게 이어지는지 바로 보게 한다.
+ * 화면 버튼과 같은 입력 함수 · 같은 엔진을 쓰고, 예시 표시가 붙으며, '예시 기록 지우기'로 예시만 뺄 수 있다.
+ */
+function ExampleCard({ s }: { s: LabState }) {
+  const router = useRouter();
+  const op = useOperator();
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [confirm, setConfirm] = useState(false);
+  const has = hasExamples(s);
+  const make = () => {
+    const r = commit((st, c) => {
+      const out = loadExamples(st, op, c);
+      return { state: out.state, value: out.sessionIds };
+    });
+    if (!r.ok) return setMsg({ ok: false, text: r.error });
+    if (r.value[0]) setPref("session", r.value[0]);
+    setMsg({ ok: true, text: "예시 기록 2건을 만들었습니다 — 현장 실증 화면으로 갑니다." });
+    router.push("/field");
+  };
+  const remove = () => {
+    const r = commit((st, c) => ({ state: removeExamples(st, c), value: null }));
+    setConfirm(false);
+    setMsg(r.ok ? { ok: true, text: "예시 기록을 지웠습니다. 다른 기록은 그대로입니다." } : { ok: false, text: r.error });
+  };
+  return (
+    <section className="card space-y-3 border-2 border-dashed border-[#94a3b8] p-4" aria-label="예시 기록">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="text-[19px] font-extrabold">{has ? "예시 기록 2건이 들어 있습니다" : "처음이면 — 예시 기록 2건 만들어 보기"}</h2>
+          <p className="text-[15px] text-ink-2">
+            {has
+              ? "가상 시나리오입니다. 현장 실증에서 세트를 골라 일정 · 작업 기록 · 현장 문제 · 위험 판단 전후를 보세요."
+              : "누르면 이 브라우저에 가상 시나리오 세트 2개가 만들어집니다. 일정 등록부터 문제 보고 · 본사 지원 · 일정 조정 · 재판단 · 해결까지 실제 화면과 같은 방법으로 입력되고, 위험 판단도 같은 엔진이 계산합니다."}
+          </p>
+        </div>
+      </div>
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {EXAMPLE_CASES.map((x) => (
+          <li key={x.title} className="rounded-2xl bg-[#f7f8fa] px-3.5 py-3 text-[15px]">
+            <b className="block">{x.title}</b>
+            <span className="text-ink-3">
+              {x.worker} · {x.sites.map((o) => o.title).join(" → ")}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <div className="flex flex-wrap items-center gap-2">
+        {!has ? (
+          <button onClick={make} className="inline-flex min-h-[3rem] items-center gap-2 rounded-xl bg-primary px-5 text-[17px] font-bold text-white hover:bg-primary-dark">
+            <PlayCircle size={20} /> 예시 기록 2건 만들기
+          </button>
+        ) : (
+          <>
+            <Link href="/field" className="inline-flex min-h-[3rem] items-center gap-2 rounded-xl bg-primary px-5 text-[17px] font-bold text-white hover:bg-primary-dark">
+              현장 실증에서 보기 <ArrowRight size={18} />
+            </Link>
+            {confirm ? (
+              <span className="inline-flex flex-wrap items-center gap-2 rounded-xl bg-danger-bg px-3 py-2 text-[15px] font-semibold text-danger">
+                예시 세트 2개와 그 기록만 지웁니다.
+                <button onClick={remove} className="rounded-lg bg-danger px-3 py-1.5 font-bold text-white">
+                  지우기
+                </button>
+                <button onClick={() => setConfirm(false)} className="rounded-lg bg-white px-3 py-1.5 font-bold text-ink-2">
+                  그만두기
+                </button>
+              </span>
+            ) : (
+              <button onClick={() => setConfirm(true)} className="inline-flex min-h-[3rem] items-center gap-2 rounded-xl bg-[#f2f4f6] px-4 text-[16px] font-bold text-ink-2 hover:bg-[#e8ebee]">
+                <Trash2 size={18} /> 예시 기록 지우기
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      {msg && (
+        <p role={msg.ok ? "status" : "alert"} className={`rounded-xl px-3 py-2 text-[15.5px] font-semibold ${msg.ok ? "bg-success-bg text-success" : "bg-danger-bg text-danger"}`}>
+          {msg.text}
+        </p>
+      )}
+      <p className="text-[13.5px] text-ink-3">이 브라우저에만 저장됩니다 (중앙 DB 아님). 실제 현장 기록이 아니며 &lsquo;가상 시나리오&rsquo;로 표시됩니다.</p>
+    </section>
+  );
+}
+
