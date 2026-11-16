@@ -35,12 +35,22 @@ export async function loadMeasures(sb: PilotClient, from: string, to: string, ki
     sb.from("pilot_trials").select(TRIAL_COLS).in("evidence_class", classes).gte("recorded_at", startOf(from)).lte("recorded_at", endOf(to)).order("trial_no"),
     sb.from("pilot_notes").select(NOTE_COLS).gte("recorded_at", startOf(from)).lte("recorded_at", endOf(to)).order("note_no"),
     sb.from("schedules").select("id, status").eq("data_kind", kind).gte("work_date", from).lte("work_date", to),
-    sb.from("work_events").select("seq, id, schedule_id, kind, voids_event_id").eq("data_kind", kind).gte("work_date", from).lte("work_date", to).in("kind", ["작업종료", "기록 무효"]).order("seq"),
-    sb.from("safety_checks").select("schedule_id, stage, review_status").eq("data_kind", kind).gte("work_date", from).lte("work_date", to),
+    sb.from("work_events").select("seq, id, schedule_id, kind, voids_event_id, occurred_at").eq("data_kind", kind).gte("work_date", from).lte("work_date", to).in("kind", ["작업개시", "작업종료", "기록 무효"]).order("seq"),
+    sb.from("safety_checks").select("id, schedule_id, stage, review_status, checked_at, recorded_at").eq("data_kind", kind).gte("work_date", from).lte("work_date", to),
   ]);
   for (const x of [c, t, n, sc, ev, sf]) if (x.error) throw new Error(x.error.message);
-  const ended = new Set(activeEvents((ev.data ?? []) as EventRow[]).filter((e) => e.kind === "작업종료").map((e) => e.schedule_id));
-  const safety = safetyCompletion((sc.data ?? []) as { id: string; status: string }[], ended, (sf.data ?? []) as { schedule_id: string; stage: string; review_status: string }[]);
+  // 작업 시작 · 종료 — 정정 · 무효를 반영한 첫 기록의 실제 발생시각
+  const starts = new Map<string, string>();
+  const ends = new Map<string, string>();
+  for (const e of activeEvents((ev.data ?? []) as EventRow[])) {
+    const m = e.kind === "작업개시" ? starts : e.kind === "작업종료" ? ends : null;
+    if (m && !m.has(e.schedule_id)) m.set(e.schedule_id, e.occurred_at);
+  }
+  const checks = (sf.data ?? []) as { id: string; schedule_id: string; stage: string; review_status: string; checked_at: string | null; recorded_at: string }[];
+  const reviews = checks.length
+    ? (((await sb.from("safety_reviews").select("check_id, kind, source, occurred_at").in("check_id", checks.map((c) => c.id))).data ?? []) as { check_id: string; kind: string; source: string; occurred_at: string }[])
+    : [];
+  const safety = safetyCompletion((sc.data ?? []) as { id: string; status: string }[], { starts, ends }, checks, reviews);
   const cases = (c.data ?? []) as CaseRow[];
   const ids = cases.map((x) => x.id);
   const steps = ids.length ? (((await sb.from("case_steps").select(STEP_COLS).in("case_id", ids).order("step_no")).data ?? []) as StepRow[]) : [];

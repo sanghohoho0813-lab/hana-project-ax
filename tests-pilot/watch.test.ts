@@ -85,3 +85,22 @@ describe("safetyGaps — 안전점검 3단계 빠짐", () => {
     expect(safetyGaps({ started: true, ended: true, midDue: true, cancelled: true }, [])).toEqual([]);
   });
 });
+
+describe("safetyTiming — 시작 전 점검을 시작 전에 · 마무리 점검을 종료 전에 냈는가 (0.6.0)", () => {
+  const T = (hm: string) => `2026-11-16T${hm}:00+09:00`;
+  const chk = (stage: string, at: string, checked = true) => ({ stage, checked_at: checked ? T(at) : null, recorded_at: T(at) });
+  it("시작 전 · 종료 전에 냈으면 제때 · 종료 전", async () => {
+    const { safetyTiming } = await import("@/lib/pilot/watch");
+    expect(safetyTiming({ startedAt: T("09:05"), endedAt: T("10:00") }, [chk("작업 전", "09:01"), chk("작업 종료", "09:58")])).toEqual({ pre: "제때", final: "종료 전" });
+  });
+  it("시작 뒤에 냈거나 없으면 표시 · 아직 시작 · 종료 전이면 해당 없음", async () => {
+    const { safetyTiming } = await import("@/lib/pilot/watch");
+    expect(safetyTiming({ startedAt: T("09:05"), endedAt: T("10:00") }, [chk("작업 전", "09:20", false), chk("작업 종료", "10:03")])).toEqual({ pre: "시작 뒤 제출", final: "종료 뒤 제출" });
+    expect(safetyTiming({ startedAt: T("09:05"), endedAt: T("10:00") }, [])).toEqual({ pre: "없음", final: "없음" });
+    expect(safetyTiming({ startedAt: null, endedAt: null }, [])).toEqual({ pre: "해당 없음", final: "해당 없음" });
+  });
+  it("같은 단계를 여러 번 냈으면 가장 이른 점검으로 본다", async () => {
+    const { safetyTiming } = await import("@/lib/pilot/watch");
+    expect(safetyTiming({ startedAt: T("09:05"), endedAt: null }, [chk("작업 전", "09:30"), chk("작업 전", "09:00")]).pre).toBe("제때");
+  });
+});

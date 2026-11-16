@@ -3,7 +3,7 @@ import { loadDay, loadStaff, parseDay } from "@/lib/pilot/board";
 import { loadSafetyInbox } from "@/lib/pilot/case-data";
 import { PENDING_REVIEW, SAFETY_STAGES, STAGE_LABEL } from "@/lib/pilot/safety";
 import { progressOf } from "@/lib/pilot/core";
-import { safetyGaps, watchInputOf, watchOf } from "@/lib/pilot/watch";
+import { safetyGaps, safetyTiming, watchInputOf, watchOf } from "@/lib/pilot/watch";
 import { kst } from "@/lib/pilot/time";
 import { DayBar, KindBanner } from "../AdminNav";
 import { cx, PageHead, Pill, SectionHead } from "../../_ui/ds";
@@ -39,13 +39,14 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
       const w = isToday ? watchOf(watchInputOf(x, p, false), kst(now).time) : null;
       const mine = inbox.checks.filter((c) => c.schedule_id === x.id);
       const gaps = safetyGaps({ started: !!p.started, ended: !!p.ended, midDue: !!w?.checkAt && kst(now).time >= w.checkAt }, mine.map((c) => c.stage));
-      return { x, phase: p.phase, mine, gaps };
+      const timing = safetyTiming({ startedAt: p.started?.occurred_at ?? null, endedAt: p.ended?.occurred_at ?? null }, mine);
+      return { x, phase: p.phase, mine, gaps, timing };
     });
   const gapCount = rows.reduce((n, r) => n + r.gaps.filter((g) => g.state === "누락").length, 0);
 
   return (
     <div className="space-y-5">
-      <PageHead eyebrow="안전관리" title="안전점검 확인" sub="시작 전 · 진행 중 · 마친 뒤 착용 사진을 눈으로 확인하고 결과를 보냅니다" right={<AutoRefresh seconds={10} label="새 점검 확인" />} />
+      <PageHead eyebrow="안전관리 · 1순위" title="안전점검 확인" sub="시작 전 · 진행 중 · 마친 뒤 착용 사진을 눈으로 확인하고 결과를 보냅니다" right={<AutoRefresh seconds={10} label="새 점검 확인" />} />
       <DayBar path="/pilot/admin/safety" date={date} kind={kind} today={kst(new Date()).date} />
       <KindBanner kind={kind} />
       <p className="rounded-2xl bg-warning-bg px-4 py-3 text-[14.5px] text-ink-2">
@@ -77,12 +78,18 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
                     {SAFETY_STAGES.map((st) => {
                       const c = r.mine.filter((m) => m.stage === st).at(-1);
                       const g = r.gaps.find((x) => x.stage === st);
+                      // 시점 표시 (0.6.0): 시작 전 점검 없이 시작 · 마무리 점검 없이 종료 · 늦게 제출
+                      const late = (st === "작업 전" && r.timing.pre === "시작 뒤 제출") || (st === "작업 종료" && r.timing.final === "종료 뒤 제출");
+                      const without = st === "작업 전" && r.timing.pre === "없음" ? "없이 시작" : st === "작업 종료" && r.timing.final === "없음" ? "없이 종료" : null;
                       return (
                         <td key={st} className="py-2 pr-2">
                           {c ? (
-                            <Pill tone={c.review_status === "보완 요청" ? "danger" : c.review_status === "적합(육안 확인)" || c.review_status === "조치 완료" ? "success" : "warning"}>{c.review_status}</Pill>
+                            <>
+                              <Pill tone={c.review_status === "보완 요청" ? "danger" : c.review_status === "적합(육안 확인)" || c.review_status === "조치 완료" ? "success" : "warning"}>{c.review_status}</Pill>
+                              {late && <span className="mt-0.5 block text-[13.5px] font-bold text-warning">{st === "작업 전" ? "시작 뒤 제출" : "종료 뒤 제출"}</span>}
+                            </>
                           ) : g ? (
-                            <span className={cx("text-[14.5px] font-bold", g.state === "누락" ? "text-danger" : "text-warning")}>{g.state === "누락" ? "누락" : "낼 차례"}</span>
+                            <span className={cx("text-[14.5px] font-bold", g.state === "누락" ? "text-danger" : "text-warning")}>{g.state === "누락" ? `누락${without ? ` · ${without}` : ""}` : "낼 차례"}</span>
                           ) : (
                             <span className="text-ink-3">—</span>
                           )}
@@ -94,7 +101,7 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
               </tbody>
             </table>
           </div>
-          <p className="text-[13.5px] text-ink-3">누락: 작업을 시작했는데 시작 전 점검이 없거나, 작업을 마쳤는데 진행 중 · 마친 뒤 점검이 없음. 낼 차례: 지금 내야 할 단계.</p>
+          <p className="text-[13.5px] text-ink-3">누락: 작업을 시작했는데 시작 전 점검이 없거나(없이 시작), 작업을 마쳤는데 진행 중 · 마친 뒤 점검이 없음(없이 종료). 낼 차례: 지금 내야 할 단계. 시작 뒤 · 종료 뒤 제출: 작업 시각보다 늦게 낸 점검 (기록 시각 비교 · 위반 판정 아님).</p>
         </section>
       )}
       <SafetyBoard items={items} names={names} sites={sites} />

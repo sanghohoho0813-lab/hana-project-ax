@@ -48,6 +48,7 @@ const cardA = m.locator(`section[aria-label="${SA} 일정"]`);
 await cardA.locator('button:has-text("업무 확인")').click();
 await m.locator(`[role=status]:has-text("${SA} 업무 확인 기록됨")`).waitFor();
 await cardA.locator('button:has-text("작업 시작")').click();
+await m.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
 await m.locator(`[role=status]:has-text("${SA} 작업 시작 기록됨")`).waitFor();
 await m.waitForTimeout(1200);
 await m.evaluate(() => window.scrollTo(0, 0));

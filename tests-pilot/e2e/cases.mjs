@@ -62,6 +62,7 @@ check((await b.locator(`section[aria-label="${SA} 일정"]`).count()) === 0 && (
 
 // A: 작업 시작
 await cardA.locator('button:has-text("작업 시작")').click();
+await a.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click(); // 0.6.0 안전 1순위 확인 — 이 시험은 문제 보고 흐름을 본다
 await cardA.locator("text=작업 시작 기록됨").or(a.locator("text=작업 시작 기록됨")).first().waitFor();
 await a.waitForTimeout(800);
 

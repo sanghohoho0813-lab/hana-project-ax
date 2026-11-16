@@ -8,7 +8,7 @@ import { newOpId } from "@/lib/pilot/op-id";
 import { enqueue, flushQueue, removeItem, type QueuedEvent } from "@/lib/pilot/queue";
 import { kst } from "@/lib/pilot/time";
 import { isOpen, STATUS_TEXT } from "@/lib/pilot/cases";
-import { SAFETY_STAGES, STAGE_LABEL } from "@/lib/pilot/safety";
+import { SAFETY_STAGES, STAGE_LABEL, type SafetyStage } from "@/lib/pilot/safety";
 import { safetyGaps, watchOf, type SafetyGap, type Watch } from "@/lib/pilot/watch";
 import { recordEventAction, type EventResult } from "./actions";
 import { getQueue, isStorable, serverSnapshot, setQueue as storeQueue, subscribe } from "./queueStore";
@@ -67,14 +67,16 @@ const PHASE_TONE: Record<ScheduleProgress["phase"], PillTone> = { 예정: "neutr
 
 const TABS: { key: FieldTab; label: string; icon: typeof CalendarDays }[] = [
   { key: "today", label: "오늘 일정", icon: CalendarDays },
-  { key: "report", label: "문제 보고", icon: AlertTriangle },
   { key: "safety", label: "안전점검", icon: HardHat },
+  { key: "report", label: "문제 보고", icon: AlertTriangle },
   { key: "records", label: "내 기록", icon: ClipboardList },
 ];
 
 type Tap = Pick<QueuedEvent, "kind" | "mode" | "enteredTime" | "expectedEnd" | "voidsEventId">;
 /** 첫 화면의 빠른 버튼이 해당 현장 카드의 보고 · 사진 · 안전점검을 바로 연다 */
-export type Focus = { id: string; act: "report" | "photo" | "safety" | "view"; n: number };
+export type Focus = { id: string; act: "report" | "photo" | "safety" | "view"; n: number; stage?: SafetyStage };
+/** 안전 1순위 (0.6.0) — 즉시 작업 시작 · 작업 종료를 누를 때 그 단계 점검이 없으면 먼저 묻는다 */
+type Gate = { card: FieldCard; t: Tap; kind: "start" | "end" };
 
 /** 기록된 단계 + 아직 보내는 중인 단계를 합친 진행 상태 */
 function progress(c: FieldCard, pending: QueuedEvent[]) {
@@ -147,6 +149,7 @@ export function FieldBoard({
   const [notice, setNotice] = useState<string | null>(null);
   const [tab, setTabState] = useState<FieldTab>(initialTab);
   const [focus, setFocus] = useState<Focus | null>(null);
+  const [gate, setGate] = useState<Gate | null>(null);
   const flushing = useRef(false);
   const current = useCallback(() => getQueue(userId), [userId]);
   const setQueue = useCallback((items: QueuedEvent[]) => storeQueue(userId, items), [userId]);
@@ -207,11 +210,20 @@ export function FieldBoard({
     return () => window.clearTimeout(t);
   }, [notice]);
 
-  const tap = (card: FieldCard, t: Tap) => {
+  const send = (card: FieldCard, t: Tap) => {
     // 누른 시각을 먼저 휴대폰에 저장한 뒤 보낸다 — 보내다 끊겨도 기록이 남는다
     setQueue(enqueue(current(), { opId: newOpId(), scheduleId: card.id, siteName: card.siteName, pressedAt: new Date().toISOString(), ...t }));
     setNotice(null);
     void flush();
+  };
+  // 안전 1순위: 시작 전 점검 없이 '작업 시작', 마무리 점검 없이 '작업 종료'를 누르면 먼저 점검을 권한다 (점검 없이 진행도 가능 · 본사에 표시됨)
+  const tap = (card: FieldCard, t: Tap) => {
+    if (t.mode === "즉시" && !t.voidsEventId) {
+      const has = new Set(card.safety.map((x) => x.c.stage));
+      if (t.kind === "작업개시" && !has.has("작업 전")) return setGate({ card, t, kind: "start" });
+      if (t.kind === "작업종료" && !has.has("작업 종료")) return setGate({ card, t, kind: "end" });
+    }
+    send(card, t);
   };
 
   const setTab = (t: FieldTab) => {
@@ -227,8 +239,8 @@ export function FieldBoard({
     window.scrollTo({ top: 0 });
   };
 
-  const go = (id: string, act: Focus["act"]) => {
-    setFocus((f) => ({ id, act, n: (f?.n ?? 0) + 1 }));
+  const go = (id: string, act: Focus["act"], stage?: SafetyStage) => {
+    setFocus((f) => ({ id, act, n: (f?.n ?? 0) + 1, stage }));
     if (tab !== "today") setTabState("today");
     if (act !== "report") window.setTimeout(() => document.getElementById(`${act === "safety" ? "safety" : "card"}-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
   };
@@ -331,6 +343,23 @@ export function FieldBoard({
       {tab === "safety" && <SafetyTab cards={active} isToday={isToday} userId={userId} />}
       {tab === "records" && <RecordsTab cards={cards} />}
 
+      {gate && (
+        <SafetyGate
+          gate={gate}
+          onCheck={() => {
+            const g = gate;
+            setGate(null);
+            go(g.card.id, "safety", g.kind === "start" ? "작업 전" : "작업 종료");
+          }}
+          onSkip={() => {
+            const g = gate;
+            setGate(null);
+            send(g.card, g.t);
+          }}
+          onClose={() => setGate(null)}
+        />
+      )}
+
       {/* 결과 알림 */}
       {notice && (
         <div className={cx("pointer-events-none fixed inset-x-0 z-40 px-4", tab === "today" && cur ? "bottom-[9.5rem]" : "bottom-[5.5rem]")}>
@@ -408,7 +437,7 @@ function Hero({
   isToday: boolean;
   date: string;
   empty: boolean;
-  onGo: (id: string, act: Focus["act"]) => void;
+  onGo: (id: string, act: Focus["act"], stage?: SafetyStage) => void;
   watch: Watch | null;
   gaps: SafetyGap[];
   onOnTrack: (c: FieldCard, end: string) => void;
@@ -435,6 +464,7 @@ function Hero({
     : "막히거나 뜯어보니 예상과 다르면 혼자 붙잡지 말고 바로 '문제 보고'를 누르세요. 본사가 숙련 직원 · 장비 지원을 바로 검토합니다.";
   const ask = watch && (watch.level === "중간 확인" || watch.level === "예정 넘김") ? watch : null;
   const gap = gaps[0];
+  const preDue = !curState.started && gaps.some((g) => g.stage === "작업 전");
   const quickBase = "flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[15.5px] font-bold transition-colors active:scale-[0.98]";
   const quick = `${quickBase} bg-white/15 text-white ring-1 ring-white/20 hover:bg-white/25`;
   return (
@@ -474,10 +504,24 @@ function Hero({
             </button>
           </div>
         </div>
+      ) : preDue ? (
+        <div aria-label="시작 전 안전점검 안내" className="mt-3 rounded-2xl bg-white p-3.5 text-ink">
+          <p className="flex items-center gap-1.5 text-[16.5px] font-extrabold text-primary-dark">
+            <HardHat size={19} /> ① 시작 전 안전점검 → ② 작업 시작
+          </p>
+          <p className="mt-1 text-[15px] text-ink-2">안전모 · 안전화 착용과 작업구역 표시를 사진으로 먼저 남겨 주세요. 위험하면 작업하지 말고 관리자에게 바로 전화하세요.</p>
+          <button onClick={() => onGo(cur.id, "safety", "작업 전")} className={cx(btn("primary", "md", true), "mt-2.5")}>
+            <HardHat size={18} /> 시작 전 안전점검 하기
+          </button>
+        </div>
       ) : (
         <p className="mt-3 rounded-2xl bg-white/10 px-3.5 py-2.5 text-[15.5px] font-semibold">{next}</p>
       )}
       <div className="mt-3 grid grid-cols-3 gap-2">
+        <button onClick={() => onGo(cur.id, "safety")} className={cx(quick, gap && "ring-2 ring-[#fde68a]")}>
+          <HardHat size={22} /> 안전점검
+          {gap && <span className="text-[12.5px] font-semibold text-[#fde68a]">{STAGE_LABEL[gap.stage]} {gap.state === "누락" ? "빠짐" : "차례"}</span>}
+        </button>
         <button onClick={() => onGo(cur.id, "report")} className={`${quickBase} bg-white text-danger shadow-sm hover:bg-[#fff5f5]`}>
           <AlertTriangle size={22} /> 문제 보고
           <span className="text-[12.5px] font-semibold text-ink-3">· 지원 요청</span>
@@ -485,12 +529,39 @@ function Hero({
         <button onClick={() => onGo(cur.id, "photo")} className={quick}>
           <Camera size={22} /> 사진 첨부
         </button>
-        <button onClick={() => onGo(cur.id, "safety")} className={cx(quick, gap && "ring-2 ring-[#fde68a]")}>
-          <HardHat size={22} /> 안전점검
-          {gap && <span className="text-[12.5px] font-semibold text-[#fde68a]">{STAGE_LABEL[gap.stage]} {gap.state === "누락" ? "빠짐" : "차례"}</span>}
-        </button>
       </div>
     </section>
+  );
+}
+
+/** 안전 1순위 확인 — 작업 시작 · 종료 전에 그 단계 안전점검(착용 사진)을 먼저 권한다 */
+function SafetyGate({ gate, onCheck, onSkip, onClose }: { gate: Gate; onCheck: () => void; onSkip: () => void; onClose: () => void }) {
+  const start = gate.kind === "start";
+  const midMissing = !start && !gate.card.safety.some((x) => x.c.stage === "작업 중");
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-3 pb-3 sm:items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="안전점검 확인" className="w-full max-w-[34rem] rounded-[24px] bg-white p-5 shadow-[var(--shadow-modal)]" onClick={(e) => e.stopPropagation()}>
+        <p className="flex items-center gap-2 text-[19px] font-extrabold text-ink">
+          <HardHat size={22} className="text-danger" /> {start ? "시작 전 안전점검을 먼저 보내 주세요" : "마무리 안전점검을 먼저 보내 주세요"}
+        </p>
+        <p className="mt-1 text-[15px] font-semibold text-ink-3">{gate.card.siteName}</p>
+        <p className="mt-3 text-[15.5px] text-ink-2">
+          {start
+            ? "안전모 · 안전화 착용과 작업구역 표시를 사진으로 남긴 뒤 시작하세요. 점검 없이 시작하면 본사 화면에 '점검 전 작업 시작'으로 표시됩니다."
+            : "장구를 착용한 채 마무리했는지 사진으로 남깁니다. 점검 없이 종료하면 본사 화면에 '마무리 점검 없이 종료'로 표시됩니다."}
+          {midMissing && " 진행 중 점검도 아직 없습니다."}
+        </p>
+        <p className="mt-2 rounded-xl bg-danger-bg px-3 py-2 text-[14.5px] font-semibold text-danger">위험한 상황이면 작업을 멈추고 관리자 · 안전 책임자에게 바로 전화하세요.</p>
+        <div className="mt-4 grid gap-2">
+          <button onClick={onCheck} className={btn("primary", "lg", true)}>
+            <HardHat size={19} /> {start ? "시작 전 점검 하기" : "마무리 점검 하기"}
+          </button>
+          <button onClick={onSkip} className={btn("ghost", "md", true)}>
+            {start ? "점검 없이 시작" : "점검 없이 종료"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -749,7 +820,7 @@ function Card({
 
       {c.status === "예정" && (
         <div id={`safety-${c.id}`} className="scroll-mt-20">
-          <SafetyPanel userId={userId} scheduleId={c.id} checks={c.safety} canCheck={active && isToday} openSignal={focus?.act === "safety" ? focus.n : 0} />
+          <SafetyPanel userId={userId} scheduleId={c.id} checks={c.safety} canCheck={active && isToday} openSignal={focus?.act === "safety" ? focus.n : 0} openStage={focus?.act === "safety" ? focus.stage : undefined} />
         </div>
       )}
 

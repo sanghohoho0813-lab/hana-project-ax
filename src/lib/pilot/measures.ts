@@ -1,5 +1,5 @@
 /**
- * 성과 측정 집계 (순수) — 측정 항목 1~7 + 측정 10(안전점검 3단계 제출, 0.5.0). 측정한 값만 모으고, 없는 값·개선율은 만들지 않는다.
+ * 성과 측정 집계 (순수) — 측정 항목 1~7 + 측정 10(안전점검 3단계 — 0.5.0 제출 · 0.6.0 시점 · 관리자 확인 시간). 측정한 값만 모으고, 없는 값·개선율은 만들지 않는다.
  *  - 실제 업무 · 현장정보 재현 · 가상 시나리오를 따로 집계한다 (섞지 않음).
  *  - 시각 근거가 '기억에 의한 추정'인 소요시간과 '기억 추정' 측정값은 통계에서 빼고 따로 보여 준다.
  *  - 비교값은 같은 자료 구분 안에서 수기·AX 실측이 모두 있을 때만 '이번 측정값'으로 낸다 (통계적 유의성 검정 아님).
@@ -9,6 +9,7 @@ import type { LinkChange } from "@/lib/risk-engine";
 import type { JudgmentSummary } from "./core";
 import { EVIDENCE_CLASSES, caseSpans, classOf, type CaseRow, type Quality, type Span, type StepRow } from "./cases";
 import { SAFETY_STAGES } from "./safety";
+import { safetyTiming } from "./watch";
 
 export interface Stat {
   n: number;
@@ -188,37 +189,64 @@ export function trialComparison(trials: TrialRow[]) {
   };
 }
 
-/* ── 측정 10 — 안전점검 3단계 제출 (0.5.0, 2026-11-13 통화: 작업 전 · 작업 중 · 마무리 착용 사진) ── */
+/* ── 측정 10 — 안전점검 3단계 (0.5.0 제출 · 0.6.0 시점과 관리자 확인 시간, 안전 1순위) ── */
 
 export interface SafetyCompletion {
-  /** 작업 종료가 기록된 현장 수 (취소 제외) */
+  /** 작업 시작이 기록된 현장 수 · 그 가운데 시작 전 점검을 작업 시작 전에 낸 현장 수 */
+  started: number;
+  preOnTime: number;
+  /** 작업 종료가 기록된 현장 수 (취소 제외) · 3단계를 모두 낸 현장 수 · 마무리 점검을 종료 전에 낸 현장 수 */
   ended: number;
-  /** 그 가운데 3단계를 모두 제출한 현장 수 */
   full: number;
+  finalBeforeEnd: number;
   /** 단계별 제출 현장 수 (작업 종료 현장 기준) */
   byStage: { stage: (typeof SAFETY_STAGES)[number]; sites: number }[];
-  /** 기간의 점검 제출 수 · 관리자 적합(육안 확인)·조치 완료 수 · 보완 요청 중 수 */
+  /** 기간의 점검 제출 수 · 관리자 적합(육안 확인)·조치 완료 수 · 보완 진행 수 */
   checks: number;
   reviewed: number;
   supplement: number;
+  /** 점검 제출 → 관리자 첫 확인(적합 확인 또는 보완 요청)까지 걸린 분 */
+  reviewMinutes: Stat;
+  /** 아직 관리자 확인이 없는 점검 수 */
+  unreviewed: number;
 }
 
-/** 작업을 마친 현장이 안전점검 3단계를 모두 냈는지 — 제출 여부만 센다 (적합 여부는 관리자 육안 확인 기록) */
+/**
+ * 안전점검 3단계 — 제출 여부 · 제출 시점 · 관리자 확인 시간만 센다 (적합 여부는 관리자 육안 확인 기록).
+ * 시점은 작업 시작 · 종료 기록의 실제 발생시각과 점검의 실제 점검 시각(없으면 서버 기록 시각)을 비교한다 (watch.ts safetyTiming 과 같은 기준).
+ */
 export function safetyCompletion(
   schedules: { id: string; status: string }[],
-  endedIds: Set<string>,
-  checks: { schedule_id: string; stage: string; review_status: string }[],
+  times: { starts: Map<string, string>; ends: Map<string, string> },
+  checks: { id: string; schedule_id: string; stage: string; review_status: string; checked_at: string | null; recorded_at: string }[],
+  reviews: { check_id: string; kind: string; source: string; occurred_at: string }[] = [],
 ): SafetyCompletion {
-  const done = schedules.filter((s) => s.status !== "취소" && endedIds.has(s.id));
-  const stages = new Map<string, Set<string>>();
-  for (const c of checks) stages.set(c.schedule_id, (stages.get(c.schedule_id) ?? new Set()).add(c.stage));
-  const has = (id: string, st: string) => stages.get(id)?.has(st) ?? false;
+  const live = schedules.filter((s) => s.status !== "취소");
+  const of = (id: string) => checks.filter((c) => c.schedule_id === id);
+  const started = live.filter((s) => times.starts.has(s.id));
+  const done = live.filter((s) => times.ends.has(s.id));
+  const has = (id: string, st: string) => of(id).some((c) => c.stage === st);
+  const timing = (id: string) => safetyTiming({ startedAt: times.starts.get(id) ?? null, endedAt: times.ends.get(id) ?? null }, of(id));
+  const firstReview = (c: (typeof checks)[number]) =>
+    reviews
+      .filter((r) => r.check_id === c.id && r.source === "관리자" && (r.kind === "관리자 확인" || r.kind === "보완 요청"))
+      .map((r) => Date.parse(r.occurred_at))
+      .sort((a, b) => a - b)[0];
+  const waits = checks.map((c) => {
+    const r = firstReview(c);
+    return r === undefined ? null : Math.max(0, Math.round((r - Date.parse(c.recorded_at)) / 60000));
+  });
   return {
+    started: started.length,
+    preOnTime: started.filter((s) => timing(s.id).pre === "제때").length,
     ended: done.length,
     full: done.filter((s) => SAFETY_STAGES.every((st) => has(s.id, st))).length,
+    finalBeforeEnd: done.filter((s) => timing(s.id).final === "종료 전").length,
     byStage: SAFETY_STAGES.map((stage) => ({ stage, sites: done.filter((s) => has(s.id, stage)).length })),
     checks: checks.length,
     reviewed: checks.filter((c) => c.review_status === "적합(육안 확인)" || c.review_status === "조치 완료").length,
     supplement: checks.filter((c) => c.review_status === "보완 요청" || c.review_status === "보완 제출").length,
+    reviewMinutes: stat(waits),
+    unreviewed: waits.filter((w) => w === null).length,
   };
 }

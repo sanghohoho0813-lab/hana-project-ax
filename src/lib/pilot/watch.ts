@@ -129,3 +129,31 @@ export function safetyGaps(x: { started: boolean; ended: boolean; midDue: boolea
   }
   return out;
 }
+
+/* ── 안전점검 시점 (0.6.0 — 안전 1순위) ───────────────────── */
+
+export type PreTiming = "제때" | "시작 뒤 제출" | "없음" | "해당 없음";
+export type FinalTiming = "종료 전" | "종료 뒤 제출" | "없음" | "해당 없음";
+
+/**
+ * 시작 전 점검을 작업 시작 전에 냈는지 · 마무리 점검을 작업 종료 전에 냈는지 — 기존 기록의 시각만 비교한다.
+ *   - 작업 시각: 작업 시작 · 작업 종료 기록의 실제 발생시각 (사후 입력이면 입력한 시각)
+ *   - 점검 시각: 점검의 실제 점검 시각(checked_at), 없으면 서버 기록 시각
+ * '시작 뒤 제출' · '없음'은 관리자가 확인할 표시일 뿐 위반 판정이 아니다 (현장 사정은 전화로 확인).
+ */
+export function safetyTiming(
+  x: { startedAt: string | null; endedAt: string | null },
+  checks: { stage: string; checked_at: string | null; recorded_at: string }[],
+): { pre: PreTiming; final: FinalTiming } {
+  const first = (stage: string) =>
+    checks
+      .filter((c) => c.stage === stage)
+      .map((c) => Date.parse(c.checked_at ?? c.recorded_at))
+      .sort((a, b) => a - b)[0];
+  const pre = first("작업 전");
+  const fin = first("작업 종료");
+  return {
+    pre: !x.startedAt ? "해당 없음" : pre === undefined ? "없음" : pre <= Date.parse(x.startedAt) ? "제때" : "시작 뒤 제출",
+    final: !x.endedAt ? "해당 없음" : fin === undefined ? "없음" : fin <= Date.parse(x.endedAt) ? "종료 전" : "종료 뒤 제출",
+  };
+}

@@ -65,39 +65,55 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
       )}
 
       <section className="card space-y-2 p-4" aria-label="핵심 지표">
-        <h2 className={h2}>핵심 지표 (0.5.0 — 2026-11-13 현장 책임자 통화 반영)</h2>
+        <h2 className={h2}>핵심 지표 (0.6.0 — 안전 1순위)</h2>
         <ol className="list-decimal space-y-1 pl-5 text-[15.5px] text-ink-2">
           <li>
-            <b>문제 발견 → 최초 보고</b> (측정 1) — 현장에서 혼자 붙잡고 있던 시간. 짧을수록 본사가 빨리 압니다.
+            <b>안전점검 3단계</b> (측정 10, 1순위) — 작업 전 · 작업 중 · 마무리 착용 사진을 제때 냈는지, 관리자가 얼마나 빨리 확인했는지.
           </li>
           <li>
-            <b>보고 → 관리자 확인 → 지원 결정</b> (측정 2·3) — 숙련 직원 · 장비 지원이 정해지기까지의 시간.
+            <b>문제 발견 → 최초 보고 → 관리자 확인 → 지원 결정</b> (측정 1~3, 공동 1순위) — 현장에서 혼자 붙잡은 시간과 숙련 직원 · 장비 지원이 정해지기까지의 시간.
           </li>
           <li>
-            <b>안전점검 3단계 제출</b> (측정 10) — 작업 전 · 작업 중 · 마무리 착용 사진.
+            <b>다음 현장 지연</b> (측정 5·6, 2순위) — 문제 보고 · 관리자 조치 전후 연쇄위험 판단엔진 계산값.
           </li>
         </ol>
-        <p className="text-[14.5px] text-ink-3">측정 5·6(후속 일정 영향 · 연쇄 위험 계산값)은 보조 지표입니다. 통화에서 다음 현장 지연은 &lsquo;일반적이지 않고 간혹 있다&rsquo;고 들었습니다 (빈도는 통화에서 들은 대략값이며 기록으로 확인한 값이 아님).</p>
+        <p className="text-[14.5px] text-ink-3">우선순위 근거: 2026-11-13 현장 책임자 통화(안전기준 위반 시 산재 · 계약 취소 · 퇴출 우려, 다음 현장 지연은 &lsquo;일반적이지 않고 간혹&rsquo;)와 2026-11-16 사용자 지시. 빈도는 통화에서 들은 대략값이며 기록으로 확인한 값이 아닙니다.</p>
       </section>
 
       <section className="card space-y-2 p-4" aria-label="안전점검 3단계 제출">
         <h2 className={h2}>
-          측정 10 — 안전점검 3단계 제출 ({from} ~ {to})
+          측정 10 — 안전점검 3단계 ({from} ~ {to})
         </h2>
-        {m.safety.ended === 0 ? (
-          <p className="text-[16px] text-ink-3">기간 안에 작업 종료가 기록된 현장이 없습니다.</p>
-        ) : (
-          <>
-            <p className="text-[16px]">
-              작업을 마친 현장 <b className="tabular-nums">{m.safety.ended}곳</b> 가운데 3단계를 모두 낸 현장 <b className="tabular-nums">{m.safety.full}곳</b>
-            </p>
-            <p className="text-[15.5px] text-ink-2 tabular-nums">{m.safety.byStage.map((x) => `${x.stage} ${x.sites}곳`).join(" · ")}</p>
-          </>
-        )}
-        <p className="text-[15.5px] text-ink-2 tabular-nums">
-          점검 제출 {m.safety.checks}건 · 관리자 적합(육안 확인) · 조치 완료 {m.safety.reviewed}건 · 보완 진행 {m.safety.supplement}건
+        <ul className="space-y-1 text-[16px] tabular-nums">
+          <li>
+            {m.safety.started === 0 ? (
+              "기간 안에 작업 시작이 기록된 현장이 없습니다."
+            ) : (
+              <>
+                작업을 시작한 현장 <b>{m.safety.started}곳</b> 가운데 시작 전 점검을 <b>작업 시작 전에</b> 낸 현장 <b>{m.safety.preOnTime}곳</b>
+              </>
+            )}
+          </li>
+          <li>
+            {m.safety.ended === 0 ? (
+              "기간 안에 작업 종료가 기록된 현장이 없습니다."
+            ) : (
+              <>
+                작업을 마친 현장 <b>{m.safety.ended}곳</b> 가운데 3단계를 모두 낸 현장 <b>{m.safety.full}곳</b> · 마무리 점검을 종료 전에 낸 현장 <b>{m.safety.finalBeforeEnd}곳</b>
+              </>
+            )}
+          </li>
+          {m.safety.ended > 0 && <li className="text-[15.5px] text-ink-2">{m.safety.byStage.map((x) => `${x.stage} ${x.sites}곳`).join(" · ")}</li>}
+          <li>
+            점검 제출 → 관리자 첫 확인(적합 확인 또는 보완 요청): <b>{fmtStat(m.safety.reviewMinutes, "분")}</b> · 아직 확인 안 된 점검 {m.safety.unreviewed}건
+          </li>
+          <li className="text-[15.5px] text-ink-2">
+            점검 제출 {m.safety.checks}건 · 관리자 적합(육안 확인) · 조치 완료 {m.safety.reviewed}건 · 보완 진행 {m.safety.supplement}건
+          </li>
+        </ul>
+        <p className="text-[14.5px] text-ink-3">
+          제출 여부 · 시점 · 확인 시간만 셉니다. 사진이 있다고 적합으로 보지 않으며, 적합은 관리자 육안 확인 기록으로만 정해집니다. 시점은 작업 시작 · 종료 기록과 점검 시각을 비교한 값입니다 (위반 판정 아님).
         </p>
-        <p className="text-[14.5px] text-ink-3">제출 여부만 셉니다. 사진이 있다고 적합으로 보지 않으며, 적합은 관리자 육안 확인 기록으로만 정해집니다.</p>
       </section>
 
       {classes.map((cls) => {

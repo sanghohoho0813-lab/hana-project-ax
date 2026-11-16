@@ -117,6 +117,7 @@ await card1.locator('button:has-text("업무 확인")').click();
 await m1.locator(`[role=status]:has-text("${S.A} 업무 확인 기록됨")`).waitFor();
 await m1.waitForTimeout(700);
 await m1.locator('div.fixed button:has-text("작업 시작")').first().click();
+await m1.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
 await m1.locator(`[role=status]:has-text("${S.A} 작업 시작 기록됨")`).waitFor();
 await m1.evaluate(() => window.scrollTo(0, 0));
 await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "업무 확인 → 작업 시작", action: "카드의 '업무 확인' → 화면 아래 고정 버튼 '작업 시작'", result: "누른 시각이 바로 기록됩니다(서버 시각 함께 저장). 아래 알림에 실제 시각 · 서버 기록 · 입력 방식이 나오고, 상태가 '작업 중'으로 바뀝니다." }, { toast: true });
@@ -188,6 +189,7 @@ await my1.locator('button:has-text("해결 보고 보내기")').click();
 await card1.locator('[role=status]:has-text("해결 보고됨")').waitFor();
 await nextMinute();
 await m1.locator('div.fixed button:has-text("작업 종료")').first().click();
+await m1.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 종료")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
 await m1.locator(`[role=status]:has-text("${S.A} 작업 종료 기록됨")`).waitFor();
 
 // 관리자: 해결 확인 · 증빙 · 안전 확인
@@ -265,6 +267,7 @@ await step(admin, { scenario: T2, who: "관리자 PC", title: "보완 확인 →
 await m2.goto(fieldUrl);
 await card2.waitFor();
 await m2.locator('div.fixed button:has-text("작업 시작")').first().click();
+await m2.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
 await m2.locator(`[role=status]:has-text("${S.D} 작업 시작 기록됨")`).waitFor();
 await m2.waitForTimeout(800);
 await card2.locator('button:has-text("현장 문제 보고 · 지원 요청")').click();
@@ -326,6 +329,7 @@ await m2.goto(fieldUrl);
 await card2.waitFor();
 await nextMinute();
 await m2.locator('div.fixed button:has-text("작업 종료")').first().click();
+await m2.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 종료")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
 await m2.locator(`[role=status]:has-text("${S.D} 작업 종료 기록됨")`).waitFor();
 await m2.locator('nav[aria-label="현장 메뉴"] button:has-text("내 기록")').click();
 await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "작업 종료 · 내 기록", action: "아래 고정 '작업 종료' → 하단 메뉴 '내 기록'", result: "오늘 남긴 기록(시각 · 입력 방식 · 서버 기록), 문제 보고 상태, 안전점검 결과를 한곳에서 봅니다. 프로그램 의견 · 오류도 여기서 보냅니다." });

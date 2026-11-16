@@ -118,8 +118,9 @@ describe("0.3.1 원자료 없는 재현 기록의 소요시간 품질", () => {
   });
 });
 
-describe("측정 10 — 안전점검 3단계 제출 (0.5.0)", () => {
-  it("작업 종료한 현장만 세고, 3단계를 모두 낸 현장 · 단계별 제출 · 관리자 확인 수를 센다 (취소 제외)", async () => {
+describe("측정 10 — 안전점검 3단계 (0.5.0 제출 · 0.6.0 시점과 관리자 확인 시간)", () => {
+  const K = (hm: string) => `2026-11-16T${hm}:00+09:00`;
+  it("시작 · 종료한 현장만 세고, 제때 낸 시작 전 점검 · 종료 전 마무리 점검 · 3단계 · 관리자 확인 시간을 센다 (취소 제외)", async () => {
     const { safetyCompletion } = await import("@/lib/pilot/measures");
     const schedules = [
       { id: "a", status: "예정" },
@@ -127,17 +128,30 @@ describe("측정 10 — 안전점검 3단계 제출 (0.5.0)", () => {
       { id: "c", status: "예정" }, // 아직 작업 중
       { id: "d", status: "취소" },
     ];
+    const starts = new Map([["a", K("09:00")], ["b", K("10:00")], ["c", K("11:00")], ["d", K("12:00")]]);
+    const ends = new Map([["a", K("09:50")], ["b", K("10:40")], ["d", K("12:30")]]);
+    const chk = (id: string, schedule_id: string, stage: string, review_status: string, at: string) => ({ id, schedule_id, stage, review_status, checked_at: K(at), recorded_at: K(at) });
     const checks = [
-      { schedule_id: "a", stage: "작업 전", review_status: "적합(육안 확인)" },
-      { schedule_id: "a", stage: "작업 중", review_status: "확인 대기" },
-      { schedule_id: "a", stage: "작업 종료", review_status: "조치 완료" },
-      { schedule_id: "b", stage: "작업 전", review_status: "보완 요청" },
-      { schedule_id: "c", stage: "작업 전", review_status: "확인 대기" },
+      chk("1", "a", "작업 전", "적합(육안 확인)", "08:55"),
+      chk("2", "a", "작업 중", "확인 대기", "09:25"),
+      chk("3", "a", "작업 종료", "조치 완료", "09:48"),
+      chk("4", "b", "작업 전", "보완 요청", "10:05"), // 시작 뒤 제출
+      chk("5", "c", "작업 전", "확인 대기", "10:58"),
     ];
-    const r = safetyCompletion(schedules, new Set(["a", "b", "d"]), checks);
-    expect(r).toEqual({
+    const reviews = [
+      { check_id: "1", kind: "관리자 확인", source: "관리자", occurred_at: K("09:01") }, // 6분
+      { check_id: "3", kind: "관리자 확인", source: "관리자", occurred_at: K("09:52") }, // 4분
+      { check_id: "3", kind: "조치 완료 확인", source: "관리자", occurred_at: K("09:59") },
+      { check_id: "4", kind: "보완 요청", source: "관리자", occurred_at: K("10:15") }, // 10분
+      { check_id: "4", kind: "보완 제출", source: "현장 직원", occurred_at: K("10:20") },
+    ];
+    const r = safetyCompletion(schedules, { starts, ends }, checks, reviews);
+    expect(r).toMatchObject({
+      started: 3,
+      preOnTime: 2,
       ended: 2,
       full: 1,
+      finalBeforeEnd: 1,
       byStage: [
         { stage: "작업 전", sites: 2 },
         { stage: "작업 중", sites: 1 },
@@ -146,6 +160,8 @@ describe("측정 10 — 안전점검 3단계 제출 (0.5.0)", () => {
       checks: 5,
       reviewed: 2,
       supplement: 1,
+      unreviewed: 2,
     });
+    expect(r.reviewMinutes).toMatchObject({ n: 3, median: 6, min: 4, max: 10 });
   });
 });

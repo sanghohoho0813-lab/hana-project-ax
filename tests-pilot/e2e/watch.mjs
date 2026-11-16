@@ -1,9 +1,13 @@
-// 0.5.0 조기 확인 (2026-11-13 현장 책임자 통화 반영) — 연락 없이 혼자 붙잡고 있는 현장을 본사가 먼저 알아챈다
+// 0.6.0 안전 1순위 + 조기 확인 (2026-11-13 현장 책임자 통화 · 11-16 사용자 지시)
+// 흐름 0 (안전 1순위): 시작 전 점검 없이 '작업 시작' → 먼저 점검을 권함 → 점검(착용 사진) 제출 → 작업 시작 (점검이 시작보다 먼저 기록)
 // 흐름: 작업 시작 40분째 · 진행 보고 없음 → 휴대폰 '예정대로 되고 있나요?' · 관리자 대시보드 '확인 필요(중간 확인)'
 //       → '예정대로' (예상 종료 보고로 기록) → 양쪽에서 사라짐
 //       → 다른 현장: 예상 종료를 넘김 · 보고 없음 → '예정 넘김' → '막혔어요' → 문제 보고 → '지원 중'으로 바뀌어 확인 필요에서 빠짐
 //       → 작업 종료했는데 안전점검을 안 냄 → 휴대폰 '안전점검 빠짐' · 관리자 안전관리 '현장별 3단계 현황'에 누락
 // 기존 기록(작업 시작 · 예상 종료 보고 · 문제 보고)만 쓴다 — 새 DB 기록 종류 없음. 실제 시각으로 동작하므로 한국 시각 04~21시에만 실행한다.
+import { writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { APP, PASSWORD, adminApi, psql, uniq, newBrowser, check, waitPath, shot, adminLogin, mobilePage, kstHHMM, kstHour, kstDate, createSchedule, activate, loginAs } from "./common.mjs";
 
 if (kstHour() < 4 || kstHour() >= 21) {
@@ -13,7 +17,7 @@ if (kstHour() < 4 || kstHour() >= 21) {
 const bro = await newBrowser();
 const RUN = String(Date.now()).slice(-5);
 const P = `조현장${RUN}`;
-const M = `M현장${RUN}`, O = `O현장${RUN}`;
+const M = `M현장${RUN}`, O = `O현장${RUN}`, S = `S현장${RUN}`;
 const TODAY = kstDate(0);
 const until = async (fn, ms = 25000) => {
   const t = Date.now();
@@ -33,7 +37,10 @@ await admin.goto(`${APP}/pilot/admin/schedule?date=${TODAY}&kind=real`);
 const mStart = kstHHMM(-40), mEnd = kstHHMM(20);
 await createSchedule(admin, { who: P, site: O, start: kstHHMM(-130), end: kstHHMM(-70) });
 await createSchedule(admin, { who: P, site: M, start: mStart, end: mEnd });
-check(true, `준비: ${O} 예정 ${kstHHMM(-130)}~${kstHHMM(-70)} · ${M} 예정 ${mStart}~${mEnd}`);
+await createSchedule(admin, { who: P, site: S, start: kstHHMM(30), end: kstHHMM(80), travel: "10" });
+check(true, `준비: ${O} 예정 ${kstHHMM(-130)}~${kstHHMM(-70)} · ${M} 예정 ${mStart}~${mEnd} · ${S} 예정 ${kstHHMM(30)}~${kstHHMM(80)}`);
+const PHOTO = join(tmpdir(), `watch-photo-${RUN}.jpg`);
+writeFileSync(PHOTO, await admin.screenshot({ type: "jpeg", quality: 70 }));
 
 const m = await mobilePage(bro);
 await loginAs(m, f);
@@ -53,8 +60,32 @@ const closeToast = async () => {
 };
 const dash = async () => {
   await admin.goto(`${APP}/pilot/admin?date=${TODAY}&kind=real`);
-  return admin.locator('section[aria-label="확인 필요 현장"]');
+  return admin.locator('section[aria-label="연락 없이 늦어지는 현장"]');
 };
+const gate = m.locator('[role=dialog][aria-label="안전점검 확인"]');
+
+// ── 0) 안전 1순위: S — 시작 전 점검 없이 '작업 시작' → 먼저 점검 권함 → 점검 제출 → 작업 시작 ──
+await card(S).locator('button:has-text("작업 시작")').click();
+await gate.waitFor();
+const gt = (await gate.innerText()).replace(/\s+/g, " ");
+check(gt.includes("시작 전 안전점검을 먼저 보내 주세요") && gt.includes("점검 전 작업 시작") && (await gate.locator('button:has-text("점검 없이 시작")').count()) === 1, "시작 전 점검 없이 '작업 시작' → 먼저 점검을 권함 (점검 없이 시작하면 본사에 표시된다고 안내)", gt.slice(0, 120));
+// 확인 창은 화면에 고정된 창이라 전체 페이지 대신 보이는 화면만 찍는다
+if (process.env.PILOT_E2E_OUT) await m.screenshot({ path: `${process.env.PILOT_E2E_OUT}/w00_field_safety_gate.png` });
+check(psql(`select count(*) from work_events e join schedules s on s.id = e.schedule_id where s.site_name = '${S}';`) === "0", "권하는 동안에는 작업 시작이 기록되지 않음");
+await gate.locator('button:has-text("시작 전 점검 하기")').click();
+const pre = card(S).locator('[aria-label="시작 전 점검"]');
+await pre.waitFor();
+check(true, "'시작 전 점검 하기' → 이 현장의 시작 전 점검이 바로 열림");
+for (const item of ["안전모 착용", "안전화 착용", "작업구역 표시·통제"]) await pre.locator(`li[aria-label="${item}"] button:text-is("확인")`).click();
+await pre.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
+await pre.locator('button:has-text("시작 전 점검 제출")').click();
+await card(S).locator('[role=status]:has-text("시작 전 점검")').waitFor();
+check(await until(async () => (await card(S).locator('[aria-label="안전점검"] button:has-text("시작 전 점검") >> text=확인 대기').count()) === 1), "시작 전 점검 제출 (확인 대기)");
+await card(S).locator('button:has-text("작업 시작")').click();
+await m.locator(`[role=status]:has-text("${S} 작업 시작 기록됨")`).waitFor();
+check((await gate.count()) === 0, "점검을 낸 뒤에는 묻지 않고 바로 작업 시작 기록");
+const order = psql(`select (min(c.checked_at) < min(e.occurred_at))::text from safety_checks c join schedules s on s.id = c.schedule_id join work_events e on e.schedule_id = s.id and e.kind = '작업개시' where s.site_name = '${S}' and c.stage = '작업 전';`);
+check(order === "true", "DB: 시작 전 점검 시각 < 작업 시작 시각", order);
 
 // ── 1) M: 예정대로 시작했지만 40분째 진행 보고 없음 → 중간 확인 ──
 await lateStart(M, mStart);
@@ -88,7 +119,15 @@ check((await ask.locator('button:has-text("예정대로")').count()) === 0, "예
 w = await dash();
 wt = (await w.innerText()).replace(/\s+/g, " ");
 await shot(admin, "w04_admin_watch_overdue");
-check(wt.includes(O) && /예정 넘김 (69|70|71)분/.test(wt), "관리자 대시보드 '확인 필요'에 O (예정 넘김 70분)", wt.slice(0, 200));
+check(wt.includes(O) && /예정 넘김 (69|70|71)분/.test(wt), "관리자 대시보드 '연락 없이 늦어짐'에 O (예정 넘김 70분)", wt.slice(0, 200));
+check(/다음 현장 .*(계산값)|다음 현장 영향 없음 \(계산값\)/.test(wt), "2순위 연결: 예정을 넘긴 O — '지금 끝나도' 다음 현장 영향 (엔진 계산값 · 저장 안 함)", wt.match(/(다음 현장[^·]*(계산값)[^·]*)/)?.[0] ?? wt.slice(0, 200));
+const safe = admin.locator('section[aria-label="안전 확인 필요"]');
+const sft = (await safe.innerText()).replace(/\s+/g, " ");
+check(sft.includes(O) && sft.includes(M) && sft.includes("점검 전 시작"), "안전 1순위: 시작 전 점검 없이 시작한 O · M → '점검 전 시작'", sft.slice(0, 200));
+check(!(await safe.locator(`li[aria-label="안전 ${S}"]`).allInnerTexts()).some((t) => t.includes("점검 전 시작")), "점검을 먼저 낸 S는 '점검 전 시작'이 아님");
+const pos = await admin.evaluate(() => ["안전 확인 필요", "연락 없이 늦어지는 현장", "우선 처리할 사건", "다음 현장 지연 위험"].map((l) => document.querySelector(`section[aria-label="${l}"]`)?.getBoundingClientRect().top ?? -1));
+// 넓은 화면에서는 안전 · 연락 없이 늦어짐이 나란히(같은 줄), 그 아래 줄에 우선 처리할 사건 · 다음 현장 지연(오른쪽)이 온다
+check(pos.every((y) => y >= 0) && pos[0] <= pos[1] && pos[1] < pos[2] && pos[2] <= pos[3], "대시보드 순서: 안전(1순위) · 연락 없이 늦어짐(공동 1순위) → 우선 처리할 사건 → 다음 현장 지연(2순위)", pos.map(Math.round).join(" / "));
 check((await w.locator('a:has-text("전화 확인")').count()) >= 1, "관리자: '전화 확인 → 대리 보고' 바로가기");
 
 // ── 4) '막혔어요' → 문제 보고 → 지원 중 (확인 필요에서 빠짐) ──
@@ -112,6 +151,10 @@ check(pri.includes(O) && pri.includes("숙련 기술자 지원"), "우선 처리
 
 // ── 5) M 작업 종료 (안전점검 없이) → 빠진 단계 표시 ──
 await card(M).locator('button:has-text("작업 종료")').first().click();
+await gate.waitFor();
+const ge = (await gate.innerText()).replace(/\s+/g, " ");
+check(ge.includes("마무리 안전점검을 먼저 보내 주세요") && ge.includes("진행 중 점검도 아직 없습니다"), "마무리 점검 없이 '작업 종료' → 먼저 마무리 점검을 권함 (진행 중 점검 없음도 안내)", ge.slice(0, 140));
+await gate.locator('button:has-text("점검 없이 종료")').click();
 await m.locator(`[role=status]:has-text("${M} 작업 종료 기록됨")`).waitFor();
 const news = m.locator('section[aria-label="본사 메시지"]');
 check(await until(async () => (await news.locator(`button:has-text("${M} · 안전점검 빠짐")`).count()) === 3), "휴대폰: 마친 M의 안전점검 3단계가 빠졌다고 알림 (시작 전 · 진행 중 · 마친 뒤)");
@@ -122,14 +165,22 @@ await admin.goto(`${APP}/pilot/admin/safety?date=${TODAY}&kind=real`);
 const row = admin.locator(`section[aria-label="현장별 3단계 현황"] tr:has-text("${M}")`);
 const rt = (await row.innerText()).replace(/\s+/g, " ");
 await shot(admin, "w07_admin_safety_stages");
-check((rt.match(/누락/g) ?? []).length === 3, "관리자 안전관리: M 3단계 모두 누락", rt);
+check((rt.match(/누락/g) ?? []).length === 3 && rt.includes("없이 시작") && rt.includes("없이 종료"), "관리자 안전관리: M 3단계 모두 누락 · 없이 시작 · 없이 종료", rt);
 await admin.goto(`${APP}/pilot/admin?date=${TODAY}&kind=real`);
 const st = (await admin.locator('[aria-label="오늘 핵심 숫자"]').innerText()).replace(/\s+/g, " ");
-check(/단계 누락 [1-9]/.test(st) && st.includes("확인 필요 현장") && st.includes("후속 일정 영향"), "대시보드 숫자: 확인 필요 현장 · 안전 단계 누락 · 후속 일정 영향(보조)", st);
+check(st.indexOf("안전 확인 필요") >= 0 && st.indexOf("안전 확인 필요") < st.indexOf("연락 없이 늦어짐") && st.indexOf("연락 없이 늦어짐") < st.indexOf("다음 현장 지연 위험"), "대시보드 숫자 순서: 안전 확인 필요 → 연락 없이 늦어짐 → … → 다음 현장 지연 위험", st);
+const sft2 = (await admin.locator('section[aria-label="안전 확인 필요"]').innerText()).replace(/\s+/g, " ");
+check(sft2.includes("마무리 점검 없음") && sft2.includes("진행 중 점검(착용 사진) 없이 작업 종료"), "안전 확인 필요: M 마무리 점검 없이 종료 · 진행 중 점검 누락", sft2.slice(0, 220));
+await shot(admin, "w09_admin_safety_first");
 
 await admin.goto(`${APP}/pilot/admin/measures?kind=real`);
 await shot(admin, "w08_admin_measures_focus");
-check((await admin.locator('section[aria-label="핵심 지표"]').count()) === 1 && /작업을 마친 현장 \d+곳 가운데 3단계를 모두 낸 현장 \d+곳/.test(await admin.locator('section[aria-label="안전점검 3단계 제출"]').innerText()), "성과 측정: 핵심 지표 안내 · 측정 10 안전점검 3단계 제출");
+const m10 = (await admin.locator('section[aria-label="안전점검 3단계 제출"]').innerText()).replace(/\s+/g, " ");
+check(
+  (await admin.locator('section[aria-label="핵심 지표"]').innerText()).includes("안전 1순위") && /작업을 시작한 현장 \d+곳 가운데 시작 전 점검을 작업 시작 전에 낸 현장 [1-9]\d*곳/.test(m10) && /작업을 마친 현장 \d+곳 가운데 3단계를 모두 낸 현장 \d+곳/.test(m10) && m10.includes("관리자 첫 확인"),
+  "성과 측정: 핵심 지표(안전 1순위) · 측정 10 제때 낸 시작 전 점검 · 3단계 · 관리자 확인 시간",
+  m10.slice(0, 220),
+);
 const noWiden = await m.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 check(noWiden && m.errs.length === 0, "휴대폰 가로 넘침 없음 · 화면 오류 없음", m.errs.join(" / "));
 await bro.close();

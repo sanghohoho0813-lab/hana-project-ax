@@ -39,7 +39,22 @@ async function uploadAll(userId: string, checkId: string, items: PhotoItem[], pa
 }
 
 /** 현장기사 카드 안 — 작업 전 · 작업 중 · 작업 종료 안전점검 (착용 사진 + 필수 항목) · 관리자 보완 요청에 보완 제출 */
-export function SafetyPanel({ userId, scheduleId, checks, canCheck, openSignal = 0 }: { userId: string; scheduleId: string; checks: FieldSafety[]; canCheck: boolean; openSignal?: number }) {
+export function SafetyPanel({
+  userId,
+  scheduleId,
+  checks,
+  canCheck,
+  openSignal = 0,
+  openStage,
+}: {
+  userId: string;
+  scheduleId: string;
+  checks: FieldSafety[];
+  canCheck: boolean;
+  openSignal?: number;
+  /** 열 단계 (작업 시작 · 종료 전 확인에서) — 이미 냈으면 아직 안 한 첫 단계 */
+  openStage?: SafetyStage;
+}) {
   const [stage, setStage] = useState<SafetyStage | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [seen, setSeen] = useState(0);
@@ -47,7 +62,7 @@ export function SafetyPanel({ userId, scheduleId, checks, canCheck, openSignal =
   // 첫 화면 '안전점검' 버튼 — 아직 안 한 첫 단계를 바로 연다
   if (openSignal > 0 && openSignal !== seen) {
     setSeen(openSignal);
-    const next = SAFETY_STAGES.find((s) => !latest(s));
+    const next = openStage && !latest(openStage) ? openStage : SAFETY_STAGES.find((s) => !latest(s));
     if (canCheck && next) setStage(next);
   }
   return (

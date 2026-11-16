@@ -49,6 +49,11 @@ await m.locator(`[role=status]:has-text("${B} 업무 확인 기록됨")`).waitFo
 const ack = q(ev(B, "업무 확인", "e.actor_id || '|' || e.source || '|' || e.entry_mode || '|' || (e.entered_time is null) || '|' || (e.client_pressed_at is not null) || '|' || (abs(extract(epoch from e.recorded_at - e.occurred_at)) < 2)"));
 check(ack === `${F1}|현장 직원|즉시 기록|true|true|true`, "업무 확인: 입력자·경로·즉시 기록·실제 발생시각≈DB 기록시각(2초 안)", ack);
 await cardOf(B).locator('button:has-text("작업 시작")').click();
+// 0.6.0 안전 1순위: 시작 전 점검이 없으면 먼저 권한다 — 이 시험은 기록 흐름을 보므로 '점검 없이 시작'
+const gateB = m.locator('[role=dialog][aria-label="안전점검 확인"]');
+await gateB.waitFor();
+check((await gateB.innerText()).includes("시작 전 안전점검을 먼저 보내 주세요"), "시작 전 점검 없이 작업 시작 → 먼저 점검을 권함 (안전 1순위)");
+await gateB.locator('button:has-text("점검 없이 시작")').click();
 await m.locator(`[role=status]:has-text("${B} 작업 시작 기록됨")`).waitFor();
 await cardOf(B).locator("text=작업 중").waitFor();
 check(q(`select count(*) from risk_judgments j join work_events e on e.id = j.trigger_ref where e.op_id is not null and j.trigger_ref = (${ev(B, "작업개시", "e.id")});`) === "1", "작업 시작 → 위험 판단 전후 1건 기록");
@@ -132,6 +137,7 @@ await m.route("**/pilot/field**", async (route) => {
   } else await route.continue();
 });
 await cardOf(B).locator('button:has-text("작업 종료")').click();
+await m.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 종료")').click();
 await m.locator("text=전송 대기 1건").waitFor();
 check(q(ev(B, "작업종료")) === "1", "응답은 끊겼지만 서버에는 이미 저장됨 (휴대폰은 결과를 모름 → 대기 유지)");
 await m.click('button:has-text("지금 다시 보내기")');
