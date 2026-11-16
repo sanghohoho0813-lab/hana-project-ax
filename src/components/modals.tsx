@@ -27,8 +27,8 @@ const REGIONS = [
   "충남 서산",
   "충남 태안",
   "충남 논산",
-  "충북 청주",
-  "충북 진천",
+  "전북 군산",
+  "전북 익산",
 ];
 
 const WORK_TYPES = [
@@ -451,7 +451,7 @@ interface ParsedMemo {
 }
 
 const DEFAULT_MEMO =
-  "청주 김부장 전화 옴. CCTV 위치 2개 바꾸고 4대 더 달아달라고 함. 금액 다시 줘야 함. 이번 주 금요일 전에 회신 달라고 함.";
+  "군산 김부장 전화 옴. CCTV 위치 2개 바꾸고 4대 더 달아달라고 함. 금액 다시 줘야 함. 이번 주 금요일 전에 회신 달라고 함.";
 
 export function PhoneMemoModal({
   open,
@@ -483,7 +483,7 @@ export function PhoneMemoModal({
       );
       const isCctv = text.includes("CCTV") || text.includes("씨씨티비");
       const proj =
-        (isCctv && text.includes("청주")
+        (isCctv && text.includes("군산")
           ? projects.find((p) => p.id === "p4")
           : undefined) ?? byRegion;
       const qtyMatch = text.match(/(\d+)\s*대/);
@@ -496,7 +496,7 @@ export function PhoneMemoModal({
 
       setParsed({
         customer: text.includes("김부장")
-          ? "금강테크 김부장 (청주 오창산단)"
+          ? "금강테크 김부장 (군산 국가산단)"
           : (proj?.client ?? "고객 확인 필요"),
         projectId: proj?.id,
         projectName: proj?.name ?? "연결된 프로젝트 없음 — 새 문의로 등록하세요",
@@ -587,7 +587,7 @@ export function PhoneMemoModal({
             className={`${inputClass} min-h-24 resize-y`}
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            placeholder="예: 청주 김부장 전화 옴. CCTV 위치 2개 바꾸고 4대 더 달아달라고 함."
+            placeholder="예: 군산 김부장 전화 옴. CCTV 위치 2개 바꾸고 4대 더 달아달라고 함."
           />
           <PrimaryButton
             onClick={analyze}
@@ -707,7 +707,7 @@ export function PhoneMemoModal({
                 <li>· 오늘 할 일에 서면승인 항목이 추가됩니다</li>
                 <li>· 추가공사 목록과 건수가 늘어납니다</li>
                 <li>· 위험·누락 가능금액에 {formatMoney(parsed.estimate)}이 반영됩니다</li>
-                <li>· 청주 프로젝트 상세의 변경·추가공사 탭에 표시됩니다</li>
+                <li>· 군산 프로젝트 상세의 변경·추가공사 탭에 표시됩니다</li>
               </ul>
             </div>
 

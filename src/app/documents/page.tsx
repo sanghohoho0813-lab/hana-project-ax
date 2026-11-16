@@ -11,7 +11,7 @@ import { closeoutDone, missingCloseoutDocs, receivable } from "@/lib/calc";
 import { Badge, EmptyState, PageIntro, ProgressBar } from "@/components/ui";
 
 const SUGGESTED = [
-  "청주 CCTV 견적서",
+  "군산 CCTV 견적서",
   "대천동 현장사진",
   "미수금 현장",
   "서천 주간보고서",

@@ -23,7 +23,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col bg-white">
       {/* 상단 안내 띠 */}
       <div className="bg-[#101a2e] px-4 py-2.5 text-center text-[17px] font-medium text-white/80">
-        보령·충남·충북 지역 전기공사 · 정보통신공사 전문 ·{" "}
+        보령·충남·전북 지역 전기공사 · 정보통신공사 전문 ·{" "}
         <span className="font-bold text-white">041-000-0000</span>
       </div>
 
@@ -118,7 +118,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
             <p className="mt-2 text-[18px] leading-relaxed text-ink-2">
               충남 보령에 자리한 전기공사·정보통신공사 업체입니다.
               <br />
-              보령·서천·홍성·서산·태안·논산과 충북 청주·진천 지역을 중심으로
+              보령·서천·홍성·서산·태안·논산과 전북 군산·익산 지역을 중심으로
               <br />
               현장 상황에 맞춘 공사와 유지보수를 제공합니다.
             </p>

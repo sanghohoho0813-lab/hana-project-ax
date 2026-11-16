@@ -35,7 +35,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "t2",
-    title: "청주 CCTV 위치 변경 확인",
+    title: "군산 CCTV 위치 변경 확인",
     projectId: "p4",
     content:
       "발주처가 요청한 CCTV 위치 2개소 변경 지점을 현장에서 확인하고, 추가 4대 설치 위치까지 표시해 주세요.",
@@ -48,7 +48,7 @@ export const TASKS: Task[] = [
     priority: "긴급",
     needsReport: true,
     needsPhoto: true,
-    location: "충북 청주 오창산단",
+    location: "전북 군산 국가산단",
     status: "진행 중",
     acknowledgedAt: "2026-07-26T09:20",
     ackResponse: "확인했습니다",
@@ -162,7 +162,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "t8",
-    title: "진천 물류창고 출입통제 장비 사양 정리",
+    title: "익산 물류창고 출입통제 장비 사양 정리",
     projectId: "p5",
     content: "출입구 3개소에 들어갈 인식기와 전기정 사양을 정리해 주세요.",
     assignerId: "u2",
@@ -174,7 +174,7 @@ export const TASKS: Task[] = [
     priority: "보통",
     needsReport: false,
     needsPhoto: false,
-    location: "충북 진천 산업단지",
+    location: "전북 익산 제2산단",
     status: "지시됨",
     openedAt: "2026-07-28T08:10",
     progress: 0,
@@ -243,7 +243,7 @@ export const TASKS: Task[] = [
   },
   {
     id: "t12",
-    title: "청주 추가공사 서면승인 요청 발송",
+    title: "군산 추가공사 서면승인 요청 발송",
     projectId: "p4",
     content: "CCTV 4대 추가와 위치 변경에 대한 추가견적서를 만들어 발주처에 보내 주세요.",
     assignerId: "u2",
@@ -295,9 +295,9 @@ export const SCHEDULES: ScheduleItem[] = [
   },
   {
     id: "s3",
-    title: "청주 CCTV 위치 재확인",
+    title: "군산 CCTV 위치 재확인",
     projectId: "p4",
-    region: "충북 청주",
+    region: "전북 군산",
     assigneeId: "u5",
     date: "2026-07-28",
     start: "09:00",
@@ -337,9 +337,9 @@ export const SCHEDULES: ScheduleItem[] = [
   },
   {
     id: "s6",
-    title: "진천 물류창고 사양 협의",
+    title: "익산 물류창고 사양 협의",
     projectId: "p5",
-    region: "충북 진천",
+    region: "전북 익산",
     assigneeId: "u6",
     date: "2026-07-28",
     start: "13:30",
@@ -376,9 +376,9 @@ export const SCHEDULES: ScheduleItem[] = [
   },
   {
     id: "s9",
-    title: "청주 추가공사 발주처 협의",
+    title: "군산 추가공사 발주처 협의",
     projectId: "p4",
-    region: "충북 청주",
+    region: "전북 군산",
     assigneeId: "u2",
     date: "2026-07-29",
     start: "14:00",
@@ -388,9 +388,9 @@ export const SCHEDULES: ScheduleItem[] = [
   },
   {
     id: "s10",
-    title: "진천 착공 전 현장 점검",
+    title: "익산 착공 전 현장 점검",
     projectId: "p5",
-    region: "충북 진천",
+    region: "전북 익산",
     assigneeId: "u4",
     date: "2026-07-30",
     start: "10:00",
@@ -486,7 +486,7 @@ export const TIMELINE: TimelineEvent[] = [
     kind: "업무지시",
     actorId: "u2",
     at: "2026-07-26T09:00",
-    text: "청주 CCTV 위치 변경 확인 업무를 이민수 현장기사에게 전달했습니다.",
+    text: "군산 CCTV 위치 변경 확인 업무를 이민수 현장기사에게 전달했습니다.",
     taskId: "t2",
   },
   {
@@ -532,7 +532,7 @@ export const TIMELINE: TimelineEvent[] = [
     kind: "업무지시",
     actorId: "u2",
     at: "2026-07-28T09:50",
-    text: "청주 추가공사 서면승인 요청 발송 업무를 김하늘 사무담당에게 전달했습니다.",
+    text: "군산 추가공사 서면승인 요청 발송 업무를 김하늘 사무담당에게 전달했습니다.",
     taskId: "t12",
   },
   {
@@ -686,15 +686,15 @@ export const PROCUREMENT_REGION = [
   { region: "충남 서천", count: 21, amount: 76000 },
   { region: "충남 홍성", count: 27, amount: 94000 },
   { region: "충남 서산", count: 19, amount: 71000 },
-  { region: "충북 청주", count: 31, amount: 115000 },
-  { region: "충북 진천", count: 24, amount: 88000 },
+  { region: "전북 군산", count: 31, amount: 115000 },
+  { region: "전북 익산", count: 24, amount: 88000 },
 ];
 
 export const PROCUREMENT_AGENCY = [
   { agency: "보령시청", last30: 7, prev30: 4, amount: 42000 },
   { agency: "서천군청", last30: 4, prev30: 4, amount: 21000 },
   { agency: "홍성군청", last30: 6, prev30: 3, amount: 33000 },
-  { agency: "청주시청", last30: 5, prev30: 6, amount: 38000 },
+  { agency: "군산시청", last30: 5, prev30: 6, amount: 38000 },
   { agency: "충남교육청", last30: 9, prev30: 5, amount: 51000 },
   { agency: "한국농어촌공사 충남본부", last30: 3, prev30: 2, amount: 18000 },
 ];
@@ -719,8 +719,8 @@ export const PROCUREMENT_COMPETITORS = [
     level: "warning" as const,
   },
   {
-    name: "□□ENG (청주)",
-    note: "청주 지역 점유 유지, 변동 없음",
+    name: "□□ENG (군산)",
+    note: "군산 지역 점유 유지, 변동 없음",
     level: "info" as const,
   },
 ];
@@ -736,8 +736,8 @@ export const PROCUREMENT_WATCH = [
 export const FACILITIES = [
   { name: "보령 본사 CCTV", kind: "CCTV", status: "온라인", detail: "카메라 8대 · 저장 28일", tone: "success" as const },
   { name: "보령 자재창고 출입통제", kind: "출입통제", status: "정상", detail: "등록 인원 14명", tone: "success" as const },
-  { name: "청주 산업단지 현장 CCTV", kind: "CCTV", status: "연동 대기", detail: "공사 완료 후 연동 예정", tone: "warning" as const },
-  { name: "진천 물류창고 출입통제", kind: "출입통제", status: "연동 대기", detail: "장비 사양 협의 중", tone: "warning" as const },
+  { name: "군산 산업단지 현장 CCTV", kind: "CCTV", status: "연동 대기", detail: "공사 완료 후 연동 예정", tone: "warning" as const },
+  { name: "익산 물류창고 출입통제", kind: "출입통제", status: "연동 대기", detail: "장비 사양 협의 중", tone: "warning" as const },
 ];
 
 export const ACCESS_LOGS = [

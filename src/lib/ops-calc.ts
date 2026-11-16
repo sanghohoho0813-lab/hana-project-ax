@@ -612,8 +612,8 @@ const PLACE_HINTS: { key: string; region: string; projectId?: string }[] = [
   { key: "서천", region: "충남 서천", projectId: "p2" },
   { key: "보령", region: "충남 보령", projectId: "p6" },
   { key: "홍성", region: "충남 홍성", projectId: "p3" },
-  { key: "청주", region: "충북 청주", projectId: "p4" },
-  { key: "진천", region: "충북 진천", projectId: "p5" },
+  { key: "군산", region: "전북 군산", projectId: "p4" },
+  { key: "익산", region: "전북 익산", projectId: "p5" },
 ];
 
 /** 통화 메모에서 담당자·장소·시간·업무를 뽑아낸다 */
