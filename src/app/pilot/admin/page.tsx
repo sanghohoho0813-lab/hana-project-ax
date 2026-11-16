@@ -17,7 +17,8 @@ import { cx, Empty, PageHead, Pill, SectionHead, Stat, type PillTone } from "../
 const STATUS_TONE: Record<CaseStatus, PillTone> = { 보고됨: "danger", 접수됨: "warning", "조치 중": "info", "현장 해결 보고": "info", 미해결: "danger", 해결: "success", 무효: "neutral" };
 const GRADE_TONE = (g: string | null): PillTone => (g === "매우 높음" || g === "높음" ? "danger" : g === "중간" ? "warning" : "neutral");
 
-type SafetyItem = { key: string; tone: "danger" | "warning"; site: string; worker: string; what: string; pill: string };
+/** rank 0: 미흡 · 안전 위험 보고 · 보완 중 (항상 맨 위) · 1: 점검 없이 시작/종료 · 2: 그 밖 — 같은 rank 안에서는 최근 것부터 */
+type SafetyItem = { key: string; tone: "danger" | "warning"; rank: 0 | 1 | 2; at: string; site: string; worker: string; what: string; pill: string };
 
 /**
  * 관리자 대시보드 — 오늘 운영 현황 한 화면.
@@ -58,16 +59,17 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   const supplement = safety.checks.filter((c) => c.review_status === "보완 요청");
   const site = (id: string) => titleOf.get(id) ?? "현장";
   const safetyItems: SafetyItem[] = [
-    ...pendingReview.filter((c) => c.deficient.length > 0).map((c) => ({ key: `d-${c.id}`, tone: "danger" as const, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 미흡: ${c.deficient.map(itemLabel).join(", ")} — 작업 중지 여부를 전화로 확인`, pill: "미흡" })),
-    ...ranked.filter((r) => r.c.issue_type === "안전 위험").map((r) => ({ key: `c-${r.c.id}`, tone: "danger" as const, site: site(r.c.schedule_id), worker: who(r.c.worker_id), what: `안전 위험 보고 ${r.c.case_no} · ${r.c.status}`, pill: "안전 위험" })),
-    ...supplement.map((c) => ({ key: `s-${c.id}`, tone: "danger" as const, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 보완 요청 — 보완 사진 대기`, pill: "보완 중" })),
-    ...sites.filter((v) => v.timing.pre === "없음").map((v) => ({ key: `p-${v.x.id}`, tone: "danger" as const, site: v.x.site_name, worker: who(v.x.assignee_id), what: "시작 전 점검(착용 사진) 없이 작업 시작", pill: "점검 전 시작" })),
-    ...sites.filter((v) => v.timing.final === "없음").map((v) => ({ key: `f-${v.x.id}`, tone: "danger" as const, site: v.x.site_name, worker: who(v.x.assignee_id), what: "마무리 점검(착용 사진) 없이 작업 종료", pill: "마무리 점검 없음" })),
-    ...sites.flatMap((v) => v.gaps.filter((g) => g.stage === "작업 중").map(() => ({ key: `m-${v.x.id}`, tone: "warning" as const, site: v.x.site_name, worker: who(v.x.assignee_id), what: "진행 중 점검(착용 사진) 없이 작업 종료", pill: "단계 누락" }))),
-    ...sites.filter((v) => v.timing.pre === "시작 뒤 제출").map((v) => ({ key: `pl-${v.x.id}`, tone: "warning" as const, site: v.x.site_name, worker: who(v.x.assignee_id), what: "시작 전 점검을 작업 시작 뒤에 제출", pill: "시작 뒤 제출" })),
-    ...sites.filter((v) => v.timing.final === "종료 뒤 제출").map((v) => ({ key: `fl-${v.x.id}`, tone: "warning" as const, site: v.x.site_name, worker: who(v.x.assignee_id), what: "마무리 점검을 작업 종료 뒤에 제출", pill: "종료 뒤 제출" })),
-    ...pendingReview.filter((c) => c.deficient.length === 0).map((c) => ({ key: `r-${c.id}`, tone: "warning" as const, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 사진 확인 대기 · ${kst(c.recorded_at).time} 제출`, pill: c.review_status })),
+    ...pendingReview.filter((c) => c.deficient.length > 0).map((c) => ({ key: `d-${c.id}`, tone: "danger" as const, rank: 0 as const, at: c.recorded_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 미흡: ${c.deficient.map(itemLabel).join(", ")} — 작업 중지 여부를 전화로 확인`, pill: "미흡" })),
+    ...ranked.filter((r) => r.c.issue_type === "안전 위험").map((r) => ({ key: `c-${r.c.id}`, tone: "danger" as const, rank: 0 as const, at: r.c.reported_at, site: site(r.c.schedule_id), worker: who(r.c.worker_id), what: `안전 위험 보고 ${r.c.case_no} · ${r.c.status}`, pill: "안전 위험" })),
+    ...supplement.map((c) => ({ key: `s-${c.id}`, tone: "danger" as const, rank: 0 as const, at: c.updated_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 보완 요청 — 보완 사진 대기`, pill: "보완 중" })),
+    ...sites.filter((v) => v.timing.pre === "없음").map((v) => ({ key: `p-${v.x.id}`, tone: "danger" as const, rank: 1 as const, at: v.p.started!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "시작 전 점검(착용 사진) 없이 작업 시작", pill: "점검 전 시작" })),
+    ...sites.filter((v) => v.timing.final === "없음").map((v) => ({ key: `f-${v.x.id}`, tone: "danger" as const, rank: 1 as const, at: v.p.ended!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "마무리 점검(착용 사진) 없이 작업 종료", pill: "마무리 점검 없음" })),
+    ...sites.flatMap((v) => v.gaps.filter((g) => g.stage === "작업 중").map(() => ({ key: `m-${v.x.id}`, tone: "warning" as const, rank: 2 as const, at: v.p.ended?.occurred_at ?? "", site: v.x.site_name, worker: who(v.x.assignee_id), what: "진행 중 점검(착용 사진) 없이 작업 종료", pill: "단계 누락" }))),
+    ...sites.filter((v) => v.timing.pre === "시작 뒤 제출").map((v) => ({ key: `pl-${v.x.id}`, tone: "warning" as const, rank: 2 as const, at: v.p.started!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "시작 전 점검을 작업 시작 뒤에 제출", pill: "시작 뒤 제출" })),
+    ...sites.filter((v) => v.timing.final === "종료 뒤 제출").map((v) => ({ key: `fl-${v.x.id}`, tone: "warning" as const, rank: 2 as const, at: v.p.ended!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "마무리 점검을 작업 종료 뒤에 제출", pill: "종료 뒤 제출" })),
+    ...pendingReview.filter((c) => c.deficient.length === 0).map((c) => ({ key: `r-${c.id}`, tone: "warning" as const, rank: 2 as const, at: c.recorded_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 사진 확인 대기 · ${kst(c.recorded_at).time} 제출`, pill: c.review_status })),
   ];
+  safetyItems.sort((a, b) => a.rank - b.rank || (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   const safetyDanger = safetyItems.filter((i) => i.tone === "danger").length;
 
   // ── 공동 1순위: 연락 없이 늦어지는 현장 (조기 확인 규칙) ──
@@ -171,7 +173,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
             <p className="card px-4 py-4 text-[14.5px] text-ink-3">지금 확인할 안전 항목이 없습니다. 미흡 · 안전 위험 보고 · 보완 요청 · 점검 없이 시작하거나 마친 현장 · 빠진 단계가 생기면 여기에 먼저 나타납니다.</p>
           ) : (
             <ul className="space-y-2.5">
-              {safetyItems.slice(0, 8).map((i) => (
+              {safetyItems.slice(0, 10).map((i) => (
                 <li key={i.key} className={cx("card flex items-start gap-3 p-4", i.tone === "danger" ? "ring-1 ring-danger/30" : "ring-1 ring-warning/30")} aria-label={`안전 ${i.site}`}>
                   <span className={cx("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", i.tone === "danger" ? "bg-danger-bg text-danger" : "bg-warning-bg text-warning")}>
                     <HardHat size={20} />
@@ -186,7 +188,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                   </span>
                 </li>
               ))}
-              {safetyItems.length > 8 && <li className="px-1 text-[14.5px] text-ink-3">외 {safetyItems.length - 8}건 — 안전관리 화면에서 모두 봅니다.</li>}
+              {safetyItems.length > 10 && <li className="px-1 text-[14.5px] text-ink-3">외 {safetyItems.length - 10}건 — 안전관리 화면에서 모두 봅니다.</li>}
             </ul>
           )}
           <p className="text-[13.5px] text-ink-3">사진만으로 적합 판정하지 않습니다 — 관리자가 눈으로 확인한 결과만 기록합니다. 위험하면 화면을 기다리지 말고 현장에 바로 전화해 작업을 멈추게 하세요.</p>

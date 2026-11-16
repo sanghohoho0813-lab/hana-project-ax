@@ -169,8 +169,9 @@ check((rt.match(/누락/g) ?? []).length === 3 && rt.includes("없이 시작") &
 await admin.goto(`${APP}/pilot/admin?date=${TODAY}&kind=real`);
 const st = (await admin.locator('[aria-label="오늘 핵심 숫자"]').innerText()).replace(/\s+/g, " ");
 check(st.indexOf("안전 확인 필요") >= 0 && st.indexOf("안전 확인 필요") < st.indexOf("연락 없이 늦어짐") && st.indexOf("연락 없이 늦어짐") < st.indexOf("다음 현장 지연 위험"), "대시보드 숫자 순서: 안전 확인 필요 → 연락 없이 늦어짐 → … → 다음 현장 지연 위험", st);
-const sft2 = (await admin.locator('section[aria-label="안전 확인 필요"]').innerText()).replace(/\s+/g, " ");
-check(sft2.includes("마무리 점검 없음") && sft2.includes("진행 중 점검(착용 사진) 없이 작업 종료"), "안전 확인 필요: M 마무리 점검 없이 종료 · 진행 중 점검 누락", sft2.slice(0, 220));
+// 목록은 '미흡 · 안전 위험 · 보완 중' → '점검 없이 시작/종료'(최근 것부터) → 그 밖 순서로 10건까지 — 다른 시험 기록이 많아도 방금 끝낸 M이 보여야 한다
+const mItems = (await admin.locator(`section[aria-label="안전 확인 필요"] li[aria-label="안전 ${M}"]`).allInnerTexts()).map((t) => t.replace(/\s+/g, " "));
+check(mItems.some((t) => t.includes("마무리 점검 없음") && t.includes("마무리 점검(착용 사진) 없이 작업 종료")), "안전 확인 필요: 방금 마무리 점검 없이 종료한 M이 '즉시 확인'으로 보임 (최근 것부터)", mItems.join(" / ").slice(0, 220));
 await shot(admin, "w09_admin_safety_first");
 
 await admin.goto(`${APP}/pilot/admin/measures?kind=real`);
