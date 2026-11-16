@@ -1,4 +1,5 @@
 // 화면 흐름 둘러보기 — 시험 사례 2개를 처음부터 끝까지 실제로 돌리며 단계마다 화면을 찍는다 (회귀 시험 아님)
+// 0.6.0 안전 1순위: 사례 1은 시작 전 · 진행 중 · 마무리 안전점검을 모두 내는 흐름, 사례 2는 마무리 점검 없이 끝내 본사에 표시되는 흐름
 // 실행: WALK_OUT=<폴더> node tests-pilot/e2e/walkthrough.mjs  →  <폴더>/*.jpg · steps.json
 // 로컬 시험 DB · '검증 시나리오(가상)' 자료만 쓴다. 사람 · 현장 이름은 시험용이다.
 // 같은 컴퓨터의 별도 브라우저 세션(관리자 PC 1 · 기사 휴대폰 2)이며 실제 휴대폰 시험이 아니다.
@@ -93,7 +94,7 @@ async function act(card, button, fill, shot) {
 const T1 = "s1";
 await admin.goto(dash);
 await admin.locator('[aria-label="오늘 핵심 숫자"]').waitFor();
-await step(admin, { scenario: T1, who: "관리자 PC", title: "관리자 첫 화면 — 대시보드", action: "로그인 → 2단계 인증(인증 앱 6자리) 확인", result: "오늘 운영 현황이 열립니다. 아직 일정이 없어 숫자가 모두 0입니다. 위쪽 회청 점선 띠는 '검증 시나리오(가상)' 자료라는 표시입니다." });
+await step(admin, { scenario: T1, who: "관리자 PC", title: "관리자 첫 화면 — 대시보드", action: "로그인 → 2단계 인증(인증 앱 6자리) 확인", result: "오늘 운영 현황이 열립니다. 맨 앞이 '안전 확인 필요(1순위)', 옆이 '연락 없이 늦어지는 현장(공동 1순위)', 아래가 우선 처리할 사건과 '다음 현장 지연 위험(2순위)'입니다. 아직 일정이 없어 숫자가 모두 0입니다. 회청 점선 띠는 '검증 시나리오(가상)' 자료 표시입니다." });
 
 await admin.goto(board);
 // 지금 시각에 맞춰 시작하는 일정 (늦게 시작한 효과가 섞이지 않게) · 예정 간격 30분 > 이동시간
@@ -102,7 +103,7 @@ await addSchedule(NAME.w1, S.A, kstHHMM(-1), kstHHMM(59), "", {
 });
 await addSchedule(NAME.w1, S.B, kstHHMM(89), kstHHMM(149), "20");
 await addSchedule(NAME.w1, S.C, kstHHMM(179), kstHHMM(229), "25");
-await step(admin, { scenario: T1, who: "관리자 PC", title: "일정 3건 등록 완료 · 위험 판단", action: "등록할 때마다 기존 연쇄위험 엔진이 다시 계산", result: "A→B→C 연결마다 '이동해서 제때 도착하는지'를 계산합니다. 지금은 여유가 있어 큰 위험이 없습니다." }, { el: admin.locator(`tr:has-text("${S.C}")`).first() });
+await step(admin, { scenario: T1, who: "관리자 PC", title: "일정 3건 등록 완료 · 다음 현장 지연 판단", action: "등록할 때마다 기존 연쇄위험 엔진이 다시 계산", result: "현장에서 다음 현장으로 이어질 때마다 '이동해서 제때 도착하는지'를 계산합니다(2순위 · 다음 현장 지연). 지금은 여유가 있어 큰 위험이 없습니다." }, { el: admin.locator(`tr:has-text("${S.C}")`).first() });
 
 // 기사 휴대폰
 const m1 = await mobilePage(bro);
@@ -110,28 +111,42 @@ await loginAs(m1, e1);
 await waitPath(m1, "/pilot/field");
 await m1.goto(fieldUrl);
 await m1.locator('section[aria-label="지금 할 일"]').waitFor();
-await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "기사 첫 화면 — 오늘 일정", action: "휴대폰에서 이메일 · 비밀번호로 로그인", result: "맨 위 '지금 할 일'에 1번째 현장과 다음 행동이 나옵니다. 아래쪽에는 '작업 시작' 버튼과 하단 메뉴 4개가 늘 고정돼 있습니다." });
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "기사 첫 화면 — 안전점검이 먼저", action: "휴대폰에서 이메일 · 비밀번호로 로그인", result: "맨 위 '지금 할 일'에 '① 시작 전 안전점검 → ② 작업 시작'이 먼저 나옵니다. 빠른 버튼도 안전점검이 맨 앞입니다. 아래쪽에는 '작업 시작' 버튼과 하단 메뉴 4개가 늘 고정돼 있습니다." });
 
 const card1 = m1.locator(`section[aria-label="${S.A} 일정"]`);
 await card1.locator('button:has-text("업무 확인")').click();
 await m1.locator(`[role=status]:has-text("${S.A} 업무 확인 기록됨")`).waitFor();
 await m1.waitForTimeout(700);
+// 안전 1순위: 점검 없이 '작업 시작'을 누르면 먼저 묻는다
 await m1.locator('div.fixed button:has-text("작업 시작")').first().click();
-await m1.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
-await m1.locator(`[role=status]:has-text("${S.A} 작업 시작 기록됨")`).waitFor();
-await m1.evaluate(() => window.scrollTo(0, 0));
-await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "업무 확인 → 작업 시작", action: "카드의 '업무 확인' → 화면 아래 고정 버튼 '작업 시작'", result: "누른 시각이 바로 기록됩니다(서버 시각 함께 저장). 아래 알림에 실제 시각 · 서버 기록 · 입력 방식이 나오고, 상태가 '작업 중'으로 바뀝니다." }, { toast: true });
-
-// 안전점검
-await m1.locator('section[aria-label="지금 할 일"] button:has-text("안전점검")').click();
+const gate1 = m1.locator('[role=dialog][aria-label="안전점검 확인"]');
+await gate1.waitFor();
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "점검 없이 '작업 시작'을 누르면", action: "'업무 확인' → 아래 고정 버튼 '작업 시작'", result: "'시작 전 안전점검을 먼저 보내 주세요' 창이 뜹니다. 점검 없이 시작할 수도 있지만 그러면 본사 화면에 '점검 전 작업 시작'으로 표시됩니다. 위험하면 작업을 멈추고 바로 전화하라는 안내도 함께 나옵니다." });
+await gate1.locator('button:has-text("시작 전 점검 하기")').click();
 const sp1 = card1.locator('[aria-label="시작 전 점검"]');
 await sp1.waitFor();
 for (const it of ["안전모 착용", "안전화 착용", "작업구역 표시·통제"]) await sp1.locator(`li[aria-label="${it}"] button:text-is("확인")`).click();
 await sp1.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
 await sp1.locator('ul[aria-label="첨부할 사진"] img').waitFor();
-await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "시작 전 안전점검", action: "'지금 할 일'의 '안전점검' → 항목마다 확인 → 착용 사진(촬영 또는 앨범)", result: "필수 항목과 사진이 있어야 제출됩니다. 관리자가 사진을 눈으로 확인하기 전까지는 '확인 대기'입니다." }, { el: sp1.locator('ul[aria-label="첨부할 사진"]') });
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "시작 전 안전점검", action: "창의 '시작 전 점검 하기' → 항목마다 확인 → 착용 사진(촬영 또는 앨범)", result: "필수 항목과 사진이 있어야 제출됩니다. 관리자가 사진을 눈으로 확인하기 전까지는 '확인 대기'입니다." }, { el: sp1.locator('ul[aria-label="첨부할 사진"]') });
 await sp1.locator('button:has-text("시작 전 점검 제출")').click();
 await card1.locator('[aria-label="안전점검"] [role=status]').waitFor({ timeout: 30000 });
+await card1.locator('[aria-label="안전점검"] button:has-text("시작 전 점검") >> text=확인 대기').waitFor({ timeout: 30000 });
+await m1.locator('div.fixed button:has-text("작업 시작")').first().click();
+await m1.locator(`[role=status]:has-text("${S.A} 작업 시작 기록됨")`).waitFor();
+await m1.evaluate(() => window.scrollTo(0, 0));
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "점검을 낸 뒤 작업 시작", action: "다시 '작업 시작'", result: "이번에는 묻지 않고 바로 기록됩니다(서버 시각 함께 저장). 시작 전 점검이 작업 시작보다 먼저 기록돼, 본사 화면에 '점검 전 시작'이 뜨지 않습니다." }, { toast: true });
+
+// 진행 중 안전점검 (작업 도중 착용 사진)
+await card1.locator('[aria-label="안전점검"] button:has-text("진행 중 점검")').click();
+const mid1 = card1.locator('[aria-label="진행 중 점검"]');
+await mid1.waitFor();
+for (const it of ["안전모 착용", "안전화 착용", "작업구역 표시·통제"]) await mid1.locator(`li[aria-label="${it}"] button:text-is("확인")`).click();
+await mid1.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
+await mid1.locator('ul[aria-label="첨부할 사진"] img').waitFor();
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "진행 중 안전점검", action: "카드의 안전점검 '진행 중 점검' → 확인 → 착용 사진", result: "작업 도중에도 장구를 착용했는지 사진으로 남깁니다. 예정 시간의 절반쯤 되면 '지금 할 일'의 안전점검 버튼에 '진행 중 점검 차례'가 표시됩니다." }, { el: mid1.locator('ul[aria-label="첨부할 사진"]') });
+await mid1.locator('button:has-text("진행 중 점검 제출")').click();
+await card1.locator('[aria-label="안전점검"] button:has-text("진행 중 점검") >> text=확인 대기').waitFor({ timeout: 30000 });
 
 // 문제 보고
 await m1.evaluate(() => window.scrollTo(0, 0));
@@ -154,7 +169,7 @@ await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "보고 완�
 // 관리자
 await admin.goto(dash);
 await admin.locator('[aria-label="오늘 핵심 숫자"]').waitFor();
-await step(admin, { scenario: T1, who: "관리자 PC", title: "대시보드에 새 보고 · 위험 현장", action: "(새로 고침 없이 15초 자동 갱신)", result: "신규 문제 보고 1건, 위험도 높은 현장이 늘어납니다. '우선 처리할 사건'에 엔진이 계산한 후속 현장 위험과 '다음 조치'가 함께 나옵니다." });
+await step(admin, { scenario: T1, who: "관리자 PC", title: "대시보드 — 안전 · 새 보고 · 다음 현장 지연", action: "(새로 고침 없이 15초 자동 갱신)", result: "'안전 확인 필요'에 사진 확인 대기 2건(시작 전 · 진행 중)이 먼저 보이고, 신규 문제 보고 1건이 '우선 처리할 사건'에 '다음 조치'와 함께 나옵니다. 아래 '다음 현장 지연 위험(2순위)'에는 엔진이 계산한 다음 현장 도착 부족이 나옵니다." }, { full: true });
 await admin.goto(casesUrl);
 const c1 = caseCard(S.A);
 await c1.waitFor();
@@ -187,9 +202,21 @@ await my1.locator('input[aria-label="해결 내용"]').fill("숙련 기술자와
 await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "해결 보고", action: "사건 카드 '해결 보고' → '해결' → (선택) 내용", result: "본사 조치 이력이 카드 안에 시간순으로 보입니다. '해결 보고 보내기'를 누르면 본사가 확인한 뒤 종결합니다." }, { el: my1 });
 await my1.locator('button:has-text("해결 보고 보내기")').click();
 await card1.locator('[role=status]:has-text("해결 보고됨")').waitFor();
+// 마무리 안전점검 → 작업 종료
 await nextMinute();
 await m1.locator('div.fixed button:has-text("작업 종료")').first().click();
-await m1.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 종료")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
+const gate1e = m1.locator('[role=dialog][aria-label="안전점검 확인"]');
+await gate1e.waitFor();
+await gate1e.locator('button:has-text("마무리 점검 하기")').click();
+const fin1 = card1.locator('[aria-label="마친 뒤 점검"]');
+await fin1.waitFor();
+for (const it of ["안전모 착용", "안전화 착용", "작업구역 표시·통제"]) await fin1.locator(`li[aria-label="${it}"] button:text-is("확인")`).click();
+await fin1.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
+await fin1.locator('ul[aria-label="첨부할 사진"] img').waitFor();
+await step(m1, { scenario: T1, who: `${NAME.w1} 휴대폰`, title: "마무리 안전점검 → 작업 종료", action: "'작업 종료' → 창의 '마무리 점검 하기' → 확인 → 착용 사진 → 제출 → 다시 '작업 종료'", result: "작업을 끝내기 전에 장구를 착용한 채 마무리했는지 사진으로 남깁니다. 시작 전 · 진행 중 · 마무리 3단계가 모두 작업 시각보다 먼저 기록됩니다." }, { el: fin1.locator('ul[aria-label="첨부할 사진"]') });
+await fin1.locator('button:has-text("마친 뒤 점검 제출")').click();
+await card1.locator('[aria-label="안전점검"] button:has-text("마친 뒤 점검") >> text=확인 대기').waitFor({ timeout: 30000 });
+await m1.locator('div.fixed button:has-text("작업 종료")').first().click();
 await m1.locator(`[role=status]:has-text("${S.A} 작업 종료 기록됨")`).waitFor();
 
 // 관리자: 해결 확인 · 증빙 · 안전 확인
@@ -204,11 +231,20 @@ await admin.locator('section[aria-label="사건 한눈에"]').waitFor();
 await step(admin, { scenario: T1, who: "관리자 PC", title: "사건 상세 — 한눈에", action: "'끝난 사건' → '사건 증빙'", result: "문제 개요 → 현장 사진 → 관리자 조치 타임라인 순서로 보입니다. 보고부터 몇 초 뒤에 무엇을 했는지 남습니다." });
 await step(admin, { scenario: T1, who: "관리자 PC", title: "연쇄 영향 그림 — 조치 전후", action: "(같은 화면 아래)", result: "사건 현장 → 다음 현장 → 그다음 현장의 위험을 '보고 직후'와 '조치 후'로 나란히 보여 줍니다. 아래 인쇄 증빙(PDF)은 그대로 이어집니다." }, { el: admin.locator('[aria-label="연쇄 영향 그림"]'), top: false });
 await admin.goto(safetyUrl);
-const chk1 = admin.locator(`li[aria-label^="안전점검 "]:has-text("${S.A}")`).first();
-await chk1.waitFor();
-await chk1.locator('button:has-text("적합 (육안)")').click();
-await chk1.locator('[role=status]:has-text("적합(육안 확인)")').waitFor();
-await step(admin, { scenario: T1, who: "관리자 PC", title: "안전관리 — 사진 눈으로 확인", action: "왼쪽 메뉴 '안전관리' → 사진 확인 → '적합 (육안)'", result: "사진만으로 자동 판정하지 않습니다. 관리자가 눈으로 본 결과만 기록하고, 기사 휴대폰에도 결과가 갑니다." }, { el: chk1 });
+for (let k = 0; k < 3; k++) {
+  // 점검마다 화면을 새로 연다 — 확인하면 목록이 다시 그려지고(자동 갱신 포함) 버튼이 바뀌기 때문
+  await admin.goto(safetyUrl);
+  const next = admin.locator(`li[aria-label^="안전점검 "]:has-text("${S.A}"):has(button:has-text("적합 (육안)"))`).first();
+  await next.waitFor();
+  const label = await next.getAttribute("aria-label");
+  const chk = admin.locator(`li[aria-label="${label}"]`);
+  await admin.waitForTimeout(800);
+  await chk.locator('button:has-text("적합 (육안)")').click({ timeout: 15000 });
+  await chk.locator('[role=status]:has-text("적합(육안 확인)")').waitFor();
+}
+await admin.goto(safetyUrl);
+await admin.locator('section[aria-label="현장별 3단계 현황"]').waitFor();
+await step(admin, { scenario: T1, who: "관리자 PC", title: "안전관리 — 3단계 현황 · 사진 눈으로 확인", action: "왼쪽 메뉴 '안전관리' → 사진 확인 → '적합 (육안)' (3건)", result: "위쪽 '현장별 3단계 현황'에 보령 지사의 시작 전 · 진행 중 · 마친 뒤 점검이 모두 '적합(육안 확인)'으로 보입니다. 사진만으로 자동 판정하지 않고, 관리자가 눈으로 본 결과만 기록합니다." }, { el: admin.locator('section[aria-label="현장별 3단계 현황"]'), top: true });
 
 /* ═══════════════ 사례 2 — 안전 미흡 보완 · 연결 끊김 보고 · 장비 지원 · 미해결 유지 ═══════════════ */
 const T2 = "s2";
@@ -226,13 +262,13 @@ await card2.waitFor();
 await card2.locator('button:has-text("업무 확인")').click();
 await m2.locator(`[role=status]:has-text("${S.D} 업무 확인 기록됨")`).waitFor();
 await m2.waitForTimeout(700);
-await m2.locator('section[aria-label="지금 할 일"] button:has-text("안전점검")').click();
+await m2.locator('section[aria-label="지금 할 일"] button:has-text("시작 전 안전점검 하기")').click();
 const sp2 = card2.locator('[aria-label="시작 전 점검"]');
 await sp2.waitFor();
 await sp2.locator('li[aria-label="안전모 착용"] button:text-is("확인")').click();
 await sp2.locator('li[aria-label="안전화 착용"] button:text-is("확인")').click();
 await sp2.locator('li[aria-label="작업구역 표시·통제"] button:text-is("미흡")').click();
-await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "시작 전 점검 — '미흡' 선택", action: "업무 확인 → '안전점검' → 작업구역 표시·통제 '미흡'", result: "빨간 경고가 바로 뜹니다: 프로그램 확인을 기다리지 말고 작업을 멈추고 관리자에게 직접 전화. 이 점검은 기록용입니다." }, { el: sp2.locator("[role=alert]") });
+await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "시작 전 점검 — '미흡' 선택", action: "업무 확인 → '시작 전 안전점검 하기' → 작업구역 표시·통제 '미흡'", result: "빨간 경고가 바로 뜹니다: 프로그램 확인을 기다리지 말고 작업을 멈추고 관리자에게 직접 전화. 이 점검은 기록용입니다." }, { el: sp2.locator("[role=alert]") });
 await sp2.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
 await sp2.locator('ul[aria-label="첨부할 사진"] img').waitFor();
 await sp2.locator('button:has-text("시작 전 점검 제출")').click();
@@ -266,8 +302,7 @@ await step(admin, { scenario: T2, who: "관리자 PC", title: "보완 확인 →
 // 작업 시작 · 연결 끊김 속 보고
 await m2.goto(fieldUrl);
 await card2.waitFor();
-await m2.locator('div.fixed button:has-text("작업 시작")').first().click();
-await m2.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
+await m2.locator('div.fixed button:has-text("작업 시작")').first().click(); // 시작 전 점검(보완 · 조치 완료)이 있어 묻지 않고 기록
 await m2.locator(`[role=status]:has-text("${S.D} 작업 시작 기록됨")`).waitFor();
 await m2.waitForTimeout(800);
 await card2.locator('button:has-text("현장 문제 보고 · 지원 요청")').click();
@@ -329,14 +364,17 @@ await m2.goto(fieldUrl);
 await card2.waitFor();
 await nextMinute();
 await m2.locator('div.fixed button:has-text("작업 종료")').first().click();
-await m2.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 종료")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
+const gate2 = m2.locator('[role=dialog][aria-label="안전점검 확인"]');
+await gate2.waitFor();
+await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "마무리 점검 없이 '작업 종료'를 누르면", action: "아래 고정 '작업 종료'", result: "'마무리 안전점검을 먼저 보내 주세요' 창이 뜨고, 진행 중 점검도 아직 없다고 알려 줍니다. 이 사례에서는 기사가 '점검 없이 종료'를 눌러 봅니다 — 본사에 어떻게 보이는지 확인하려는 것입니다." });
+await gate2.locator('button:has-text("점검 없이 종료")').click();
 await m2.locator(`[role=status]:has-text("${S.D} 작업 종료 기록됨")`).waitFor();
 await m2.locator('nav[aria-label="현장 메뉴"] button:has-text("내 기록")').click();
-await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "작업 종료 · 내 기록", action: "아래 고정 '작업 종료' → 하단 메뉴 '내 기록'", result: "오늘 남긴 기록(시각 · 입력 방식 · 서버 기록), 문제 보고 상태, 안전점검 결과를 한곳에서 봅니다. 프로그램 의견 · 오류도 여기서 보냅니다." });
+await step(m2, { scenario: T2, who: `${NAME.w2} 휴대폰`, title: "작업 종료 · 내 기록", action: "창의 '점검 없이 종료' → 하단 메뉴 '내 기록'", result: "오늘 남긴 기록(시각 · 입력 방식 · 서버 기록), 문제 보고 상태, 안전점검 결과를 한곳에서 봅니다. 프로그램 의견 · 오류도 여기서 보냅니다." });
 
 await admin.goto(dash);
 await admin.locator('[aria-label="오늘 핵심 숫자"]').waitFor();
-await step(admin, { scenario: T2, who: "관리자 PC", title: "하루 마감 — 대시보드", action: "'대시보드'", result: "사례 1은 해결(최근 처리 결과), 사례 2는 미해결 유지(조치 대기)로 남습니다. 안전점검은 둘 다 확인을 마쳤습니다." });
+await step(admin, { scenario: T2, who: "관리자 PC", title: "하루 마감 — 대시보드", action: "'대시보드'", result: "맨 앞 '안전 확인 필요'에 청주 사옥 '마무리 점검 없음'(즉시 확인)과 '진행 중 점검 누락'이 올라옵니다. 사례 1(보령 지사)은 3단계를 모두 내서 뜨지 않습니다. 사례 1 사건은 해결(최근 처리 결과), 사례 2 사건은 미해결 유지(조치 대기)로 남습니다." }, { full: true });
 
 writeFileSync(join(OUT, "steps.json"), JSON.stringify({ date: D, kind: KIND, steps, names: NAME, sites: S, cases: psql(`select string_agg(case_no || ':' || status, ',' order by case_no) from field_cases where work_date = '${D}' and data_kind = '검증 시나리오';`) }, null, 1));
 await bro.close();

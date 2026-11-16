@@ -51,7 +51,7 @@ export default async function PilotLayout({ children }: { children: React.ReactN
       </header>
       <main className="mx-auto max-w-[1320px] px-4 py-5 lg:px-6 lg:py-7">{children}</main>
       <footer className="mx-auto max-w-[1320px] px-4 pt-2 pb-28 text-[13.5px] leading-relaxed text-ink-3 lg:px-6 lg:pb-8 print:hidden">
-        실증 시스템 — 실제 현장 기록을 저장합니다 · 데모 화면과 데이터가 섞이지 않습니다 · 실제 자료로 성능이 검증됐다는 뜻이 아닙니다
+        실증 시스템 — 실제 현장 기록을 저장합니다 · 데모 화면과 데이터가 섞이지 않습니다 · 실제 자료로 성능이 검증됐다는 뜻이 아닙니다 · 화면 버전 {process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
       </footer>
     </div>
   );

@@ -45,6 +45,7 @@ import { DemoPanel } from "@/components/DemoPanel";
 import { FontScalePicker, useFontScale } from "@/components/FontScale";
 import { StoreShell } from "@/components/store/StoreShell";
 import { DeviceSwitcher, FrameBridge, LabShell, LAB_LINKS, isDeviceRoute, isLabRoute, useDeviceMode, useInFrame } from "@/components/lab/LabShell";
+import { APP_VERSION } from "@/lib/lab/version";
 
 interface NavItem {
   href: string;
@@ -384,6 +385,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </>
         )}
       </nav>
+
+      {/* 배포 확인용 — 지금 보고 있는 화면의 버전(package 버전 + 커밋). 보고서의 커밋 번호와 같으면 최신이 반영된 것 */}
+      <p className="shrink-0 px-6 pb-2 text-[13px] font-semibold text-white/40 tabular-nums" aria-label="화면 버전">
+        화면 버전 {APP_VERSION}
+      </p>
 
       {legacyOpen && (
       <div className="relative shrink-0 border-t border-white/8 px-4 py-3">

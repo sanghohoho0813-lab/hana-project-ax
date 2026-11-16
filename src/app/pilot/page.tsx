@@ -10,6 +10,9 @@ export default async function PilotHome() {
         <p className="text-[19px] text-ink-2">
           관리자가 Supabase 주소와 공개 키(NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)를 배포 설정에 넣으면 이 화면이 열립니다. 데모 화면은 그대로 쓸 수 있습니다.
         </p>
+        <p className="rounded-2xl bg-warning-bg px-4 py-3 text-[16px] text-ink-2">
+          화면 코드는 최신으로 배포돼 있습니다 (화면 버전 <b className="tabular-nums">{process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}</b>). 다만 현장 직원 휴대폰 · 관리자 대시보드 · 안전점검 확인 창처럼 실증 시스템 안의 화면은 DB가 연결돼야 보입니다. 그 전까지는 저장소의 화면 캡처(docs/evidence)와 시험 사례 페이지로 확인합니다.
+        </p>
       </div>
     );
   }
