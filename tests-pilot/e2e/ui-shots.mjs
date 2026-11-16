@@ -47,8 +47,19 @@ await snap(m, "m01_field_today");
 const cardA = m.locator(`section[aria-label="${SA} 일정"]`);
 await cardA.locator('button:has-text("업무 확인")').click();
 await m.locator(`[role=status]:has-text("${SA} 업무 확인 기록됨")`).waitFor();
+// 0.6.0 안전 1순위 — 시작 전 안전점검(착용 사진)을 먼저 내고 작업 시작
+await m.evaluate(() => window.scrollTo(0, 0));
+await m.locator('section[aria-label="지금 할 일"] button:has-text("시작 전 안전점검 하기")').click();
+const sp = cardA.locator('[aria-label="시작 전 점검"]');
+await sp.waitFor();
+for (const it of ["안전모 착용", "안전화 착용", "작업구역 표시·통제"]) await sp.locator(`li[aria-label="${it}"] button:text-is("확인")`).click();
+await sp.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
+await sp.locator('ul[aria-label="첨부할 사진"] img').waitFor();
+await sp.scrollIntoViewIfNeeded();
+await snap(m, "m05_safety_check");
+await sp.locator('button:has-text("시작 전 점검 제출")').click();
+await cardA.locator('[aria-label="안전점검"] button:has-text("시작 전 점검") >> text=확인 대기').waitFor({ timeout: 30000 });
 await cardA.locator('button:has-text("작업 시작")').click();
-await m.locator('[role=dialog][aria-label="안전점검 확인"] button:has-text("점검 없이 시작")').click({ timeout: 5000 }).catch(() => {}); // 0.6.0 안전 1순위 확인
 await m.locator(`[role=status]:has-text("${SA} 작업 시작 기록됨")`).waitFor();
 await m.waitForTimeout(1200);
 await m.evaluate(() => window.scrollTo(0, 0));
@@ -72,18 +83,6 @@ await sheet.locator('button:has-text("보고 보내기")').click();
 await cardA.locator('[role=status]:has-text("보고됨")').waitFor({ timeout: 30000 });
 await m.waitForTimeout(800);
 
-// 안전점검 — 첫 화면 빠른 버튼 → 시작 전 점검
-await m.evaluate(() => window.scrollTo(0, 0));
-await m.locator('section[aria-label="지금 할 일"] button:has-text("안전점검")').click();
-const sp = cardA.locator('[aria-label="시작 전 점검"]');
-await sp.waitFor();
-for (const it of ["안전모 착용", "안전화 착용", "작업구역 표시·통제"]) await sp.locator(`li[aria-label="${it}"] button:text-is("확인")`).click();
-await sp.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
-await sp.locator('ul[aria-label="첨부할 사진"] img').waitFor();
-await sp.scrollIntoViewIfNeeded();
-await snap(m, "m05_safety_check");
-await sp.locator('button:has-text("시작 전 점검 제출")').click();
-await cardA.locator('[aria-label="안전점검"] [role=status]').waitFor({ timeout: 30000 });
 
 // ── 본사 PC ──
 await admin.goto(`${APP}/pilot/admin?date=${D}&kind=scenario`);
