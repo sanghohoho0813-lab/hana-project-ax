@@ -56,7 +56,7 @@ export function RiskChain({ links, caseSite, hasAction }: { links: ChainLink[]; 
               </span>
               {l && (
                 <span className="mx-1.5 flex w-16 flex-col items-center sm:w-24">
-                  <span className="text-[11px] font-bold whitespace-nowrap text-ink-3">{now ? now.grade : "—"}</span>
+                  <span className="text-[12px] font-bold whitespace-nowrap text-ink-3">{now ? now.grade : "—"}</span>
                   <span className="flex w-full items-center">
                     <span className={cx("h-1 flex-1 rounded-full", LINE[tone(now?.grade)])} />
                     <ArrowRight size={14} className="-ml-1 text-ink-3" />
@@ -76,10 +76,10 @@ export function RiskChain({ links, caseSite, hasAction }: { links: ChainLink[]; 
               <p className="min-w-0 text-[14.5px] font-bold">
                 {l.from} <span className="text-ink-3">→</span> {l.to}
               </p>
-              <div className="flex flex-wrap items-center gap-1.5 text-[12px] font-bold text-ink-3">
+              <div className="flex flex-wrap items-center gap-1.5 text-[13px] font-bold text-ink-3">
                 보고 직후
                 {l.report ? (
-                  <Pill tone={tone(l.report.grade)} className="!text-[12.5px]">
+                  <Pill tone={tone(l.report.grade)} className="!text-[13.5px]">
                     {l.report.grade}
                     {slackText(l.report)}
                   </Pill>
@@ -89,7 +89,7 @@ export function RiskChain({ links, caseSite, hasAction }: { links: ChainLink[]; 
                 <ArrowRight size={14} />
                 조치 후
                 {l.action ? (
-                  <Pill tone={tone(l.action.grade)} className="!text-[12.5px]">
+                  <Pill tone={tone(l.action.grade)} className="!text-[13.5px]">
                     {l.action.grade}
                     {slackText(l.action)}
                   </Pill>
@@ -97,7 +97,7 @@ export function RiskChain({ links, caseSite, hasAction }: { links: ChainLink[]; 
                   <span className="font-semibold">{hasAction ? "변화 기록 없음" : "조치 전"}</span>
                 )}
               </div>
-              <Pill tone={o.tone} dot={false} className="justify-self-start !text-[12.5px] md:justify-self-end">
+              <Pill tone={o.tone} dot={false} className="justify-self-start !text-[13.5px] md:justify-self-end">
                 {o.text}
               </Pill>
             </li>

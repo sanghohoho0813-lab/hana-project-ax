@@ -67,7 +67,7 @@ const DOT: Record<PillTone, string> = {
 /** 상태 칩 — 색은 뜻대로 (위험 빨강 · 주의 주황 · 정상 초록 · 진행 인디고 · 시험 회청 점선) */
 export function Pill({ tone = "neutral", dot = true, children, className }: { tone?: PillTone; dot?: boolean; children: ReactNode; className?: string }) {
   return (
-    <span className={cx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13.5px] leading-none font-bold whitespace-nowrap", PILL[tone], className)}>
+    <span className={cx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[14.5px] leading-none font-bold whitespace-nowrap", PILL[tone], className)}>
       {dot && <span aria-hidden className={cx("h-1.5 w-1.5 rounded-full", DOT[tone])} />}
       {children}
     </span>
@@ -79,7 +79,7 @@ export function PageHead({ title, sub, right, eyebrow }: { title: ReactNode; sub
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div className="min-w-0">
-        {eyebrow && <p className="text-[13.5px] font-bold tracking-wide text-primary">{eyebrow}</p>}
+        {eyebrow && <p className="text-[14.5px] font-bold tracking-wide text-primary">{eyebrow}</p>}
         <h1 className="text-[26px] leading-tight font-extrabold tracking-[-0.01em] text-ink">{title}</h1>
         {sub && <p className="mt-1 text-[15px] text-ink-3">{sub}</p>}
       </div>
@@ -94,7 +94,7 @@ export function SectionHead({ title, count, right, id }: { title: ReactNode; cou
     <div className="flex items-center justify-between gap-2" id={id}>
       <h2 className="flex items-center gap-2 text-[18px] font-extrabold text-ink">
         {title}
-        {count !== undefined && <span className="rounded-full bg-[#eef0f3] px-2 py-0.5 text-[13px] font-bold text-ink-2 tabular-nums">{count}</span>}
+        {count !== undefined && <span className="rounded-full bg-[#eef0f3] px-2 py-0.5 text-[14px] font-bold text-ink-2 tabular-nums">{count}</span>}
       </h2>
       {right}
     </div>
@@ -114,7 +114,7 @@ export function Stat({ label, value, unit, tone = "neutral", hint, href, ariaLab
         {value}
         {unit && <span className="ml-0.5 text-[16px] font-bold text-ink-3">{unit}</span>}
       </p>
-      {hint && <p className="mt-2 text-[13px] leading-snug text-ink-3">{hint}</p>}
+      {hint && <p className="mt-2 text-[14px] leading-snug text-ink-3">{hint}</p>}
     </>
   );
   const cls = "card block min-w-0 px-4 py-4";
@@ -175,7 +175,7 @@ export function Steps({ items, current, label = "진행 단계" }: { items: stri
       {items.map((x, i) => (
         <li key={x} className="flex min-w-0 flex-1 flex-col gap-1">
           <span className={cx("h-1.5 rounded-full", i < current ? "bg-primary" : i === current ? "bg-primary/45" : "bg-[#e4e7eb]")} />
-          <span className={cx("truncate text-[12px] font-semibold", i <= current ? "text-primary-dark" : "text-ink-3")}>{x}</span>
+          <span className={cx("text-[12.5px] leading-tight font-semibold tracking-tight break-keep", i <= current ? "text-primary-dark" : "text-ink-3")}>{x}</span>
         </li>
       ))}
     </ol>

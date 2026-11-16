@@ -109,7 +109,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
         <h2 className={h2}>사건별 측정 (측정 1~6)</h2>
         {m.measures.length === 0 && <p className="text-[16px] text-ink-3">기간 안의 사건이 없습니다.</p>}
         <table className="w-full min-w-[60rem] text-[14.5px] tabular-nums">
-          <thead className="text-[13.5px] text-ink-3">
+          <thead className="text-[14.5px] text-ink-3">
             <tr>
               {["사건", "자료 구분", "현장기사", "상태", "발견→보고", "보고→확인", "확인→결정", "발생→해결", "보고 영향(계산값)", "조치 재판단(계산값)", "판단 보류", "버전"].map((h) => (
                 <th key={h} className={th}>
@@ -159,7 +159,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
                 {SECTION[x.cls]} — <span className="font-semibold text-ink-2">{x.note}</span>
               </p>
               <table className="w-full min-w-[40rem] text-[15px] tabular-nums">
-                <thead className="text-[13.5px] text-ink-3">
+                <thead className="text-[14.5px] text-ink-3">
                   <tr>
                     <th className={th}>측정</th>
                     <th className={th}>수기</th>
@@ -189,7 +189,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
             </div>
           ))}
         <table className="w-full min-w-[60rem] text-[14px] tabular-nums">
-          <thead className="text-[13px] text-ink-3">
+          <thead className="text-[14px] text-ink-3">
             <tr>
               {["#", "자료 구분", "방식", "시나리오(묶음)", "참가자", "파악(초)", "재판단(초)", "정확/정답", "놓침·오판", "근거", "측정 방법", "입력자 · 서버 시각 · 버전", ""].map((h) => (
                 <th key={h} className={th}>
@@ -237,8 +237,8 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
             const ref = n.ref_note_id ? m.notes.find((o) => o.id === n.ref_note_id) : undefined;
             return (
               <li key={n.id} className="py-1.5">
-                <b>#{n.note_no}</b> <span className="rounded-full bg-[#f2f4f6] px-2 py-0.5 text-[13.5px] font-bold">{n.kind}</span> {n.text}
-                <span className="block text-[13.5px] text-ink-3">
+                <b>#{n.note_no}</b> <span className="rounded-full bg-[#f2f4f6] px-2 py-0.5 text-[14.5px] font-bold">{n.kind}</span> {n.text}
+                <span className="block text-[14.5px] text-ink-3">
                   말한 사람 {n.speaker_id ? names[n.speaker_id] : (n.speaker_name ?? "-")} · {n.confirmation} · 입력 {names[n.actor_id]}({n.source}) · 서버 {kst(n.recorded_at).date} {kst(n.recorded_at).time} · {n.app_version}
                   {n.case_id && ` · 사건 ${m.cases.find((c) => c.id === n.case_id)?.case_no ?? "기간 밖"}`}
                   {n.kind === "개선 반영" && ` · 원래 기록 #${ref?.note_no ?? "?"} · 반영 ${n.dev_date} · 버전 ${n.dev_version}`}

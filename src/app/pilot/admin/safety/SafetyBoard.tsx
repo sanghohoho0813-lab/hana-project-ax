@@ -59,13 +59,13 @@ function Check({ x, names, site }: { x: Item; names: Record<string, string>; sit
     <li className={cx("card space-y-3 p-5", c.deficient.length > 0 && "ring-2 ring-danger/50")} aria-label={`안전점검 ${c.check_no}`}>
       <div className="flex flex-wrap items-center gap-2">
         <Pill tone={TONE[c.review_status]}>{c.review_status}</Pill>
-        <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.check_no}</span>
+        <span className="text-[14px] font-semibold text-ink-3 tabular-nums">{c.check_no}</span>
       </div>
       <div>
         <p className="text-[18px] font-extrabold">
           {site} · {STAGE_LABEL[c.stage]}
         </p>
-        <p className="text-[13.5px] text-ink-3">
+        <p className="text-[14.5px] text-ink-3">
           {names[c.worker_id]} · 점검 {c.checked_at ? kst(c.checked_at).time : "모름"} ({c.check_basis}) · 서버 {kst(c.recorded_at).seconds} · 입력 {names[c.reporter_id]} · {c.app_version}
         </p>
       </div>
@@ -88,7 +88,7 @@ function Check({ x, names, site }: { x: Item; names: Record<string, string>; sit
         <ul className="flex flex-wrap gap-2" aria-label="점검 사진">
           {x.photos.map((p) =>
             p.url && !p.deleted_at ? (
-              <li key={p.id} className="text-[12.5px] text-ink-3">
+              <li key={p.id} className="text-[13.5px] text-ink-3">
                 <a href={p.url} target="_blank" rel="noreferrer">
                   {/* eslint-disable-next-line @next/next/no-img-element -- 비공개 저장소의 서명 주소(10분) */}
                   <img src={p.url} alt="안전점검 사진" className="h-32 w-32 rounded-2xl object-cover" />
@@ -96,7 +96,7 @@ function Check({ x, names, site }: { x: Item; names: Record<string, string>; sit
                 {kst(p.recorded_at).time} · {p.exif_removed ? "촬영정보 제거" : "원본"}
               </li>
             ) : (
-              <li key={p.id} className="rounded-lg bg-[#f2f4f6] p-2 text-[12.5px] text-ink-3">
+              <li key={p.id} className="rounded-lg bg-[#f2f4f6] p-2 text-[13.5px] text-ink-3">
                 삭제됨 · {p.delete_reason}
               </li>
             ),

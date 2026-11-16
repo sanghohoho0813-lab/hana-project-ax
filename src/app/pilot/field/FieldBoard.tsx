@@ -211,7 +211,7 @@ export function FieldBoard({
           <p className="flex items-center gap-2 text-[16.5px] font-extrabold text-warning">
             <WifiOff size={19} /> 전송 대기 {waiting.length}건 — 이 휴대폰에 보관 중
           </p>
-          <p className="mt-1 text-[14.5px] text-ink-2">연결되면 자동으로 다시 보냅니다. 같은 기록이 두 번 저장되지 않습니다. 누른 시각을 기준으로 기록됩니다.</p>
+          <p className="mt-1 text-[15.5px] text-ink-2">연결되면 자동으로 다시 보냅니다. 같은 기록이 두 번 저장되지 않습니다. 누른 시각을 기준으로 기록됩니다.</p>
           <button onClick={() => void flush()} className={cx(btn("white", "md"), "mt-2.5")}>
             <RotateCw size={17} /> 지금 다시 보내기
           </button>
@@ -222,7 +222,7 @@ export function FieldBoard({
           <p className="text-[16px] font-extrabold text-danger">
             {x.siteName} {LABEL[x.kind]} 기록 안 됨 — {x.lastError}
           </p>
-          <p className="mt-1 text-[14.5px] text-ink-2">다시 보내도 같은 결과라 자동 재시도를 멈췄습니다. 내용을 확인한 뒤 지우고, 필요하면 다시 입력하세요.</p>
+          <p className="mt-1 text-[15.5px] text-ink-2">다시 보내도 같은 결과라 자동 재시도를 멈췄습니다. 내용을 확인한 뒤 지우고, 필요하면 다시 입력하세요.</p>
           <button onClick={() => setQueue(removeItem(current(), x.opId))} className={cx(btn("white", "sm"), "mt-2")}>
             이 기록 지우기
           </button>
@@ -238,7 +238,7 @@ export function FieldBoard({
                 { label: "오늘 현장", value: `${active.length}곳` },
                 { label: "작업 종료", value: `${active.filter((c) => progress(c, queue).ended).length}곳`, tone: "success" },
                 { label: "안전점검", value: `${active.reduce((n, c) => n + new Set(c.safety.map((s) => s.c.stage)).size, 0)}/${active.length * 3}`, tone: supplements.length ? "danger" : "info" },
-                { label: "진행 중 요청", value: `${openCases.length}건`, tone: openCases.length ? "warning" : "neutral" },
+                { label: "열린 요청", value: `${openCases.length}건`, tone: openCases.length ? "warning" : "neutral" },
               ]}
             />
           )}
@@ -289,7 +289,7 @@ export function FieldBoard({
         {tab === "today" && cur && curState && (
           <div className="mx-auto flex max-w-[40rem] items-center gap-3 px-4 pt-2.5">
             <div className="min-w-0 flex-1">
-              <p className="text-[12.5px] font-semibold text-ink-3">지금 현장 · {cur.phase}</p>
+              <p className="text-[14px] font-semibold text-ink-3">지금 현장 · {cur.phase}</p>
               <p className="truncate text-[16.5px] font-extrabold">{cur.siteName}</p>
             </div>
             {!curState.started ? (
@@ -314,10 +314,10 @@ export function FieldBoard({
             const Icon = t.icon;
             const badge = t.key === "report" ? openCases.length : t.key === "safety" ? supplements.length : 0;
             return (
-              <button key={t.key} onClick={() => setTab(t.key)} aria-current={on ? "page" : undefined} className={cx("relative flex min-h-[3.75rem] flex-col items-center justify-center gap-1 text-[12.5px] font-bold", on ? "text-primary" : "text-ink-3")}>
+              <button key={t.key} onClick={() => setTab(t.key)} aria-current={on ? "page" : undefined} className={cx("relative flex min-h-[3.75rem] flex-col items-center justify-center gap-1 text-[14px] font-bold", on ? "text-primary" : "text-ink-3")}>
                 <Icon size={22} strokeWidth={on ? 2.4 : 2} aria-hidden />
                 {t.label}
-                {badge > 0 && <span className="absolute top-1.5 left-[calc(50%+6px)] min-w-[1.15rem] rounded-full bg-danger px-1 text-[11px] leading-[1.15rem] text-white tabular-nums">{badge}</span>}
+                {badge > 0 && <span className="absolute top-1.5 left-[calc(50%+6px)] min-w-[1.15rem] rounded-full bg-danger px-1 text-[12.5px] leading-[1.15rem] text-white tabular-nums">{badge}</span>}
               </button>
             );
           })}
@@ -351,7 +351,7 @@ function Hero({
   if (!isToday)
     return (
       <section aria-label="지금 할 일" className="rounded-[24px] bg-white p-5 shadow-[var(--shadow-card)]">
-        <p className="text-[13.5px] font-bold text-primary">{date} 일정 보기</p>
+        <p className="text-[15px] font-bold text-primary">{date} 일정 보기</p>
         <p className="mt-1 text-[17px] font-bold text-ink-2">작업 시작 · 종료는 그날에만 누를 수 있습니다. 놓친 시각은 카드의 &lsquo;사후 입력&rsquo;으로 남기세요.</p>
       </section>
     );
@@ -365,15 +365,15 @@ function Hero({
       </section>
     );
   const next = !curState.started ? "현장에 도착하면 작업 시작을 누르세요." : "작업이 끝나면 작업 종료를 누르세요. 끝나는 시각이 바뀌면 예상 종료를 보내세요.";
-  const quickBase = "flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[14.5px] font-bold transition-colors active:scale-[0.98]";
+  const quickBase = "flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[15.5px] font-bold transition-colors active:scale-[0.98]";
   const quick = `${quickBase} bg-white/15 text-white ring-1 ring-white/20 hover:bg-white/25`;
   return (
     <section aria-label="지금 할 일" className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#4f46e5] to-[#3730a3] p-5 text-white shadow-[0_18px_40px_-18px_rgba(79,70,229,0.7)]">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[13.5px] font-bold text-white/80">
+        <p className="text-[15px] font-bold text-white/80">
           지금 할 일 · {index}/{total}번째 현장
         </p>
-        <span className="rounded-full bg-white/15 px-2.5 py-1 text-[12.5px] font-bold">{cur.phase}</span>
+        <span className="rounded-full bg-white/15 px-2.5 py-1 text-[14px] font-bold">{cur.phase}</span>
       </div>
       <p className="mt-2 text-[25px] leading-tight font-extrabold tracking-[-0.01em]">{cur.siteName}</p>
       <p className="mt-0.5 text-[15px] text-white/80 tabular-nums">
@@ -385,7 +385,7 @@ function Hero({
       <div className="mt-3 grid grid-cols-3 gap-2">
         <button onClick={() => onGo(cur.id, "report")} className={`${quickBase} bg-white text-danger shadow-sm hover:bg-[#fff5f5]`}>
           <AlertTriangle size={22} /> 문제 보고
-          <span className="text-[11.5px] font-semibold text-ink-3">· 지원 요청</span>
+          <span className="text-[12.5px] font-semibold text-ink-3">· 지원 요청</span>
         </button>
         <button onClick={() => onGo(cur.id, "photo")} className={quick}>
           <Camera size={22} /> 사진 첨부
@@ -405,7 +405,7 @@ function Summary({ items }: { items: { label: string; value: string; tone?: Pill
       {items.map((x) => (
         <div key={x.label} className="rounded-2xl bg-white px-2 py-3 text-center shadow-[var(--shadow-card)]">
           <p className={cx("text-[19px] leading-none font-extrabold tabular-nums", color(x.tone))}>{x.value}</p>
-          <p className="mt-1.5 text-[12px] font-semibold text-ink-3">{x.label}</p>
+          <p className="mt-1.5 text-[13.5px] font-semibold text-ink-3">{x.label}</p>
         </div>
       ))}
     </div>
@@ -435,7 +435,7 @@ function Messages({
                 <HardHat size={18} />
               </span>
               <span className="min-w-0">
-                <span className="block text-[13px] font-bold text-danger">{card.siteName} · 안전점검 보완 요청</span>
+                <span className="block text-[14.5px] font-bold text-danger">{card.siteName} · 안전점검 보완 요청</span>
                 <span className="block text-[15px] font-semibold text-ink">{x.reviews.filter((r) => r.source === "관리자" && r.message).at(-1)?.message ?? STAGE_LABEL[x.c.stage]}</span>
               </span>
             </button>
@@ -448,7 +448,7 @@ function Messages({
                 <Megaphone size={18} />
               </span>
               <span className="min-w-0">
-                <span className="block text-[13px] font-bold text-ink-3">
+                <span className="block text-[14.5px] font-bold text-ink-3">
                   {card.siteName} · {x.c.case_no} · {STATUS_TEXT[x.c.status]}
                 </span>
                 <span className="block text-[15px] font-semibold text-ink">
@@ -512,11 +512,11 @@ function Card({
           {ended ? <CheckCircle2 size={18} /> : index}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[14.5px] font-semibold text-ink-3 tabular-nums">
+          <p className="text-[15.5px] font-semibold text-ink-3 tabular-nums">
             {c.plannedStart} ~ {c.plannedEnd}
           </p>
           <h2 className="text-[21px] leading-tight font-extrabold">{c.siteName}</h2>
-          {c.region && <p className="text-[14px] text-ink-3">{c.region}</p>}
+          {c.region && <p className="text-[15px] text-ink-3">{c.region}</p>}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <Pill tone={PHASE_TONE[c.phase]}>{c.status === "취소" ? "취소된 일정" : c.phase}</Pill>
@@ -524,7 +524,7 @@ function Card({
         </div>
       </div>
       {(c.travelMinutes !== null || c.note) && (
-        <p className="rounded-xl bg-[#f7f8fa] px-3 py-2 text-[14.5px] text-ink-2">
+        <p className="rounded-xl bg-[#f7f8fa] px-3 py-2 text-[15.5px] text-ink-2">
           {c.travelMinutes !== null && `이동 ${c.travelMinutes}분${c.travelFrom ? ` (${c.travelFrom}에서)` : ""}`}
           {c.travelMinutes !== null && c.note && " · "}
           {c.note}
@@ -536,7 +536,7 @@ function Card({
           {flow.map((f, i) => (
             <div key={f.k} className="flex flex-1 items-center gap-1.5">
               <span className={cx("h-1.5 flex-1 rounded-full", f.on ? "bg-primary" : "bg-[#e4e7eb]")} />
-              <span className={cx("text-[12px] font-bold", f.on ? "text-primary-dark" : "text-ink-3")}>{f.k}</span>
+              <span className={cx("text-[13.5px] font-bold", f.on ? "text-primary-dark" : "text-ink-3")}>{f.k}</span>
               {i < flow.length - 1 && <span className="w-0.5" />}
             </div>
           ))}
@@ -556,17 +556,17 @@ function Card({
               ) : (
                 <b className="tabular-nums">{s.time}</b>
               )}{" "}
-              <span className="text-[13px] text-ink-3">
+              <span className="text-[14.5px] text-ink-3">
                 · {s.entryMode}
                 {!s.mine && " · 관리자 입력"}
                 {s.replaced && ` · ${s.replaced}됨`}
               </span>
               {s.mine && !s.replaced && active && s.kind !== "예상 종료 보고" && !(s.kind === "작업개시" && endActive) && (
                 <span className="ml-1 inline-flex gap-1 no-underline">
-                  <button onClick={() => setFix(fix === s.id ? null : s.id)} className="min-h-[2rem] rounded-lg bg-white px-2.5 text-[13.5px] font-bold text-primary-dark ring-1 ring-line">
+                  <button onClick={() => setFix(fix === s.id ? null : s.id)} className="min-h-[2rem] rounded-lg bg-white px-2.5 text-[15px] font-bold text-primary-dark ring-1 ring-line">
                     시각 정정
                   </button>
-                  <button onClick={() => onTap({ kind: "기록 무효", mode: "즉시", voidsEventId: s.id })} className="min-h-[2rem] rounded-lg bg-white px-2.5 text-[13.5px] font-bold text-danger ring-1 ring-line">
+                  <button onClick={() => onTap({ kind: "기록 무효", mode: "즉시", voidsEventId: s.id })} className="min-h-[2rem] rounded-lg bg-white px-2.5 text-[15px] font-bold text-danger ring-1 ring-line">
                     잘못 누름
                   </button>
                 </span>
@@ -661,7 +661,7 @@ function ReportTab({ cards, isToday, userId, scenario, queue }: { cards: FieldCa
     <div className="space-y-3">
       <div>
         <h2 className="text-[20px] font-extrabold">문제 보고 · 지원 요청</h2>
-        <p className="text-[14.5px] text-ink-3">문제가 생긴 현장에서 보고하세요. 단계대로 고르기만 하면 됩니다. 본사 조치 결과도 여기서 봅니다.</p>
+        <p className="text-[15.5px] text-ink-3">문제가 생긴 현장에서 보고하세요. 단계대로 고르기만 하면 됩니다. 본사 조치 결과도 여기서 봅니다.</p>
       </div>
       {list.length === 0 ? (
         <Empty icon={<AlertTriangle size={22} />} title="보고할 현장이 없습니다." />
@@ -672,7 +672,7 @@ function ReportTab({ cards, isToday, userId, scenario, queue }: { cards: FieldCa
             <section key={c.id} aria-label={`${c.siteName} 문제·지원`} className="card space-y-3 p-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[13.5px] font-semibold text-ink-3 tabular-nums">
+                  <p className="text-[15px] font-semibold text-ink-3 tabular-nums">
                     {c.plannedStart} ~ {c.plannedEnd}
                   </p>
                   <p className="truncate text-[18px] font-extrabold">{c.siteName}</p>
@@ -687,7 +687,7 @@ function ReportTab({ cards, isToday, userId, scenario, queue }: { cards: FieldCa
                 target={{ scheduleId: c.id, siteName: c.siteName, plannedEnd: c.plannedEnd, currentEnd: c.currentEnd, started: p.started }}
                 focus={null}
               />
-              {c.cases.length === 0 && !(c.status === "예정" && isToday) && <p className="text-[14px] text-ink-3">보고 기록이 없습니다.</p>}
+              {c.cases.length === 0 && !(c.status === "예정" && isToday) && <p className="text-[15px] text-ink-3">보고 기록이 없습니다.</p>}
             </section>
           );
         })
@@ -704,12 +704,12 @@ function SafetyTab({ cards, isToday, userId }: { cards: FieldCard[]; isToday: bo
     <div className="space-y-3">
       <div>
         <h2 className="text-[20px] font-extrabold">안전점검</h2>
-        <p className="text-[14.5px] text-ink-3">현장마다 시작 전 · 진행 중 · 마친 뒤 착용 사진을 보내 주세요. 관리자가 사진을 눈으로 확인합니다.</p>
+        <p className="text-[15.5px] text-ink-3">현장마다 시작 전 · 진행 중 · 마친 뒤 착용 사진을 보내 주세요. 관리자가 사진을 눈으로 확인합니다.</p>
       </div>
       {total > 0 && (
         <div className="card p-4">
           <div className="flex items-baseline justify-between">
-            <p className="text-[14.5px] font-bold text-ink-2">오늘 점검 진행</p>
+            <p className="text-[15.5px] font-bold text-ink-2">오늘 점검 진행</p>
             <p className="text-[20px] font-extrabold text-primary tabular-nums">
               {done}/{total}
             </p>
@@ -725,7 +725,7 @@ function SafetyTab({ cards, isToday, userId }: { cards: FieldCard[]; isToday: bo
         cards.map((c) => (
           <section key={c.id} aria-label={`${c.siteName} 안전`} className="card space-y-3 p-4">
             <div className="min-w-0">
-              <p className="text-[13.5px] font-semibold text-ink-3 tabular-nums">
+              <p className="text-[15px] font-semibold text-ink-3 tabular-nums">
                 {c.plannedStart} ~ {c.plannedEnd}
               </p>
               <p className="truncate text-[18px] font-extrabold">{c.siteName}</p>
@@ -761,7 +761,7 @@ function RecordsTab({ cards }: { cards: FieldCard[] }) {
                     {c.siteName} · {LABEL[s.kind]}
                     {s.kind === "예상 종료 보고" && s.expectedEnd && ` ${s.expectedEnd}`}
                   </span>
-                  <span className="block text-[12.5px] text-ink-3">
+                  <span className="block text-[14px] text-ink-3">
                     {s.entryMode} · 서버 기록 {s.recordedAt}
                     {!s.mine && " · 관리자 입력"}
                     {s.replaced && ` · ${s.replaced}됨`}
@@ -776,7 +776,7 @@ function RecordsTab({ cards }: { cards: FieldCard[] }) {
       <section className="space-y-2" aria-label="내 문제 보고">
         <SectionHead title="문제 보고" count={cases.length} />
         {cases.length === 0 ? (
-          <p className="rounded-2xl bg-white px-4 py-3 text-[14.5px] text-ink-3">보고한 문제가 없습니다.</p>
+          <p className="rounded-2xl bg-white px-4 py-3 text-[15.5px] text-ink-3">보고한 문제가 없습니다.</p>
         ) : (
           <ul className="card divide-y divide-line px-4">
             {cases.map(({ c, x }) => (
@@ -785,7 +785,7 @@ function RecordsTab({ cards }: { cards: FieldCard[] }) {
                   <span className="block truncate text-[15px] font-bold">
                     {c.siteName} · {x.c.issue_type}
                   </span>
-                  <span className="block text-[12.5px] text-ink-3 tabular-nums">{x.c.case_no}</span>
+                  <span className="block text-[14px] text-ink-3 tabular-nums">{x.c.case_no}</span>
                 </span>
                 <Pill tone={isOpen(x.c) ? "warning" : x.c.status === "해결" ? "success" : "neutral"}>{STATUS_TEXT[x.c.status]}</Pill>
               </li>
@@ -797,7 +797,7 @@ function RecordsTab({ cards }: { cards: FieldCard[] }) {
       <section className="space-y-2" aria-label="내 안전점검">
         <SectionHead title="안전점검" count={checks.length} />
         {checks.length === 0 ? (
-          <p className="rounded-2xl bg-white px-4 py-3 text-[14.5px] text-ink-3">제출한 점검이 없습니다.</p>
+          <p className="rounded-2xl bg-white px-4 py-3 text-[15.5px] text-ink-3">제출한 점검이 없습니다.</p>
         ) : (
           <ul className="card divide-y divide-line px-4">
             {checks.map(({ c, x }) => (
@@ -806,7 +806,7 @@ function RecordsTab({ cards }: { cards: FieldCard[] }) {
                   <span className="block truncate text-[15px] font-bold">
                     {c.siteName} · {STAGE_LABEL[x.c.stage]}
                   </span>
-                  <span className="block text-[12.5px] text-ink-3 tabular-nums">
+                  <span className="block text-[14px] text-ink-3 tabular-nums">
                     {x.c.check_no} · {kst(x.c.recorded_at).time} 제출
                   </span>
                 </span>
@@ -842,7 +842,7 @@ function TimeSend({ label, defaultValue, button, onSend }: { label: string; defa
   return (
     <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2 no-underline">
       <label className="block min-w-0">
-        <span className="mb-1 block text-[13.5px] font-bold text-ink-3">{label}</span>
+        <span className="mb-1 block text-[15px] font-bold text-ink-3">{label}</span>
         <input type="time" value={t} onChange={(e) => setT(e.target.value)} className="min-h-[3.25rem] w-full rounded-2xl bg-white px-3 text-[19px] tabular-nums ring-1 ring-line outline-none focus:ring-2 focus:ring-primary" />
       </label>
       <button onClick={() => /^\d{2}:\d{2}$/.test(t) && onSend(t)} className={btn("soft", "lg")}>
@@ -858,7 +858,7 @@ function LateEntry({ steps, onSend }: { steps: PilotEventKind[]; onSend: (k: Pil
   if (steps.length === 0) return null;
   return (
     <div className="mt-2 space-y-3 rounded-2xl bg-[#f7f8fa] p-3.5">
-      <p className="text-[14.5px] text-ink-2">실제로 있었던 시각을 넣으세요. &lsquo;사후 입력&rsquo;으로 표시되어 즉시 기록과 구분됩니다.</p>
+      <p className="text-[15.5px] text-ink-2">실제로 있었던 시각을 넣으세요. &lsquo;사후 입력&rsquo;으로 표시되어 즉시 기록과 구분됩니다.</p>
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="사후 입력할 단계">
         {steps.map((k) => (
           <button key={k} onClick={() => setKind(k)} aria-pressed={kind === k} className={cx("min-h-[2.75rem] rounded-xl px-3.5 text-[15.5px] font-bold", kind === k ? "bg-ink text-white" : "bg-white text-ink-2 ring-1 ring-line")}>
@@ -868,7 +868,7 @@ function LateEntry({ steps, onSend }: { steps: PilotEventKind[]; onSend: (k: Pil
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
         <label className="block min-w-0">
-          <span className="mb-1 block text-[13.5px] font-bold text-ink-3">실제 시각</span>
+          <span className="mb-1 block text-[15px] font-bold text-ink-3">실제 시각</span>
           <input type="time" value={t} onChange={(e) => setT(e.target.value)} aria-label="실제 시각" className="min-h-[3.25rem] w-full rounded-2xl bg-white px-3 text-[19px] ring-1 ring-line outline-none focus:ring-2 focus:ring-primary" />
         </label>
         <button disabled={!/^\d{2}:\d{2}$/.test(t)} onClick={() => onSend(kind, t)} className={btn("primary", "lg")}>

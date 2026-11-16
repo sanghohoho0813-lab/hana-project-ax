@@ -83,7 +83,7 @@ export default async function JudgmentPage({ params }: { params: Promise<{ id: s
     // print-area: 공용 인쇄 규칙(globals.css)은 이 영역만 인쇄한다 — 없으면 PDF가 빈 쪽으로 나온다
     <div className="print-area space-y-5" aria-label="위험 판단 기록">
       <div>
-        <p className="text-[13.5px] font-bold tracking-wide text-primary print:hidden">기록·판단 이력</p>
+        <p className="text-[14.5px] font-bold tracking-wide text-primary print:hidden">기록·판단 이력</p>
         <h1 className="text-[26px] leading-tight font-extrabold">
           위험 판단 번호 {j.seq} <span className="text-[17px] font-semibold text-ink-3">{j.work_date} · {j.data_kind}</span>
         </h1>
@@ -109,7 +109,7 @@ export default async function JudgmentPage({ params }: { params: Promise<{ id: s
           <Item k="연쇄위험 규칙 버전" v={j.rule_version} />
           <Item k="상태편차 · 우선순위 버전" v={`${j.state_version} · ${j.priority_version}`} />
           <Item k="프로그램 버전" v={j.app_version} />
-          <Item k="판단 원문 해시 (SHA-256)" v={<span className="text-[13px]">{j.payload_sha256}</span>} />
+          <Item k="판단 원문 해시 (SHA-256)" v={<span className="text-[14px]">{j.payload_sha256}</span>} />
         </dl>
         <p className={`rounded-xl px-3.5 py-2 text-[16.5px] font-semibold ${check.checked && check.before && check.after ? "bg-success-bg text-success" : "bg-warning-bg text-warning"}`}>
           재계산 확인: {check.reason}

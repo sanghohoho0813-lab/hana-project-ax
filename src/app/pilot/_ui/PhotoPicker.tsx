@@ -84,7 +84,7 @@ export function PhotoPicker({
           {title}
           {required && <span className="ml-1 text-danger">필수</span>}
         </p>
-        <p className="text-[13.5px] font-semibold text-ink-3 tabular-nums">
+        <p className="text-[15px] font-semibold text-ink-3 tabular-nums">
           {items.length}/{max}장{done > 0 && ` · 올림 ${done}`}
           {failed > 0 && <span className="text-danger"> · 실패 {failed}</span>}
         </p>
@@ -107,7 +107,7 @@ export function PhotoPicker({
               <img src={p.preview} alt={`첨부 사진 ${i + 1}`} className={cx("aspect-square w-full object-cover", p.status === "올리는 중" && "opacity-60")} />
               <span
                 className={cx(
-                  "absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold text-white",
+                  "absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[13.5px] font-bold text-white",
                   p.status === "실패" ? "bg-danger" : p.status === "완료" ? "bg-success" : p.status === "올리는 중" ? "bg-primary" : "bg-ink/70",
                 )}
               >
@@ -128,8 +128,8 @@ export function PhotoPicker({
           ))}
         </ul>
       )}
-      {failed > 0 && <p className="text-[13.5px] font-semibold text-danger">실패한 사진은 아래 버튼을 다시 누르면 그 사진만 다시 올립니다.</p>}
-      {hint && <p className="text-[13px] text-ink-3">{hint}</p>}
+      {failed > 0 && <p className="text-[15px] font-semibold text-danger">실패한 사진은 아래 버튼을 다시 누르면 그 사진만 다시 올립니다.</p>}
+      {hint && <p className="text-[14.5px] text-ink-3">{hint}</p>}
     </div>
   );
 }

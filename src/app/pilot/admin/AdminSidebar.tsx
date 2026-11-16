@@ -51,7 +51,7 @@ export function AdminSidebar() {
       {/* PC: 왼쪽 고정 메뉴 */}
       <nav aria-label="관리자 메뉴" className="sticky top-[4.5rem] hidden space-y-1 self-start lg:block print:hidden">
         {MAIN.map((x) => item(x, false))}
-        <p className="px-3 pt-5 pb-1 text-[12.5px] font-bold tracking-wide text-ink-3">더보기</p>
+        <p className="px-3 pt-5 pb-1 text-[13.5px] font-bold tracking-wide text-ink-3">더보기</p>
         {MORE.map((x) => item(x, false))}
       </nav>
       {/* 모바일 · 태블릿: 위쪽 가로 메뉴 */}

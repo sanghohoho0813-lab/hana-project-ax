@@ -54,7 +54,7 @@ export function SafetyPanel({ userId, scheduleId, checks, canCheck, openSignal =
     <div className="space-y-3 rounded-2xl bg-[#f7f8fa] p-3.5" aria-label="안전점검">
       <p className="flex items-center gap-2 text-[16px] font-extrabold">
         <HardHat size={19} className="text-primary" /> 안전점검
-        <span className="ml-auto text-[13px] font-semibold text-ink-3">{SAFETY_STAGES.filter((s) => latest(s)).length}/3 단계</span>
+        <span className="ml-auto text-[14.5px] font-semibold text-ink-3">{SAFETY_STAGES.filter((s) => latest(s)).length}/3 단계</span>
       </p>
       <div className="grid grid-cols-3 gap-2">
         {SAFETY_STAGES.map((s) => {
@@ -66,12 +66,12 @@ export function SafetyPanel({ userId, scheduleId, checks, canCheck, openSignal =
               onClick={() => (setNotice(null), setStage(stage === s ? null : s))}
               aria-pressed={stage === s}
               className={cx(
-                "flex min-h-[4.25rem] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white px-1 text-[14.5px] font-bold transition-shadow disabled:opacity-40",
+                "flex min-h-[4.25rem] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white px-1 text-[15.5px] font-bold transition-shadow disabled:opacity-40",
                 stage === s ? "ring-2 ring-primary" : "ring-1 ring-line",
               )}
             >
               {STAGE_LABEL[s]}
-              {l ? <Pill tone={TONE[l.c.review_status]} className="!text-[11.5px]">{l.c.review_status}</Pill> : <Pill tone="neutral" dot={false} className="!text-[11.5px]">미점검</Pill>}
+              {l ? <Pill tone={TONE[l.c.review_status]} className="!text-[12.5px]">{l.c.review_status}</Pill> : <Pill tone="neutral" dot={false} className="!text-[12.5px]">미점검</Pill>}
             </button>
           );
         })}
@@ -87,7 +87,7 @@ export function SafetyPanel({ userId, scheduleId, checks, canCheck, openSignal =
           {checks
             .filter((x) => x.c.stage === stage)
             .map((x) => (
-              <p key={x.c.id} className="rounded-xl bg-white px-3 py-2 text-[13.5px] text-ink-2">
+              <p key={x.c.id} className="rounded-xl bg-white px-3 py-2 text-[15px] text-ink-2">
                 {x.c.check_no} · {kst(x.c.recorded_at).time} 제출 · {x.c.review_status}
                 {x.c.deficient.length > 0 && ` · 미흡 ${x.c.deficient.map(itemLabel).join(", ")}`}
                 {x.reviews.filter((r) => r.source === "관리자").map((r) => ` · 본사 ${r.kind}${r.result ? ` ${r.result}` : ""}${r.message ? `: ${r.message}` : ""}`)}
@@ -154,7 +154,7 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
           <li key={it.key} className="space-y-2 py-2.5 first:pt-0" aria-label={it.label}>
             <span className="block text-[15.5px] font-bold">
               {it.label}
-              {it.required && <span className="ml-1 text-[12.5px] text-danger">필수</span>}
+              {it.required && <span className="ml-1 text-[14px] text-danger">필수</span>}
             </span>
             <div className="grid grid-cols-3 gap-1.5">
               {(["확인", "해당 없음", "미흡"] as SafetyAnswer[]).map((a) => (

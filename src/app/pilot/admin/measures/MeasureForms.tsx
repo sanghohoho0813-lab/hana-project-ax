@@ -280,7 +280,7 @@ export function VoidTrialButton({ id }: { id: string }) {
   const router = useRouter();
   return (
     <button
-      className="rounded-lg bg-[#f2f4f6] px-2 py-1 text-[13.5px] font-bold text-danger"
+      className="rounded-lg bg-[#f2f4f6] px-2 py-1 text-[14.5px] font-bold text-danger"
       onClick={async () => {
         const reason = window.prompt("무효 사유 (기록은 지우지 않고 무효로 남깁니다)");
         if (!reason) return;

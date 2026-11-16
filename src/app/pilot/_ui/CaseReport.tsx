@@ -190,7 +190,7 @@ export function CaseReport({
             ))}
           </Group>
           <div className="mt-3 space-y-2" role="group" aria-label="문제 발견시각">
-            <span className="block text-[14px] font-bold text-ink-3">문제를 처음 발견한 시각</span>
+            <span className="block text-[15px] font-bold text-ink-3">문제를 처음 발견한 시각</span>
             <div className="flex flex-wrap gap-2">
               {!proxy && (
                 <button type="button" className={chip(disc.basis === "보고와 같은 시각")} onClick={() => setDisc({ basis: "보고와 같은 시각", time: "" })}>
@@ -266,7 +266,7 @@ export function CaseReport({
                 className="min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[19px] tabular-nums outline-none focus:ring-2 focus:ring-primary"
               />
             )}
-            <p className={cx("rounded-xl px-3 py-2 text-[14.5px] font-semibold", end ? "bg-danger-bg text-danger" : "bg-[#f3f4f6] text-ink-3")}>
+            <p className={cx("rounded-xl px-3 py-2 text-[15.5px] font-semibold", end ? "bg-danger-bg text-danger" : "bg-[#f3f4f6] text-ink-3")}>
               {end ? `→ ${end} 종료 예상 · 이 값으로 다음 현장 도착·위험을 다시 계산합니다` : "예상 종료를 모르면 보고만 남고 위험 판단은 바뀌지 않습니다"}
             </p>
           </div>
@@ -286,7 +286,7 @@ export function CaseReport({
 
       <Step n={6} title="확인하고 보내기" done={done[5]}>
         <fieldset disabled={!!saved} className="space-y-3">
-          <dl className="grid grid-cols-[5.5rem_1fr] gap-x-2 gap-y-1 text-[14.5px]">
+          <dl className="grid grid-cols-[5.5rem_1fr] gap-x-2 gap-y-1 text-[15.5px]">
             <dt className="text-ink-3">현장</dt>
             <dd className="font-semibold">{target.siteName}</dd>
             <dt className="text-ink-3">문제</dt>
@@ -301,15 +301,15 @@ export function CaseReport({
           {proxy && (
             <div className="grid gap-2 rounded-2xl bg-[#f7f8fa] p-3 sm:grid-cols-2">
               <label>
-                <span className="block text-[14px] font-bold text-ink-3">현장에서 본사에 보고한 시각</span>
+                <span className="block text-[15px] font-bold text-ink-3">현장에서 본사에 보고한 시각</span>
                 <input type="time" aria-label="보고 시각" value={rep.time} onChange={(e) => setRep({ ...rep, time: e.target.value })} className="min-h-[2.8rem] w-full rounded-xl bg-white px-3 text-[17px] ring-1 ring-line" />
               </label>
               <div>
-                <span className="block text-[14px] font-bold text-ink-3">보고 시각 근거</span>
+                <span className="block text-[15px] font-bold text-ink-3">보고 시각 근거</span>
                 <Basis value={rep.basis} onChange={(b) => setRep({ ...rep, basis: b })} />
               </div>
               <label>
-                <span className="block text-[14px] font-bold text-ink-3">자료 출처</span>
+                <span className="block text-[15px] font-bold text-ink-3">자료 출처</span>
                 <select value={info} onChange={(e) => setInfo(e.target.value)} aria-label="자료 출처" className="min-h-[2.8rem] w-full rounded-xl bg-white px-2 text-[16px] ring-1 ring-line">
                   {INFO_SOURCES.filter((x) => x !== "현장기사 앱").map((x) => (
                     <option key={x}>{x}</option>
@@ -337,7 +337,7 @@ export function CaseReport({
                 aria-label="원자료 이름"
                 className="min-h-[3rem] w-full rounded-2xl bg-[#f3f4f6] px-4 text-[16px] outline-none focus:ring-2 focus:ring-primary"
               />
-              <p className="text-[13.5px] text-ink-3">실제 과거 현장의 원자료가 있을 때만 고릅니다. 원자료가 없는 시험·연습은 가상 시나리오입니다.</p>
+              <p className="text-[15px] text-ink-3">실제 과거 현장의 원자료가 있을 때만 고릅니다. 원자료가 없는 시험·연습은 가상 시나리오입니다.</p>
             </div>
           )}
         </fieldset>
@@ -379,7 +379,7 @@ export function CaseReport({
       <header className="shrink-0 space-y-3 bg-white px-4 pt-[max(12px,env(safe-area-inset-top))] pb-3 shadow-[0_1px_0_#e7e9ee]">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[13px] font-bold text-danger">현장 문제 보고 · 지원 요청</p>
+            <p className="text-[14.5px] font-bold text-danger">현장 문제 보고 · 지원 요청</p>
             <p className="truncate text-[19px] font-extrabold">{target.siteName}</p>
           </div>
           <button onClick={onCancel} disabled={busy} aria-label="보고 닫기" className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eef0f3] text-ink-2">
@@ -398,11 +398,11 @@ function Step({ n, title, hint, done, children, anchor }: { n: number; title: st
   return (
     <section ref={anchor} className="scroll-mt-4 rounded-[20px] bg-white p-4" aria-label={`${n}단계 ${title}`}>
       <div className="mb-3 flex items-center gap-2.5">
-        <span className={cx("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[14px] font-extrabold", done ? "bg-primary text-white" : "bg-[#eef0f3] text-ink-2")}>
+        <span className={cx("flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[15px] font-extrabold", done ? "bg-primary text-white" : "bg-[#eef0f3] text-ink-2")}>
           {done ? "✓" : n}
         </span>
         <h3 className="text-[17px] font-extrabold">{title}</h3>
-        {hint && <span className="ml-auto text-[13px] font-semibold text-ink-3">{hint}</span>}
+        {hint && <span className="ml-auto text-[14.5px] font-semibold text-ink-3">{hint}</span>}
       </div>
       {children}
     </section>
@@ -428,7 +428,7 @@ export function Basis({ value, onChange }: { value: string; onChange: (b: string
           aria-checked={value === b}
           key={b}
           onClick={() => onChange(b)}
-          className={cx("min-h-[2.5rem] rounded-full px-3 text-[14px] font-bold", value === b ? "bg-ink text-white" : "bg-[#eef0f3] text-ink-2")}
+          className={cx("min-h-[2.5rem] rounded-full px-3 text-[15px] font-bold", value === b ? "bg-ink text-white" : "bg-[#eef0f3] text-ink-2")}
         >
           {b}
         </button>

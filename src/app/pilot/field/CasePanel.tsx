@@ -131,11 +131,11 @@ function MyCase({ userId, x, target, onNotice, photoSignal }: { userId: string; 
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
         <Pill tone={TONE[c.status]}>{STATUS_TEXT[c.status]}</Pill>
         {c.urgency === "긴급" && <Pill tone="danger">긴급</Pill>}
-        <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
+        <span className="text-[14.5px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
       </div>
       <div>
         <p className="text-[17px] font-extrabold">{c.issue_type}</p>
-        <p className="text-[14.5px] text-ink-3">
+        <p className="text-[15.5px] text-ink-3">
           보고 {hm(c.reported_at)} · 발견 {c.discovered_at ? hm(c.discovered_at) : "모름"}
           {c.expected_end && ` · 예상 종료 ${c.expected_end.slice(0, 5)}`}
           {c.needs.length > 0 && ` · 요청 ${c.needs.join(", ")}`}
@@ -150,7 +150,7 @@ function MyCase({ userId, x, target, onNotice, photoSignal }: { userId: string; 
                 본사 {s.kind}
                 {s.action && ` — ${s.action}`}
                 {s.assignee_name && ` — ${s.assignee_name}`}
-                {s.message && `: ${s.message}`} <span className="text-[12.5px] font-normal text-ink-3">({hm(s.occurred_at)})</span>
+                {s.message && `: ${s.message}`} <span className="text-[14px] font-normal text-ink-3">({hm(s.occurred_at)})</span>
               </span>
             </li>
           ))}
@@ -160,7 +160,7 @@ function MyCase({ userId, x, target, onNotice, photoSignal }: { userId: string; 
         <ul className="flex flex-wrap gap-2" aria-label="사건 사진">
           {x.photos.map((p) =>
             p.deleted_at || !p.url ? (
-              <li key={p.id} className="rounded-xl bg-[#eef0f3] px-2.5 py-1.5 text-[12.5px] text-ink-3">
+              <li key={p.id} className="rounded-xl bg-[#eef0f3] px-2.5 py-1.5 text-[14px] text-ink-3">
                 삭제된 사진 ({p.delete_reason})
               </li>
             ) : (
@@ -217,7 +217,7 @@ function MyCase({ userId, x, target, onNotice, photoSignal }: { userId: string; 
       {sheet === "종료" && (
         <div className="space-y-3 rounded-2xl bg-[#f7f8fa] p-3" aria-label="예상 종료 다시 알림">
           <label className="block">
-            <span className="mb-1 block text-[14px] font-bold text-ink-3">새 예상 종료</span>
+            <span className="mb-1 block text-[15px] font-bold text-ink-3">새 예상 종료</span>
             <input type="time" value={end} onChange={(e) => setEnd(e.target.value)} aria-label="새 예상 종료" className="min-h-[3.25rem] w-full rounded-2xl bg-white px-4 text-[20px] tabular-nums ring-1 ring-line outline-none focus:ring-2 focus:ring-primary" />
           </label>
           <Buttons

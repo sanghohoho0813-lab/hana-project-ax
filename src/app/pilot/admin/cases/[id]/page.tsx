@@ -113,7 +113,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
   }).length;
   const solved = chain.filter((l) => outcome(l).text === "해소").length;
   const adminSteps = ev.steps.filter((x) => x.source === "관리자");
-  const th = "py-1 pr-2 text-left text-[13.5px] font-semibold text-ink-3";
+  const th = "py-1 pr-2 text-left text-[14.5px] font-semibold text-ink-3";
 
   return (
     <div className="mx-auto max-w-[62rem] space-y-4">
@@ -139,10 +139,10 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
             <Pill tone={testOnly ? "test" : cls === "실제 업무" ? "success" : "info"} dot={false}>
               {CLASS_LABEL[cls]}
             </Pill>
-            <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
+            <span className="text-[14px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
           </div>
           <div>
-            <p className="text-[13.5px] font-bold text-primary">문제 개요</p>
+            <p className="text-[14.5px] font-bold text-primary">문제 개요</p>
             <h2 className="text-[24px] leading-tight font-extrabold">
               {site} · {c.issue_type}
             </h2>
@@ -159,7 +159,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
               ["다음 조치", NEXT_ADMIN_ACTION[c.status]],
             ].map(([k, v]) => (
               <div key={k} className="rounded-2xl bg-[#f7f8fa] px-3.5 py-3">
-                <dt className="text-[12.5px] font-bold text-ink-3">{k}</dt>
+                <dt className="text-[13.5px] font-bold text-ink-3">{k}</dt>
                 <dd className="mt-0.5 text-[15px] font-bold">{v}</dd>
               </div>
             ))}
@@ -169,7 +169,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="card space-y-3 p-5">
             <h2 className="text-[17px] font-extrabold">현장 사진 · {ev.photos.length}장</h2>
-            {testOnly && ev.photos.length > 0 && <p className="text-[13px] font-semibold text-test">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
+            {testOnly && ev.photos.length > 0 && <p className="text-[14px] font-semibold text-test">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
             {ev.photos.length === 0 ? (
               <p className="text-[14.5px] text-ink-3">첨부된 사진이 없습니다.</p>
             ) : (
@@ -177,7 +177,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
                 {ev.photos.map((ph) => (
                   <li key={ph.id}>
                     {ph.deleted_at || !ph.url ? (
-                      <span className="flex aspect-square items-center justify-center rounded-2xl bg-[#eef0f3] p-2 text-center text-[12px] text-ink-3">삭제됨</span>
+                      <span className="flex aspect-square items-center justify-center rounded-2xl bg-[#eef0f3] p-2 text-center text-[13px] text-ink-3">삭제됨</span>
                     ) : (
                       <a href={ph.url} target="_blank" rel="noreferrer">
                         {/* eslint-disable-next-line @next/next/no-img-element -- 비공개 저장소의 서명 주소(10분) */}
@@ -204,7 +204,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
                       {x.assignee_name && ` — ${x.assignee_name}`}
                     </p>
                     {x.message && <p className="text-[14px] text-ink-2">{x.message}</p>}
-                    <p className="text-[12.5px] text-ink-3 tabular-nums">
+                    <p className="text-[13.5px] text-ink-3 tabular-nums">
                       {x.occurred_at ? kst(x.occurred_at).time : "모름"} · {since(x.occurred_at)} · {who(x.actor_id)}
                     </p>
                   </li>
@@ -218,7 +218,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h2 className="text-[17px] font-extrabold">후속 현장 위험 · 조치 전후</h2>
-              <p className="text-[13.5px] text-ink-3">이 사건(담당 기사 · 사건 현장부터)의 연결만 그립니다. 그날 전체 수는 아래에 참고로 따로 둡니다.</p>
+              <p className="text-[14.5px] text-ink-3">이 사건(담당 기사 · 사건 현장부터)의 연결만 그립니다. 그날 전체 수는 아래에 참고로 따로 둡니다.</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -229,7 +229,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
             ].map((x) => (
               <div key={x.k} className="rounded-2xl bg-[#f7f8fa] px-3 py-3 text-center">
                 <p className={`text-[24px] leading-none font-extrabold tabular-nums ${x.t}`}>{x.v}</p>
-                <p className="mt-1.5 text-[12.5px] font-semibold text-ink-3">{x.k}</p>
+                <p className="mt-1.5 text-[13.5px] font-semibold text-ink-3">{x.k}</p>
               </div>
             ))}
           </div>
@@ -397,7 +397,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
               ))}
             </ul>
           </div>
-          <p className="text-[13px] text-ink-3">
+          <p className="text-[14px] text-ink-3">
             근거: 판단 {judgments.map((j) => `#${j.seq}`).join(" · ") || "없음"} · {judgments[0]?.rule_version ?? "chain-risk"} · 판단 전후는 서버가 계산해 서명(SHA-256)과 함께 기록 · 개선율·절감효과는 계산하지 않음 · 상세 증빙은 다음 쪽
           </p>
         </section>
@@ -436,7 +436,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
           {ev.photos.length === 0 && <p className="text-[15.5px] text-ink-3">사진 없음</p>}
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 print:grid-cols-4 print:gap-2">
             {ev.photos.map((p) => (
-              <li key={p.id} className="text-[13px] text-ink-3">
+              <li key={p.id} className="text-[14px] text-ink-3">
                 {p.url && !p.deleted_at ? (
                   // eslint-disable-next-line @next/next/no-img-element -- 비공개 저장소의 서명 주소(10분)
                   <img src={p.url} alt={p.caption ?? (testOnly ? "시험용 이미지" : "현장 사진")} className="aspect-square w-full rounded-lg border border-line object-cover" />
@@ -476,16 +476,16 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
                 {ev.steps.map((x) => (
                   <tr key={x.id} className="border-t border-line">
                     <td className={`${td} font-bold`}>
-                      <span className="block text-[12.5px] font-normal text-ink-3">#{x.step_no}</span>
+                      <span className="block text-[13.5px] font-normal text-ink-3">#{x.step_no}</span>
                       {x.kind}
                     </td>
                     <td className={`${td} break-words`}>
                       {[x.action, x.resolution, x.assignee_id ? who(x.assignee_id) : null, x.assignee_name, x.message].filter(Boolean).join(" · ") || "-"}
-                      {x.linked_seq !== null && <span className="block text-[12.5px] text-ink-3">엔진 기록 #{x.linked_seq}</span>}
+                      {x.linked_seq !== null && <span className="block text-[13.5px] text-ink-3">엔진 기록 #{x.linked_seq}</span>}
                     </td>
                     <td className={td}>
                       {tm(x.occurred_at)}
-                      <span className="block text-[12.5px] text-ink-3">
+                      <span className="block text-[13.5px] text-ink-3">
                         {meaning(x.occurred_basis)} · {x.occurred_mode}
                       </span>
                     </td>
@@ -496,7 +496,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
               </tbody>
             </table>
           )}
-          {versions.length > 0 && <p className="text-[13px] text-ink-3">조치 기록 프로그램 버전: {versions.join(" · ")} · 시각은 {c.work_date} 기준 (초까지)</p>}
+          {versions.length > 0 && <p className="text-[14px] text-ink-3">조치 기록 프로그램 버전: {versions.join(" · ")} · 시각은 {c.work_date} 기준 (초까지)</p>}
         </section>
 
         <section className="space-y-1.5">
@@ -534,11 +534,11 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
                   ))}
                   {split.mine.length === 0 && <li className="text-ink-3">· 이 사건 관련 연결 변화 없음</li>}
                 </ul>
-                <p className="text-[13.5px] text-ink-3">
+                <p className="text-[14.5px] text-ink-3">
                   참고 — 그날 전체(모든 기사·모든 일정, 같은 날 다른 시험 기록 포함) 위험 연결 {j.summary.risky_before} → {j.summary.risky_after}건 · 판단 보류 {j.summary.held_before} → {j.summary.held_after}건
                   {split.others.length > 0 && ` · 이 사건과 무관한 연결 변화 ${split.others.length}건`}. 이 수는 이 사건만의 결과가 아닙니다. 바뀌지 않은 연결은 목록에 없습니다.
                 </p>
-                <p className="text-[13px] text-ink-3">
+                <p className="text-[14px] text-ink-3">
                   {j.rule_version} · {j.state_version} · {j.priority_version} · 계산 프로그램 {j.app_version} · 서명 기록 {dt(j.recorded_at)} · SHA-256 {j.payload_sha256.slice(0, 16)}…
                 </p>
               </div>
@@ -555,7 +555,7 @@ export default async function CaseEvidencePage({ params }: { params: Promise<{ i
               </li>
             ))}
           </ul>
-          <p className="text-[13.5px] text-ink-3">
+          <p className="text-[14.5px] text-ink-3">
             품질: 실측(두 시각 모두 버튼 시각) · 원자료 · 진술 · 추정(기억 — 비교 통계에서 뺌) · 가상(시험 시나리오). 두 시각이 모두 버튼 누른 시각이면 초 단위까지 표시한다 — 자동 시험처럼 같은 초에 연달아 누르면 0초로 나온다.
             측정하지 않은 개선율·절감효과는 만들지 않는다.
           </p>

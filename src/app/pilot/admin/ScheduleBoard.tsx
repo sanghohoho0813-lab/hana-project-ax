@@ -216,7 +216,7 @@ export function ScheduleBoard({ date, kind, staff, names, rows, pending }: Props
           <div key={w} className="card overflow-x-auto p-5">
             <p className="mb-2 text-[17px] font-extrabold">{names[w] ?? "알 수 없는 직원"}</p>
             <table className="w-full min-w-[46rem] text-left text-[15.5px]">
-              <thead className="text-[13px] text-ink-3">
+              <thead className="text-[14px] text-ink-3">
                 <tr>
                   <th className="py-1 pr-3 font-semibold">예정</th>
                   <th className="py-1 pr-3 font-semibold">현장</th>

@@ -33,7 +33,7 @@ export function LabFlow() {
         <p className="text-[14px] font-extrabold text-ink">
           처리 흐름 <span className="font-semibold text-ink-3">{issue ? `· 현장 문제 #${issue.no}` : "· 아직 보고된 현장 문제가 없습니다"}</span>
         </p>
-        <p className="text-[12.5px] text-ink-3">같은 브라우저 안의 PC 화면과 휴대폰 크기 화면입니다 — 실제 다른 기기 사이 시험이 아닙니다</p>
+        <p className="text-[13.5px] text-ink-3">같은 브라우저 안의 PC 화면과 휴대폰 크기 화면입니다 — 실제 다른 기기 사이 시험이 아닙니다</p>
       </div>
       <ol className="mt-2 grid grid-cols-6 gap-2">
         {steps.map((s, i) => (
@@ -41,10 +41,10 @@ export function LabFlow() {
             key={`${s.k}-${s.done ? doneCount : 0}`}
             className={`min-w-0 rounded-xl px-2.5 py-2 ${s.done ? "flash-in bg-success-bg" : i === current ? "bg-primary-light ring-2 ring-primary/40" : "bg-[#f5f6f8]"}`}
           >
-            <p className={`flex items-center gap-1 text-[13px] font-extrabold ${s.done ? "text-success" : i === current ? "text-primary-dark" : "text-ink-3"}`}>
+            <p className={`flex items-center gap-1 text-[14px] font-extrabold ${s.done ? "text-success" : i === current ? "text-primary-dark" : "text-ink-3"}`}>
               {s.done ? <Check size={14} /> : <span className="tabular-nums">{i + 1}</span>} {s.k}
             </p>
-            <p className="mt-0.5 truncate text-[11.5px] text-ink-2">{s.note || (i === current ? "지금 단계" : "—")}</p>
+            <p className="mt-0.5 truncate text-[12.5px] text-ink-2">{s.note || (i === current ? "지금 단계" : "—")}</p>
           </li>
         ))}
       </ol>

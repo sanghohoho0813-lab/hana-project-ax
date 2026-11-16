@@ -103,11 +103,11 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                   <li key={c.id}>
                     <Link href={`/pilot/admin/cases?${q}`} className="card card-hover block p-4" aria-label={`우선 ${i + 1} 사건 ${c.case_no}`}>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-[13px] font-extrabold text-white tabular-nums">{i + 1}</span>
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-[14px] font-extrabold text-white tabular-nums">{i + 1}</span>
                         <Pill tone={STATUS_TONE[c.status]}>{c.status}</Pill>
                         {c.urgency === "긴급" && <Pill tone="danger">긴급</Pill>}
                         {c.issue_type === "안전 위험" && <Pill tone="danger">안전</Pill>}
-                        <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
+                        <span className="text-[14px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
                         <span className="ml-auto">
                           {im && im.risky > 0 ? (
                             <Pill tone="danger">
@@ -126,7 +126,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                         {titleOf.get(c.schedule_id) ?? "현장"} <span className="font-semibold text-ink-3">· {names[c.worker_id] ?? "직원"}</span>
                       </p>
                       <p className="text-[15px] font-semibold text-ink-2">{c.issue_type}</p>
-                      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[13.5px] sm:grid-cols-4">
+                      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[14.5px] sm:grid-cols-4">
                         <div>
                           <dt className="text-ink-3">발견</dt>
                           <dd className="font-semibold tabular-nums">{hm(c.discovered_at)}</dd>
@@ -165,7 +165,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                       <span className="block truncate text-[15px] font-bold">
                         {l.prev.title} → {l.next.title}
                       </span>
-                      <span className="block text-[12.5px] text-ink-3">
+                      <span className="block text-[13.5px] text-ink-3">
                         {names[l.workerId] ?? "직원"} · {l.shortfall > 0 ? `도착 ${l.shortfall}분 부족 (계산값)` : "여유 부족"}
                       </span>
                     </span>
@@ -174,7 +174,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                 ))}
               </ul>
             )}
-            <p className="text-[12.5px] text-ink-3">규칙 기반 계산 (AI 예측 아님) · {RISK_RULE_VERSION}</p>
+            <p className="text-[13.5px] text-ink-3">규칙 기반 계산 (AI 예측 아님) · {RISK_RULE_VERSION}</p>
           </section>
 
           <section aria-label="안전점검 대기" className="space-y-3">
@@ -198,7 +198,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                       <span className="block truncate text-[15px] font-bold">
                         {titleOf.get(c.schedule_id) ?? "현장"} · {STAGE_LABEL[c.stage]}
                       </span>
-                      <span className="block text-[12.5px] text-ink-3">
+                      <span className="block text-[13.5px] text-ink-3">
                         {names[c.worker_id] ?? "직원"} · {kst(c.recorded_at).time} 제출{c.deficient.length > 0 && " · 미흡 있음"}
                       </span>
                     </span>
@@ -206,7 +206,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                   </li>
                 ))}
                 {noPreCheck.length > 0 && (
-                  <li className="py-3 text-[13.5px] text-ink-2">
+                  <li className="py-3 text-[14.5px] text-ink-2">
                     시작 전 점검 미제출 {noPreCheck.length}곳 — {noPreCheck.slice(0, 3).map((x) => x.site_name).join(", ")}
                     {noPreCheck.length > 3 && " 외"}
                   </li>
@@ -229,7 +229,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
                         <span className="block truncate text-[15px] font-bold">
                           {titleOf.get(c.schedule_id) ?? "현장"} · {c.issue_type}
                         </span>
-                        <span className="block text-[12.5px] text-ink-3 tabular-nums">
+                        <span className="block text-[13.5px] text-ink-3 tabular-nums">
                           {c.case_no} · {kst(c.updated_at).time}
                         </span>
                       </span>
@@ -242,7 +242,7 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
           </section>
         </div>
       </div>
-      <p className="text-[12.5px] text-ink-3">
+      <p className="text-[13.5px] text-ink-3">
         사건 {inbox.cases.length}건 · 직원 {staff.filter((p) => p.role === "field" && p.active).length}명 기준. 처리 기록과 조치 전후 비교는 각 사건의 증빙 화면(성과·증빙)에서 확인합니다.
       </p>
     </div>

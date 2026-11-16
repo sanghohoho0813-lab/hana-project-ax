@@ -72,11 +72,11 @@ export function CaseBoard({
             <AlertTriangle size={20} className={open.length ? "text-danger" : "text-ink-3"} /> 처리 중 {open.length}건
           </h2>
           {fresh > 0 && (
-            <span className="rounded-full bg-danger px-2.5 py-1 text-[13.5px] font-bold text-white" data-new-cases={fresh}>
+            <span className="rounded-full bg-danger px-2.5 py-1 text-[14.5px] font-bold text-white" data-new-cases={fresh}>
               새 보고 {fresh}건 (미접수)
             </span>
           )}
-          <span className="text-[13px] text-ink-3">기준 {nowLabel}</span>
+          <span className="text-[14px] text-ink-3">기준 {nowLabel}</span>
         </div>
         {notice && <Notice kind="success">{notice}</Notice>}
         {open.length === 0 && <p className="card px-5 py-6 text-[15px] text-ink-3">처리 중인 지원 요청이 없습니다. 현장기사 휴대폰에서 보고하면 자동 갱신으로 여기에 나타납니다.</p>}
@@ -91,7 +91,7 @@ export function CaseBoard({
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex-1">
             <h2 className="text-[17px] font-extrabold">대리 보고</h2>
-            <p className="text-[13.5px] text-ink-3">전화 · 메신저 · 업무일지로 받은 문제를 사후 입력합니다.</p>
+            <p className="text-[14.5px] text-ink-3">전화 · 메신저 · 업무일지로 받은 문제를 사후 입력합니다.</p>
           </div>
           <select value={proxy ?? ""} onChange={(e) => setProxy(e.target.value || null)} aria-label="대리 보고할 일정" className="min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px]">
             <option value="">일정 고르기 ({date})</option>
@@ -187,14 +187,14 @@ function AdminCase({
       aria-label={`사건 ${c.case_no}`}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-ink px-2.5 py-1 text-[13px] leading-none font-bold text-white">{rank}순위</span>
+        <span className="rounded-full bg-ink px-2.5 py-1 text-[14px] leading-none font-bold text-white">{rank}순위</span>
         <Pill tone={TONE[c.status]}>{c.status}</Pill>
         {c.urgency === "긴급" && <Pill tone="danger">긴급</Pill>}
         <Pill tone={c.issue_type === "안전 위험" ? "danger" : "neutral"} dot={false}>
           {c.issue_type}
         </Pill>
-        <span className="text-[13px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
-        <Pill tone={isTestOnly(c) ? "test" : "neutral"} dot={false} className="ml-auto !text-[12.5px]">
+        <span className="text-[14px] font-semibold text-ink-3 tabular-nums">{c.case_no}</span>
+        <Pill tone={isTestOnly(c) ? "test" : "neutral"} dot={false} className="ml-auto !text-[13.5px]">
           {CLASS_LABEL[classOf(c)]}
         </Pill>
       </div>
@@ -220,7 +220,7 @@ function AdminCase({
           ["요청 지원", c.needs.join(", ") || "없음"],
         ].map(([k, v]) => (
           <div key={k} className="rounded-xl bg-[#f7f8fa] px-3 py-2">
-            <dt className="text-[12px] font-bold text-ink-3">{k}</dt>
+            <dt className="text-[13px] font-bold text-ink-3">{k}</dt>
             <dd className="font-semibold">{v}</dd>
           </div>
         ))}
@@ -300,10 +300,10 @@ function Photos({ photos, onNotice, testOnly }: { photos: (PhotoRow & { url: str
   const router = useRouter();
   return (
     <>
-      {testOnly && <p className="text-[13px] font-semibold text-test">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
+      {testOnly && <p className="text-[14px] font-semibold text-test">시험용 이미지 — 실제 현장사진이 아닙니다</p>}
       <ul className="flex flex-wrap gap-2" aria-label="현장 사진">
       {photos.map((p) => (
-        <li key={p.id} className="w-28 text-[12.5px] text-ink-3">
+        <li key={p.id} className="w-28 text-[13.5px] text-ink-3">
           {p.deleted_at || !p.url ? (
             <span className="block rounded-lg bg-[#f2f4f6] p-2">삭제됨 · {p.delete_reason}</span>
           ) : (
@@ -480,7 +480,7 @@ function StepSheet({
         placeholder={kind === "현장 전달" ? "현장기사에게 보낼 내용 (예: 숙련 기술자 10:00 도착)" : kind === "일정 조정" ? "조정 사유 (고객 연락 등)" : needMsg ? "사유 (필수)" : "내용 (선택)"}
         className="w-full min-h-[2.75rem] rounded-xl bg-[#f5f6f8] px-3 text-[15px] outline-none focus:ring-2 focus:ring-primary"
       />
-      {kind === "일정 조정" && <p className="text-[13.5px] text-ink-3">시스템이 일정을 정하지 않습니다 — 관리자가 넣은 시작·종료만 저장하고, 기존 엔진으로 판단 전후를 기록합니다.</p>}
+      {kind === "일정 조정" && <p className="text-[14.5px] text-ink-3">시스템이 일정을 정하지 않습니다 — 관리자가 넣은 시작·종료만 저장하고, 기존 엔진으로 판단 전후를 기록합니다.</p>}
       {err && (
         <p role="alert" className="rounded-xl bg-danger-bg px-3 py-2 text-[15.5px] font-bold text-danger">
           {err}

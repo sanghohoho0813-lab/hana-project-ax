@@ -87,7 +87,7 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
         <h1 className="text-[21px] leading-tight font-extrabold tracking-[-0.01em]">
           {s.profile?.display_name}님, {date === today ? "오늘" : "이날"} 현장 {active.length}곳
         </h1>
-        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] text-ink-3">
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-ink-3">
           기록은 서버 시각 기준 · {kstLabel(new Date()).slice(11, 16)} <AutoRefresh seconds={15} label="본사 조치 확인" />
         </p>
       </div>
@@ -97,19 +97,19 @@ export default async function FieldPage({ searchParams }: { searchParams: Promis
         </Link>
         <p className="min-w-0 text-center text-[15px] font-extrabold whitespace-nowrap tabular-nums">
           {dayLabel(date)}
-          {date === today && <span className="ml-1.5 rounded-full bg-primary-light px-2 py-0.5 text-[12px] font-bold text-primary-dark">오늘</span>}
+          {date === today && <span className="ml-1.5 rounded-full bg-primary-light px-2 py-0.5 text-[13.5px] font-bold text-primary-dark">오늘</span>}
         </p>
         <Link href={q(shift(date, 1))} aria-label="다음날" className={arrow}>
           <ChevronRight size={20} />
         </Link>
         {date !== today && (
-          <Link href={q(today)} className="rounded-full bg-primary-light px-3 py-2 text-[14px] font-bold text-primary-dark">
+          <Link href={q(today)} className="rounded-full bg-primary-light px-3 py-2 text-[15px] font-bold text-primary-dark">
             오늘로
           </Link>
         )}
         <Link
           href={`/pilot/field?date=${date}&kind=${kind === "실제 업무" ? "scenario" : "real"}`}
-          className="ml-auto rounded-full bg-white px-3 py-2 text-[12.5px] font-semibold whitespace-nowrap text-ink-3 shadow-[var(--shadow-card)]"
+          className="ml-auto rounded-full bg-white px-3 py-2 text-[14px] font-semibold whitespace-nowrap text-ink-3 shadow-[var(--shadow-card)]"
         >
           {kind === "실제 업무" ? "검증 시나리오 보기" : "실제 업무로 돌아가기"}
         </Link>

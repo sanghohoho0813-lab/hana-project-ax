@@ -97,7 +97,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
       <section className="card table-scroll p-5" aria-label="직원별 현재 현장">
         <h2 className="mb-2 text-[17px] font-extrabold">직원별 현재 현장 · 작업상태 <span className="text-[14px] font-semibold text-ink-3">{date}</span></h2>
         <table className="w-full text-[15px]">
-          <thead className="text-[13px] text-ink-3">
+          <thead className="text-[14px] text-ink-3">
             <tr>
               {["직원", "지금 현장", "끝난 현장", "처리 중 사건"].map((h) => (
                 <th key={h} className="py-1 pr-2 text-left font-semibold">
