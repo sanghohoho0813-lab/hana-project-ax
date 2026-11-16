@@ -58,3 +58,11 @@
 - 인쇄물 PDF 5개: 다시 만든 뒤 옛 지명이 0건인 것을 확인했다.
 - AX 시험 화면: `node trial/tools/build-ax-screen.mjs`.
 - 채점 자체 점검: `python3 trial/tools/score.py --selftest` — 통과했다.
+
+## 시험
+
+- 전체 회귀: **686 / 686 통과** (`docs/evidence/ui-0.6.0/test-run-0.6.0-region.txt`).
+- 바로 앞 회귀에서 조기 확인 화면 시험 2건이 실패했다.
+  - 원인: 시험 기록이 로컬 DB에 쌓여 대시보드 요약 목록에서 이번 시험 현장이 밀려났다. 기능 문제가 아니었다.
+  - 고친 방법: 시험이 전체 목록 화면에서 확인하도록 바꿨다.
+- 화면 데모의 엔진 판단 증빙(`docs/evidence/*.json`)은 지역 변경 전과 같다.
