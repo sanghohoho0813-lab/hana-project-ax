@@ -64,6 +64,42 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
         </p>
       )}
 
+      <section className="card space-y-2 p-4" aria-label="핵심 지표">
+        <h2 className={h2}>핵심 지표 (0.5.0 — 2026-11-13 현장 책임자 통화 반영)</h2>
+        <ol className="list-decimal space-y-1 pl-5 text-[15.5px] text-ink-2">
+          <li>
+            <b>문제 발견 → 최초 보고</b> (측정 1) — 현장에서 혼자 붙잡고 있던 시간. 짧을수록 본사가 빨리 압니다.
+          </li>
+          <li>
+            <b>보고 → 관리자 확인 → 지원 결정</b> (측정 2·3) — 숙련 직원 · 장비 지원이 정해지기까지의 시간.
+          </li>
+          <li>
+            <b>안전점검 3단계 제출</b> (측정 10) — 작업 전 · 작업 중 · 마무리 착용 사진.
+          </li>
+        </ol>
+        <p className="text-[14.5px] text-ink-3">측정 5·6(후속 일정 영향 · 연쇄 위험 계산값)은 보조 지표입니다. 통화에서 다음 현장 지연은 &lsquo;일반적이지 않고 간혹 있다&rsquo;고 들었습니다 (빈도는 통화에서 들은 대략값이며 기록으로 확인한 값이 아님).</p>
+      </section>
+
+      <section className="card space-y-2 p-4" aria-label="안전점검 3단계 제출">
+        <h2 className={h2}>
+          측정 10 — 안전점검 3단계 제출 ({from} ~ {to})
+        </h2>
+        {m.safety.ended === 0 ? (
+          <p className="text-[16px] text-ink-3">기간 안에 작업 종료가 기록된 현장이 없습니다.</p>
+        ) : (
+          <>
+            <p className="text-[16px]">
+              작업을 마친 현장 <b className="tabular-nums">{m.safety.ended}곳</b> 가운데 3단계를 모두 낸 현장 <b className="tabular-nums">{m.safety.full}곳</b>
+            </p>
+            <p className="text-[15.5px] text-ink-2 tabular-nums">{m.safety.byStage.map((x) => `${x.stage} ${x.sites}곳`).join(" · ")}</p>
+          </>
+        )}
+        <p className="text-[15.5px] text-ink-2 tabular-nums">
+          점검 제출 {m.safety.checks}건 · 관리자 적합(육안 확인) · 조치 완료 {m.safety.reviewed}건 · 보완 진행 {m.safety.supplement}건
+        </p>
+        <p className="text-[14.5px] text-ink-3">제출 여부만 셉니다. 사진이 있다고 적합으로 보지 않으며, 적합은 관리자 육안 확인 기록으로만 정해집니다.</p>
+      </section>
+
       {classes.map((cls) => {
         const x = sum.byClass[cls];
         return (

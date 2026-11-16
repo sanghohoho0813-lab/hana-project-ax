@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, CalendarDays, Camera, CheckCircle2, ClipboardList, Clock, HardHat, Megaphone, PlayCircle, RotateCw, Send, StopCircle, WifiOff, X } from "lucide-react";
+import { AlertTriangle, CalendarDays, Camera, CheckCircle2, ClipboardList, Clock, HardHat, Megaphone, PlayCircle, RotateCw, Send, StopCircle, ThumbsUp, WifiOff, X } from "lucide-react";
 import type { PilotEventKind, ScheduleProgress } from "@/lib/pilot/core";
 import { newOpId } from "@/lib/pilot/op-id";
 import { enqueue, flushQueue, removeItem, type QueuedEvent } from "@/lib/pilot/queue";
 import { kst } from "@/lib/pilot/time";
 import { isOpen, STATUS_TEXT } from "@/lib/pilot/cases";
 import { SAFETY_STAGES, STAGE_LABEL } from "@/lib/pilot/safety";
+import { safetyGaps, watchOf, type SafetyGap, type Watch } from "@/lib/pilot/watch";
 import { recordEventAction, type EventResult } from "./actions";
 import { getQueue, isStorable, serverSnapshot, setQueue as storeQueue, subscribe } from "./queueStore";
 import { adminSteps, CasePanel, type FieldCase } from "./CasePanel";
@@ -81,6 +82,48 @@ function progress(c: FieldCard, pending: QueuedEvent[]) {
   const has = (k: PilotEventKind) => live.some((x) => x.kind === k && !x.voidsEventId);
   const started = c.started || has("작업개시");
   return { ackd: c.acknowledged || has("업무 확인"), started, ended: c.ended || has("작업종료") };
+}
+
+/** 지금 시각(한국 HH:MM) — 서버 그림에는 없고(null) 휴대폰에서 20초마다 다시 읽는다 */
+const subscribeNow = (cb: () => void) => {
+  const t = window.setInterval(cb, 20000);
+  return () => window.clearInterval(t);
+};
+const readNow = () => kst(new Date()).time;
+const useNowHM = () => useSyncExternalStore(subscribeNow, readNow, () => null);
+
+/**
+ * 조기 확인 (0.5.0) — 작업 중인데 예정 시간의 절반이 지나도록 진행 보고가 없거나, 예상 종료를 넘기면 먼저 묻는다.
+ * 기록된 단계 + 아직 보내는 중인 단계로 계산한다 (규칙: lib/pilot/watch.ts).
+ */
+function fieldWatch(c: FieldCard, pending: QueuedEvent[], now: string): Watch {
+  const live = pending.filter((x) => x.scheduleId === c.id && !x.stopped && !x.voidsEventId);
+  const alive = c.steps.filter((x) => !x.replaced);
+  const startIdx = alive.findIndex((x) => x.kind === "작업개시");
+  const queuedStart = live.find((x) => x.kind === "작업개시");
+  const startedAt = startIdx >= 0 ? alive[startIdx].time : queuedStart ? kst(queuedStart.pressedAt).time : null;
+  const reports = [
+    ...alive.slice(startIdx + 1).filter((x) => startIdx >= 0 && x.kind === "예상 종료 보고" && x.expectedEnd).map((x) => ({ at: x.time, end: x.expectedEnd! })),
+    ...live.filter((x) => x.kind === "예상 종료 보고" && x.expectedEnd).map((x) => ({ at: kst(x.pressedAt).time, end: x.expectedEnd! })),
+  ];
+  return watchOf(
+    {
+      plannedStart: c.plannedStart,
+      plannedEnd: c.plannedEnd,
+      startedAt,
+      ended: progress(c, pending).ended,
+      cancelled: c.status === "취소",
+      lastReport: startedAt ? (reports.at(-1) ?? null) : null,
+      openCase: c.cases.some((x) => isOpen(x.c)),
+    },
+    now,
+  );
+}
+
+/** 이 현장 안전점검 3단계 가운데 빠졌거나 지금 낼 차례인 단계 */
+function cardGaps(c: FieldCard, pending: QueuedEvent[], w: Watch | null, now: string | null): SafetyGap[] {
+  const p = progress(c, pending);
+  return safetyGaps({ started: p.started, ended: p.ended, midDue: !!(w?.checkAt && now && now >= w.checkAt), cancelled: c.status === "취소" }, c.safety.map((x) => x.c.stage));
 }
 
 export function FieldBoard({
@@ -198,6 +241,11 @@ export function FieldBoard({
   const openCases = cards.flatMap((c) => c.cases.filter((x) => isOpen(x.c)).map((x) => ({ card: c, x })));
   const supplements = cards.flatMap((c) => c.safety.filter((x) => x.c.review_status === "보완 요청").map((x) => ({ card: c, x })));
   const curState = cur ? progress(cur, queue) : null;
+  const now = useNowHM();
+  const curWatch = cur && now ? fieldWatch(cur, queue, now) : null;
+  const curGaps = cur ? cardGaps(cur, queue, curWatch, now) : [];
+  // 마친 현장의 빠진 안전점검(작업 중 · 작업 종료) — 오늘 소식에 띄운다
+  const safetyMissing = isToday ? active.filter((c) => c.id !== cur?.id).flatMap((c) => cardGaps(c, queue, null, now).filter((g) => g.state === "누락").map((g) => ({ card: c, stage: g.stage }))) : [];
 
   return (
     <div className="space-y-4 pb-24">
@@ -231,7 +279,19 @@ export function FieldBoard({
 
       {tab === "today" && (
         <>
-          <Hero cur={cur} curState={curState} index={cur ? active.indexOf(cur) + 1 : 0} total={active.length} isToday={isToday} date={date} empty={cards.length === 0} onGo={go} />
+          <Hero
+            cur={cur}
+            curState={curState}
+            index={cur ? active.indexOf(cur) + 1 : 0}
+            total={active.length}
+            isToday={isToday}
+            date={date}
+            empty={cards.length === 0}
+            onGo={go}
+            watch={curWatch}
+            gaps={curGaps}
+            onOnTrack={(c, end) => tap(c, { kind: "예상 종료 보고", mode: "즉시", expectedEnd: end })}
+          />
           {cards.length > 0 && (
             <Summary
               items={[
@@ -242,7 +302,7 @@ export function FieldBoard({
               ]}
             />
           )}
-          <Messages openCases={openCases} supplements={supplements} onGo={go} />
+          <Messages openCases={openCases} supplements={supplements} missing={safetyMissing} onGo={go} />
           {cards.length > 0 && <SectionHead title="방문 순서" count={cards.length} />}
           {cards.length === 0 ? null : (
             <ol className="space-y-3">
@@ -337,6 +397,9 @@ function Hero({
   date,
   empty,
   onGo,
+  watch,
+  gaps,
+  onOnTrack,
 }: {
   cur: FieldCard | undefined;
   curState: ReturnType<typeof progress> | null;
@@ -346,6 +409,9 @@ function Hero({
   date: string;
   empty: boolean;
   onGo: (id: string, act: Focus["act"]) => void;
+  watch: Watch | null;
+  gaps: SafetyGap[];
+  onOnTrack: (c: FieldCard, end: string) => void;
 }) {
   if (empty) return <Empty icon={<CalendarDays size={22} />} title="이 날짜에 배정된 일정이 없습니다." desc="본사에서 일정을 등록하면 여기에 방문 순서대로 나타납니다." />;
   if (!isToday)
@@ -364,7 +430,11 @@ function Hero({
         <p className="mt-1 text-[15px] text-ink-2">놓친 기록이 있으면 각 카드에서 사후 입력이나 시각 정정을 하세요.</p>
       </section>
     );
-  const next = !curState.started ? "현장에 도착하면 작업 시작을 누르세요." : "작업이 끝나면 작업 종료를 누르세요. 끝나는 시각이 바뀌면 예상 종료를 보내세요.";
+  const next = !curState.started
+    ? "현장에 도착하면 시작 전 안전점검(착용 사진)을 보내고 작업 시작을 누르세요."
+    : "막히거나 뜯어보니 예상과 다르면 혼자 붙잡지 말고 바로 '문제 보고'를 누르세요. 본사가 숙련 직원 · 장비 지원을 바로 검토합니다.";
+  const ask = watch && (watch.level === "중간 확인" || watch.level === "예정 넘김") ? watch : null;
+  const gap = gaps[0];
   const quickBase = "flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[15.5px] font-bold transition-colors active:scale-[0.98]";
   const quick = `${quickBase} bg-white/15 text-white ring-1 ring-white/20 hover:bg-white/25`;
   return (
@@ -381,7 +451,32 @@ function Hero({
         {cur.region && ` · ${cur.region}`}
         {curState.started && cur.currentEnd !== cur.plannedEnd && ` · 예상 종료 ${cur.currentEnd}`}
       </p>
-      <p className="mt-3 rounded-2xl bg-white/10 px-3.5 py-2.5 text-[15.5px] font-semibold">{next}</p>
+      {ask ? (
+        <div aria-live="polite" role="region" aria-label="진행 확인" className="mt-3 rounded-2xl bg-white p-3.5 text-ink">
+          <p className={cx("flex items-center gap-1.5 text-[16.5px] font-extrabold", ask.level === "예정 넘김" ? "text-danger" : "text-warning")}>
+            <Clock size={19} /> {ask.level === "예정 넘김" ? `예상 종료 ${ask.expectedEnd}가 ${ask.overBy}분 지났어요` : `작업 시작 ${ask.elapsed}분째예요 — 예정대로 되고 있나요?`}
+          </p>
+          <p className="mt-1 text-[15px] text-ink-2">{ask.level === "예정 넘김" ? "막혔으면 지원을 요청하고, 아니면 새 예상 종료를 보내 주세요. 본사가 먼저 알면 빨리 도울 수 있습니다." : "막히는 게 있으면 지금 알려 주세요. 혼자 오래 붙잡을수록 지원이 늦어집니다."}</p>
+          <div className={cx("mt-2.5 grid gap-2", ask.level === "중간 확인" ? "grid-cols-3" : "grid-cols-2")}>
+            <button onClick={() => onGo(cur.id, "report")} className={cx(btn("danger", "md"), "flex-col !gap-0.5 !px-1 leading-tight")}>
+              <AlertTriangle size={18} /> 막혔어요
+              <span className="text-[12.5px] font-semibold opacity-90">지원 요청</span>
+            </button>
+            {ask.level === "중간 확인" && (
+              <button onClick={() => onOnTrack(cur, ask.expectedEnd!)} className={cx(btn("soft", "md"), "flex-col !gap-0.5 !px-1 leading-tight")}>
+                <ThumbsUp size={18} /> 예정대로
+                <span className="text-[12.5px] font-semibold tabular-nums">{ask.expectedEnd} 종료</span>
+              </button>
+            )}
+            <button onClick={() => onGo(cur.id, "view")} className={cx(btn("white", "md"), "flex-col !gap-0.5 !px-1 leading-tight ring-1 ring-line")}>
+              <Send size={18} /> 늦어져요
+              <span className="text-[12.5px] font-semibold text-ink-3">새 예상 종료</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-3 rounded-2xl bg-white/10 px-3.5 py-2.5 text-[15.5px] font-semibold">{next}</p>
+      )}
       <div className="mt-3 grid grid-cols-3 gap-2">
         <button onClick={() => onGo(cur.id, "report")} className={`${quickBase} bg-white text-danger shadow-sm hover:bg-[#fff5f5]`}>
           <AlertTriangle size={22} /> 문제 보고
@@ -390,8 +485,9 @@ function Hero({
         <button onClick={() => onGo(cur.id, "photo")} className={quick}>
           <Camera size={22} /> 사진 첨부
         </button>
-        <button onClick={() => onGo(cur.id, "safety")} className={quick}>
+        <button onClick={() => onGo(cur.id, "safety")} className={cx(quick, gap && "ring-2 ring-[#fde68a]")}>
           <HardHat size={22} /> 안전점검
+          {gap && <span className="text-[12.5px] font-semibold text-[#fde68a]">{STAGE_LABEL[gap.stage]} {gap.state === "누락" ? "빠짐" : "차례"}</span>}
         </button>
       </div>
     </section>
@@ -416,18 +512,33 @@ function Summary({ items }: { items: { label: string; value: string; tone?: Pill
 function Messages({
   openCases,
   supplements,
+  missing,
   onGo,
 }: {
   openCases: { card: FieldCard; x: FieldCase }[];
   supplements: { card: FieldCard; x: FieldSafety }[];
+  missing: { card: FieldCard; stage: (typeof SAFETY_STAGES)[number] }[];
   onGo: (id: string, act: Focus["act"]) => void;
 }) {
   const msgs = openCases.map(({ card, x }) => ({ card, x, last: adminSteps(x).at(-1) })).filter((m) => m.last);
-  if (msgs.length === 0 && supplements.length === 0) return null;
+  if (msgs.length === 0 && supplements.length === 0 && missing.length === 0) return null;
   return (
     <section aria-label="본사 메시지" className="space-y-2">
-      <SectionHead title="본사에서 온 소식" count={msgs.length + supplements.length} />
+      <SectionHead title="본사에서 온 소식" count={msgs.length + supplements.length + missing.length} />
       <ul className="space-y-2">
+        {missing.map(({ card, stage }) => (
+          <li key={`${card.id}-${stage}`}>
+            <button onClick={() => onGo(card.id, "safety")} className="flex w-full items-start gap-3 rounded-2xl bg-white p-3.5 text-left shadow-[var(--shadow-card)] ring-1 ring-warning/30">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning-bg text-warning">
+                <HardHat size={18} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[14.5px] font-bold text-warning">{card.siteName} · 안전점검 빠짐</span>
+                <span className="block text-[15px] font-semibold text-ink">{STAGE_LABEL[stage]}(착용 사진)을 아직 보내지 않았습니다</span>
+              </span>
+            </button>
+          </li>
+        ))}
         {supplements.map(({ card, x }) => (
           <li key={x.c.id}>
             <button onClick={() => onGo(card.id, "safety")} className="flex w-full items-start gap-3 rounded-2xl bg-white p-3.5 text-left shadow-[var(--shadow-card)] ring-1 ring-danger/25">

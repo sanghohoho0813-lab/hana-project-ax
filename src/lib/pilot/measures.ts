@@ -1,5 +1,5 @@
 /**
- * 성과 측정 집계 (순수) — 측정 항목 1~7. 측정한 값만 모으고, 없는 값·개선율은 만들지 않는다.
+ * 성과 측정 집계 (순수) — 측정 항목 1~7 + 측정 10(안전점검 3단계 제출, 0.5.0). 측정한 값만 모으고, 없는 값·개선율은 만들지 않는다.
  *  - 실제 업무 · 현장정보 재현 · 가상 시나리오를 따로 집계한다 (섞지 않음).
  *  - 시각 근거가 '기억에 의한 추정'인 소요시간과 '기억 추정' 측정값은 통계에서 빼고 따로 보여 준다.
  *  - 비교값은 같은 자료 구분 안에서 수기·AX 실측이 모두 있을 때만 '이번 측정값'으로 낸다 (통계적 유의성 검정 아님).
@@ -8,6 +8,7 @@
 import type { LinkChange } from "@/lib/risk-engine";
 import type { JudgmentSummary } from "./core";
 import { EVIDENCE_CLASSES, caseSpans, classOf, type CaseRow, type Quality, type Span, type StepRow } from "./cases";
+import { SAFETY_STAGES } from "./safety";
 
 export interface Stat {
   n: number;
@@ -184,5 +185,40 @@ export function trialComparison(trials: TrialRow[]) {
     estimated: trials.filter((t) => !t.voided_at && t.value_basis === "기억 추정"),
     voided: trials.filter((t) => t.voided_at).length,
     unclassified: trials.filter((t) => !t.voided_at && classOf(t) === "분류 확인 필요").length,
+  };
+}
+
+/* ── 측정 10 — 안전점검 3단계 제출 (0.5.0, 2026-11-13 통화: 작업 전 · 작업 중 · 마무리 착용 사진) ── */
+
+export interface SafetyCompletion {
+  /** 작업 종료가 기록된 현장 수 (취소 제외) */
+  ended: number;
+  /** 그 가운데 3단계를 모두 제출한 현장 수 */
+  full: number;
+  /** 단계별 제출 현장 수 (작업 종료 현장 기준) */
+  byStage: { stage: (typeof SAFETY_STAGES)[number]; sites: number }[];
+  /** 기간의 점검 제출 수 · 관리자 적합(육안 확인)·조치 완료 수 · 보완 요청 중 수 */
+  checks: number;
+  reviewed: number;
+  supplement: number;
+}
+
+/** 작업을 마친 현장이 안전점검 3단계를 모두 냈는지 — 제출 여부만 센다 (적합 여부는 관리자 육안 확인 기록) */
+export function safetyCompletion(
+  schedules: { id: string; status: string }[],
+  endedIds: Set<string>,
+  checks: { schedule_id: string; stage: string; review_status: string }[],
+): SafetyCompletion {
+  const done = schedules.filter((s) => s.status !== "취소" && endedIds.has(s.id));
+  const stages = new Map<string, Set<string>>();
+  for (const c of checks) stages.set(c.schedule_id, (stages.get(c.schedule_id) ?? new Set()).add(c.stage));
+  const has = (id: string, st: string) => stages.get(id)?.has(st) ?? false;
+  return {
+    ended: done.length,
+    full: done.filter((s) => SAFETY_STAGES.every((st) => has(s.id, st))).length,
+    byStage: SAFETY_STAGES.map((stage) => ({ stage, sites: done.filter((s) => has(s.id, stage)).length })),
+    checks: checks.length,
+    reviewed: checks.filter((c) => c.review_status === "적합(육안 확인)" || c.review_status === "조치 완료").length,
+    supplement: checks.filter((c) => c.review_status === "보완 요청" || c.review_status === "보완 제출").length,
   };
 }

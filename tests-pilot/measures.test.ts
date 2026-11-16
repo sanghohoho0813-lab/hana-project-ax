@@ -117,3 +117,35 @@ describe("0.3.1 원자료 없는 재현 기록의 소요시간 품질", () => {
     expect(caseSpans(c, [step("1", "c1", "접수", "09:27")]).map((s) => s.quality).slice(0, 2)).toEqual(["가상", "가상"]);
   });
 });
+
+describe("측정 10 — 안전점검 3단계 제출 (0.5.0)", () => {
+  it("작업 종료한 현장만 세고, 3단계를 모두 낸 현장 · 단계별 제출 · 관리자 확인 수를 센다 (취소 제외)", async () => {
+    const { safetyCompletion } = await import("@/lib/pilot/measures");
+    const schedules = [
+      { id: "a", status: "예정" },
+      { id: "b", status: "예정" },
+      { id: "c", status: "예정" }, // 아직 작업 중
+      { id: "d", status: "취소" },
+    ];
+    const checks = [
+      { schedule_id: "a", stage: "작업 전", review_status: "적합(육안 확인)" },
+      { schedule_id: "a", stage: "작업 중", review_status: "확인 대기" },
+      { schedule_id: "a", stage: "작업 종료", review_status: "조치 완료" },
+      { schedule_id: "b", stage: "작업 전", review_status: "보완 요청" },
+      { schedule_id: "c", stage: "작업 전", review_status: "확인 대기" },
+    ];
+    const r = safetyCompletion(schedules, new Set(["a", "b", "d"]), checks);
+    expect(r).toEqual({
+      ended: 2,
+      full: 1,
+      byStage: [
+        { stage: "작업 전", sites: 2 },
+        { stage: "작업 중", sites: 1 },
+        { stage: "작업 종료", sites: 1 },
+      ],
+      checks: 5,
+      reviewed: 2,
+      supplement: 1,
+    });
+  });
+});

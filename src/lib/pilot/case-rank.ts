@@ -9,7 +9,7 @@ import { hhmm } from "./time";
 /**
  * 관리자 수신함 + 우선 확인 순서 — '문제·지원' 화면과 대시보드가 같이 쓴다.
  * 사건 날짜별 하루치 기록으로 지금 시각 기준 기존 엔진 판단(judgeAt)을 돌려 후속 현장 영향(impactOf)을 구하고,
- * 기존 순서 규칙(rankCases)으로 정렬한다. 계산 방법은 0.3과 같다 (화면 개편으로 바꾸지 않음).
+ * 순서 규칙(rankCases)으로 정렬한다. 엔진 계산은 0.3과 같고, 0.5.0에서 순서만 '지원 요청 먼저'로 바꿨다 (cases.ts 설명).
  */
 export async function loadRankedInbox(sb: PilotClient, date: string, kind: DataKind, now: Date) {
   const [inbox, today] = await Promise.all([loadInbox(sb, date, kind), loadDay(sb, date, kind)]);

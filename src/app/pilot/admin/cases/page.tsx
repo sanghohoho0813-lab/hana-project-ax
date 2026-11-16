@@ -75,7 +75,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
       <PageHead
         eyebrow="문제·지원"
         title="현장 문제 · 지원 요청"
-        sub="우선 확인 순서: 안전 위험·긴급 → 엔진이 계산한 후속 현장 위험 → 미접수 · 오래 기다린 순"
+        sub="우선 확인 순서: 안전 위험·긴급 → 본사 확인 전 → 지원 요청(숙련 기술자·장비) → 후속 일정 영향(엔진 계산) → 오래 기다린 순"
         right={<AutoRefresh seconds={10} label="새 보고 확인" />}
       />
       <DayBar path="/pilot/admin/cases" date={date} kind={kind} today={kst(now).date} />

@@ -289,9 +289,14 @@ export interface Ranked {
 }
 
 /**
- * 관리자 우선 확인 순서 — ① 안전 위험·긴급 ② 엔진이 계산한 후속 현장 위험 수 ③ 가장 늦는 후속 현장 ④ 미접수 ⑤ 오래 기다린 순.
- * 점수는 정렬용 비교값이며 확률이 아니다.
+ * 관리자 우선 확인 순서 (0.5.0 — 2026-11-13 통화 반영: '빨리 지원하는 것'이 먼저, 후속 일정 영향은 그다음)
+ *   ① 안전 위험 ② 긴급 ③ 본사 확인 전(미접수) ④ 지원 요청(숙련 기술자 · 장비 · 원격 지원) 있음
+ *   ⑤ 엔진이 계산한 후속 현장 위험 수 ⑥ 가장 늦는 후속 현장 ⑦ 오래 기다린 순.
+ * 0.4까지는 ⑤⑥이 ③④보다 앞이었다. 점수는 정렬용 비교값이며 확률이 아니다. 엔진 계산은 그대로다.
  */
+/** 본사 지원(숙련 기술자 · 장비 · 원격 · 일정)을 요청했는가 — '보고만'은 아님 */
+export const needsHelp = (c: Pick<CaseRow, "needs">) => c.needs.some((n) => n !== "보고만");
+
 export function rankCases(cases: CaseRow[], impacts: Map<string, Impact | null>, now: Date): Ranked[] {
   return cases
     .map((c) => {
@@ -300,16 +305,17 @@ export function rankCases(cases: CaseRow[], impacts: Map<string, Impact | null>,
       const reasons: string[] = [];
       if (c.issue_type === "안전 위험") reasons.push("안전 위험 보고");
       if (c.urgency === "긴급") reasons.push("긴급");
+      if (c.status === "보고됨") reasons.push(`본사 확인 전 ${waited}분`);
+      if (needsHelp(c)) reasons.push(`지원 요청: ${c.needs.filter((n) => n !== "보고만").join(", ")}`);
       if (im && im.risky > 0) reasons.push(`후속 현장 ${im.risky}곳 위험(최대 ${im.maxShortfall}분 늦음, 계산값)`);
       if (im && im.held > 0) reasons.push(`판단 보류 ${im.held}건(자료 미확인)`);
       if (!c.expected_end && c.status !== "해결") reasons.push("예상 종료 미확인 — 엔진 판단에 반영 안 됨");
-      if (c.status === "보고됨") reasons.push(`미접수 ${waited}분`);
       if (c.status === "미해결") reasons.push("미해결");
       return {
         c,
         impact: im,
         reasons,
-        score: [c.issue_type === "안전 위험" ? 1 : 0, c.urgency === "긴급" ? 1 : 0, im?.risky ?? 0, im?.maxShortfall ?? 0, c.status === "보고됨" ? 1 : 0, waited],
+        score: [c.issue_type === "안전 위험" ? 1 : 0, c.urgency === "긴급" ? 1 : 0, c.status === "보고됨" ? 1 : 0, needsHelp(c) ? 1 : 0, im?.risky ?? 0, im?.maxShortfall ?? 0, waited],
       };
     })
     .sort((a, b) => {
