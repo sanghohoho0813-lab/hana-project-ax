@@ -1035,9 +1035,11 @@ function TimeSend({ label, defaultValue, button, onSend }: { label: string; defa
 }
 
 function LateEntry({ steps, onSend }: { steps: PilotEventKind[]; onSend: (k: PilotEventKind, t: string) => void }) {
-  const [kind, setKind] = useState<PilotEventKind>(steps[0]);
+  const [picked, setKind] = useState<PilotEventKind>(steps[0]);
   const [t, setT] = useState("");
   if (steps.length === 0) return null;
+  // 입력 칸을 연 뒤 앞 기록이 반영되면 고를 수 있는 단계가 바뀐다 — 보이지 않는 단계로 보내지 않게 지금 목록에 있는 단계만 쓴다
+  const kind = steps.includes(picked) ? picked : steps[0];
   return (
     <div className="mt-2 space-y-3 rounded-2xl bg-[#f7f8fa] p-3.5">
       <p className="text-[15.5px] text-ink-2">실제로 있었던 시각을 넣으세요. &lsquo;사후 입력&rsquo;으로 표시되어 즉시 기록과 구분됩니다.</p>
