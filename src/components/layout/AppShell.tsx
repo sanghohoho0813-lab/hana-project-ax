@@ -27,6 +27,7 @@ import {
   PlusSquare,
   RotateCcw,
   Search,
+  ShieldCheck,
   Store as Storefront,
   TrendingUp,
   Users,
@@ -43,7 +44,7 @@ import { GuideOverlay, useGuide } from "@/components/GuideOverlay";
 import { DemoPanel } from "@/components/DemoPanel";
 import { FontScalePicker, useFontScale } from "@/components/FontScale";
 import { StoreShell } from "@/components/store/StoreShell";
-import { LabShell, LAB_LINKS, isLabRoute } from "@/components/lab/LabShell";
+import { DeviceSwitcher, FrameBridge, LabShell, LAB_LINKS, isDeviceRoute, isLabRoute, useDeviceMode, useInFrame } from "@/components/lab/LabShell";
 
 interface NavItem {
   href: string;
@@ -234,6 +235,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             );
           })}
         </ul>
+
+        {/* 로그인 · 중앙 DB 실증 시스템 (현장기사 · 관리자) — 브라우저 저장 실증판과 다른 화면 */}
+        <a
+          href="/pilot"
+          onClick={onNavigate}
+          className="flex items-center gap-2.5 rounded-xl bg-white/8 px-2.5 py-2 text-[18px] font-bold text-white/90 ring-1 ring-white/15 transition-colors hover:bg-white/12"
+        >
+          <ShieldCheck size={21} strokeWidth={2.3} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate">실증 시스템 (로그인)</span>
+            <span className="block truncate text-[13.5px] font-semibold text-white/50">현장기사 · 관리자 · 중앙 DB</span>
+          </span>
+        </a>
 
         <button
           onClick={() => setLegacyOpen((v) => !v)}
@@ -542,6 +556,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { open: guideOpen, setOpen: setGuideOpen } = useGuide();
   const { scale, setScale } = useFontScale();
 
+  // PC / Mobile / PC+Mobile 보기 — 실증판과 기존 기능 화면이 같은 설정을 쓴다
+  const deviceMode = useDeviceMode();
+  const inFrame = useInFrame();
   const isStore = pathname.startsWith("/store");
   // 실증(/pilot)은 데모 셸·데모 역할 전환을 쓰지 않는다 — 자체 화면 틀과 실제 로그인으로 동작
   const isPilot = pathname === "/pilot" || pathname.startsWith("/pilot/");
@@ -592,9 +609,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // 권한 밖 화면은 URL로 직접 들어와도 열리지 않는다
   const baseRoute = pathname.startsWith("/projects/") ? "/projects" : pathname;
   const allowed = baseRoute === "/today" || permission.routes.includes(permKey(baseRoute));
+  const body = allowed ? (
+    children
+  ) : (
+            <div className="card mx-auto max-w-[42rem] p-10 text-center">
+              <span className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-warning-bg text-warning">
+                <HelpCircle size={34} />
+              </span>
+              <p className="mt-4 text-[26px] font-extrabold">
+                이 화면은 권한이 있는 계정만 볼 수 있어요
+              </p>
+              <p className="mt-2 text-[19.5px] leading-relaxed text-ink-2">
+                {me.name} {me.roleLabel} 계정에는 열려 있지 않은 메뉴입니다.
+                좌측 하단에서 대표 또는 이사 계정으로 전환하면 확인할 수
+                있습니다.
+              </p>
+              <Link
+                href="/today"
+                className="mt-5 inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-primary px-6 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark"
+              >
+                오늘의 업무로 돌아가기
+              </Link>
+            </div>
+  );
+
+  // Mobile · PC+Mobile 보기에서는 기존 기능 화면도 실증판과 같은 틀(휴대폰 틀 · 전체 메뉴)로 보여 준다
+  if (!inFrame && deviceMode !== "pc" && isDeviceRoute(pathname)) {
+    return (
+      <LabShell legacy title={meta.title} sidebar={(onNavigate) => <SidebarContent onNavigate={onNavigate} />}>
+        {body}
+      </LabShell>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
+      {inFrame && <FrameBridge />}
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2.5 focus:text-[20.2px] focus:font-bold focus:text-white"
@@ -646,6 +696,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
             <div className="flex min-w-0 items-center gap-2 lg:gap-2.5">
               <HeaderSearch />
+              {!inFrame && (
+                <div className="hidden shrink-0 lg:block">
+                  <DeviceSwitcher />
+                </div>
+              )}
               {permission.seeMoney && (
                 <div className="hidden shrink-0 2xl:block">
                   <Segment<BusinessView>
@@ -769,29 +824,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           id="main"
           className="mx-auto w-full max-w-[1760px] flex-1 px-4 py-6 pb-[6.5rem] lg:px-8 lg:py-7 lg:pb-7"
         >
-          {allowed ? (
-            children
-          ) : (
-            <div className="card mx-auto max-w-[42rem] p-10 text-center">
-              <span className="mx-auto flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-2xl bg-warning-bg text-warning">
-                <HelpCircle size={34} />
-              </span>
-              <p className="mt-4 text-[26px] font-extrabold">
-                이 화면은 권한이 있는 계정만 볼 수 있어요
-              </p>
-              <p className="mt-2 text-[19.5px] leading-relaxed text-ink-2">
-                {me.name} {me.roleLabel} 계정에는 열려 있지 않은 메뉴입니다.
-                좌측 하단에서 대표 또는 이사 계정으로 전환하면 확인할 수
-                있습니다.
-              </p>
-              <Link
-                href="/today"
-                className="mt-5 inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl bg-primary px-6 text-[20px] font-bold text-white transition-colors hover:bg-primary-dark"
-              >
-                오늘의 업무로 돌아가기
-              </Link>
-            </div>
-          )}
+          {body}
         </main>
 
         {/* 모바일 하단 내비 — 현장에서 엄지로 누르는 5버튼 */}

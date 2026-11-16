@@ -280,6 +280,21 @@ await p.goto(APP + "/today");
 check((await p.locator("h1:has-text('오늘의 업무')").count()) === 1, "12 기존 홈(오늘의 업무)은 /today 로 그대로");
 await p.goto(APP + "/schedule");
 check((await p.locator("text=위험 판단과 대응 우선순위").count()) >= 1, "12 기존 통합일정 위험 판단 화면 그대로");
+// 0.4.1: 기존 기능 화면도 Mobile · PC+Mobile 보기 (전체 메뉴 · 휴대폰 틀) — PC 보기는 원래 틀 그대로
+check((await p.locator('a[href="/pilot"]').count()) >= 1, "12 메뉴에 실증 시스템(로그인) 바로가기");
+await p.click('[aria-label="화면 보기"] button >> text="PC+Mobile"');
+await p.locator('[data-pane="pc"]').waitFor();
+const legacyFrame = p.frameLocator('iframe[title^="모바일 화면"]');
+await legacyFrame.locator("h1:has-text('위험 판단'), h1").first().waitFor();
+check((await p.locator('[data-pane="pc"] >> text=위험 판단과 대응 우선순위').count()) >= 1 && (await legacyFrame.locator("text=통합일정").count()) >= 1, "12 기존 통합일정도 PC+Mobile 동시보기 (왼쪽 PC · 오른쪽 휴대폰 틀)");
+await p.click('button:has-text("전체 메뉴")');
+// 기존 기능 화면에서는 '기타 · 기존 기능'이 이미 펼쳐져 있다 — 접혀 있을 때만 편다
+if ((await p.locator('a[href="/today"]:visible').count()) === 0) await p.click('button:has-text("기타 · 기존 기능")');
+await p.locator('a[href="/today"]:visible').first().click();
+await p.waitForURL(/\/today/);
+check(await until(async () => (await legacyFrame.locator("h1:has-text('오늘의 업무')").count()) === 1), "12 전체 메뉴로 기존 기능 이동 → 휴대폰 틀도 같은 화면으로 따라감");
+await p.click('[aria-label="화면 보기"] button >> text="PC"');
+check((await p.locator("aside").count()) >= 1 && (await p.locator('iframe[title^="모바일 화면"]').count()) === 0, "12 PC 보기로 돌리면 기존 화면은 원래 틀");
 check(p.errs.length === 0, "화면 오류 없음", p.errs.join(" | "));
 
 // ── 실제 휴대폰 크기(390·430)에서 현장기사 화면 ──

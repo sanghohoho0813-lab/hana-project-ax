@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ClipboardList, Database, FlaskConical } from "lucide-react";
+import { ArrowRight, ClipboardList, Database, FlaskConical, ShieldCheck } from "lucide-react";
 import { useLab } from "@/lib/lab/store";
 import { currentSchedules, personName, sessionEvents, type LabState } from "@/lib/lab/model";
 import { kst } from "@/lib/pilot/time";
@@ -61,6 +61,22 @@ export default function LabHome() {
           </Link>
         ))}
       </section>
+
+      {/* 0.4.0 — 로그인 · 중앙 DB 실증 시스템 (현장기사 휴대폰 · 본사 관리자) 바로가기 */}
+      <a
+        href="/pilot"
+        aria-label="실증 시스템 열기"
+        className="flex items-center gap-3 rounded-[20px] bg-gradient-to-br from-[#4f46e5] to-[#3730a3] p-4 text-white shadow-[0_14px_32px_-16px_rgba(79,70,229,0.7)] transition-transform hover:-translate-y-0.5"
+      >
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15">
+          <ShieldCheck size={24} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[19px] font-extrabold">실증 시스템 (로그인 · 중앙 DB)</span>
+          <span className="block text-[14.5px] text-white/80">현장기사 휴대폰 화면 · 본사 관리자 대시보드 — 0.4.0 새 화면. 계정이 있어야 들어갑니다.</span>
+        </span>
+        <ArrowRight size={22} className="shrink-0" />
+      </a>
 
       <BackupCard />
 

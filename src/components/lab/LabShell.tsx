@@ -33,6 +33,11 @@ export function isLabRoute(p: string) {
   return p === "/" || ["/field", "/compare", "/records"].some((x) => p === x || p.startsWith(`${x}/`));
 }
 
+/** PC / Mobile / PC+Mobile 보기를 쓸 수 있는 화면 — 실증판과 기존 기능 화면 모두 (실증 시스템 /pilot · 서비스 안내 /store 는 자체 틀) */
+export function isDeviceRoute(p: string) {
+  return !(p === "/pilot" || p.startsWith("/pilot/") || p.startsWith("/store"));
+}
+
 const TITLE: Record<string, string> = {
   "/": "실증 홈",
   "/field": "현장 실증",
@@ -165,10 +170,10 @@ function DeviceSwitch({ mode, setMode }: { mode: DeviceMode; setMode: (m: Device
   );
 }
 
-function BottomNav({ pathname }: { pathname: string }) {
+function BottomNav({ pathname, onMore }: { pathname: string; onMore?: () => void }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)] lg:hidden" aria-label="실증 하단 메뉴">
-      <div className="grid grid-cols-4">
+      <div className={onMore ? "grid grid-cols-5" : "grid grid-cols-4"}>
         {LAB_LINKS.map((i) => {
           const active = i.href === "/" ? pathname === "/" : pathname.startsWith(i.href);
           return (
@@ -183,6 +188,12 @@ function BottomNav({ pathname }: { pathname: string }) {
             </Link>
           );
         })}
+        {onMore && (
+          <button onClick={onMore} className="flex min-h-[4.1rem] flex-col items-center justify-center gap-0.5 text-[15px] font-bold text-ink-3" aria-label="전체 메뉴 (기존 기능 포함)">
+            <Menu size={25} />
+            전체
+          </button>
+        )}
       </div>
     </nav>
   );
@@ -190,7 +201,8 @@ function BottomNav({ pathname }: { pathname: string }) {
 
 /* ── 모바일 화면 (같은 앱 · 같은 경로 · 같은 데이터) ─── */
 
-function PhoneFrame({ width, height, label }: { width: number; height: number | string; label: string }) {
+/** height 를 주지 않으면 부모 칸의 남은 높이를 채운다 (머리글이 두 줄이 돼도 휴대폰 틀 아래가 잘리지 않음) */
+function PhoneFrame({ width, height, label }: { width: number; height?: number | string; label: string }) {
   const ref = useRef<HTMLIFrameElement>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -211,24 +223,27 @@ function PhoneFrame({ width, height, label }: { width: number; height: number | 
   useEffect(() => {
     const on = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== ref.current?.contentWindow) return;
-      if (e.data?.type === ROUTE && typeof e.data.path === "string" && e.data.path !== window.location.pathname && isLabRoute(e.data.path)) router.push(e.data.path);
+      if (e.data?.type === ROUTE && typeof e.data.path === "string" && e.data.path !== window.location.pathname && isDeviceRoute(e.data.path)) router.push(e.data.path);
     };
     window.addEventListener("message", on);
     return () => window.removeEventListener("message", on);
   }, [router]);
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <div className="overflow-hidden rounded-[2rem] border-[10px] border-[#1d2433] bg-white shadow-[0_18px_40px_rgba(16,26,46,0.25)]" style={{ width: width + 20 }}>
-        <iframe ref={ref} src={src} title={label} style={{ width, height, display: "block", border: 0 }} />
+    <div className={height === undefined ? "flex h-full min-h-0 flex-col items-center gap-1.5" : "flex flex-col items-center gap-1.5"}>
+      <div
+        className={`overflow-hidden rounded-[2rem] border-[10px] border-[#1d2433] bg-white shadow-[0_18px_40px_rgba(16,26,46,0.25)] ${height === undefined ? "min-h-0 flex-1" : ""}`}
+        style={{ width: width + 20 }}
+      >
+        <iframe ref={ref} src={src} title={label} style={{ width, height: height ?? "100%", display: "block", border: 0 }} />
       </div>
-      <p className="text-[14px] text-ink-3">실제 {width}px 모바일 화면 · 같은 앱·같은 데이터 (이 브라우저 안에서만)</p>
+      <p className="shrink-0 text-[14px] text-ink-3">실제 {width}px 모바일 화면 · 같은 앱·같은 데이터 (이 브라우저 안에서만)</p>
     </div>
   );
 }
 
 /** iframe 안: 경로가 바뀌면 바깥(PC)에 알리고, 바깥에서 온 경로로 이동한다 */
-function FrameBridge() {
+export function FrameBridge() {
   const pathname = usePathname();
   const router = useRouter();
   useEffect(() => {
@@ -237,7 +252,7 @@ function FrameBridge() {
   useEffect(() => {
     const on = (e: MessageEvent) => {
       if (e.origin !== window.location.origin || e.source !== window.parent) return;
-      if (e.data?.type === NAV && typeof e.data.path === "string" && e.data.path !== window.location.pathname && isLabRoute(e.data.path)) router.push(`${e.data.path}?frame=1`);
+      if (e.data?.type === NAV && typeof e.data.path === "string" && e.data.path !== window.location.pathname && isDeviceRoute(e.data.path)) router.push(`${e.data.path}?frame=1`);
     };
     window.addEventListener("message", on);
     return () => window.removeEventListener("message", on);
@@ -250,24 +265,35 @@ function FrameBridge() {
 function Header({
   title,
   onMenu,
+  menuAlways = false,
   tabs,
   pathname,
   switcher,
+  legacy = false,
 }: {
   title: string;
   onMenu?: () => void;
+  /** PC 폭에서도 '전체 메뉴' 버튼을 보인다 (Mobile · PC+Mobile 보기 — 왼쪽 메뉴가 없을 때) */
+  menuAlways?: boolean;
   tabs?: boolean;
   pathname: string;
   switcher?: React.ReactNode;
+  /** 기존 기능 화면 — 실증 기록 안내 띠 · 백업 · 입력자 표시를 하지 않는다 */
+  legacy?: boolean;
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-white/95 backdrop-blur print:static">
       <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 lg:px-6">
-        {onMenu && (
-          <button onClick={onMenu} aria-label="메뉴 열기" className="rounded-xl p-2 text-ink-2 hover:bg-[#f2f4f6] lg:hidden print:hidden">
-            <Menu size={26} />
-          </button>
-        )}
+        {onMenu &&
+          (menuAlways ? (
+            <button onClick={onMenu} aria-label="전체 메뉴 열기" className="inline-flex items-center gap-1.5 rounded-xl bg-[#f2f4f6] px-3 py-2 text-[15.5px] font-bold text-ink-2 hover:bg-[#e8ebee] print:hidden">
+              <Menu size={20} /> <span className="max-2xl:sr-only">전체 메뉴</span>
+            </button>
+          ) : (
+            <button onClick={onMenu} aria-label="메뉴 열기" className="rounded-xl p-2 text-ink-2 hover:bg-[#f2f4f6] lg:hidden print:hidden">
+              <Menu size={26} />
+            </button>
+          ))}
         <h1 className="min-w-[7rem] flex-1 truncate text-[22px] font-extrabold lg:text-[24px]">{title}</h1>
         {tabs && (
           <nav className="hidden items-center gap-1 xl:flex" aria-label="실증 메뉴">
@@ -281,36 +307,39 @@ function Header({
             })}
           </nav>
         )}
-        <div className="flex items-center gap-1.5 print:hidden">
-          <BackupBadge compact />
-          <OperatorPicker compact />
-        </div>
+        {!legacy && (
+          <div className="flex items-center gap-1.5 print:hidden">
+            <BackupBadge compact />
+            <OperatorPicker compact />
+          </div>
+        )}
         {switcher && <div className="hidden lg:block print:hidden">{switcher}</div>}
       </div>
-      <p className="bg-[#fff7e6] px-4 py-1 text-center text-[13.5px] text-[#8a5a00] print:hidden">
-        실증 기록은 이 브라우저에만 저장됩니다 (중앙 DB 아님) · 다른 기기와 공유되지 않음 · 백업 JSON 을 꼭 받아 두세요
-      </p>
+      {legacy ? (
+        <p className="bg-[#f5f6f8] px-4 py-1 text-center text-[13.5px] text-ink-3 print:hidden">기존 기능 화면 (데모 데이터) — 실증 기록과 섞이지 않습니다</p>
+      ) : (
+        <p className="bg-[#fff7e6] px-4 py-1 text-center text-[13.5px] text-[#8a5a00] print:hidden">
+          실증 기록은 이 브라우저에만 저장됩니다 (중앙 DB 아님) · 다른 기기와 공유되지 않음 · 백업 JSON 을 꼭 받아 두세요
+        </p>
+      )}
     </header>
   );
 }
 
-export function LabShell({ children, sidebar }: { children: React.ReactNode; sidebar: (onNavigate?: () => void) => React.ReactNode }) {
-  const pathname = usePathname();
+/** 지금 보기 방식 — iframe 안이거나 화면이 좁으면 항상 PC(=그 폭의 반응형). iframe 을 다시 그리지 않는다 (재귀 방지) */
+export function useDeviceMode(): DeviceMode {
   const inFrame = useInFrame();
   const wide = useWide();
-  const [modePref, setModePref] = usePref("device", "pc");
+  const [modePref] = usePref("device", "pc");
+  return inFrame || !wide ? "pc" : modePref === "mobile" || modePref === "both" ? modePref : "pc";
+}
+
+/** PC / Mobile / PC+Mobile 고르기 + 모바일 폭 (실증판 · 기존 기능 머리글이 같이 씀) */
+export function DeviceSwitcher() {
+  const mode = useDeviceMode();
+  const [, setModePref] = usePref("device", "pc");
   const [widthPref, setWidthPref] = usePref("device-width", "390");
-  const [drawer, setDrawer] = useState(false);
-  const title = TITLE[pathname] ?? "실증";
-  // iframe 안이거나 화면이 좁으면 항상 PC(=그 폭의 반응형) — iframe 을 다시 그리지 않는다 (재귀 방지)
-  const mode: DeviceMode = inFrame || !wide ? "pc" : modePref === "mobile" || modePref === "both" ? modePref : "pc";
-  const width = widthPref === "430" ? 430 : 390;
-
-  useEffect(() => {
-    document.title = `${title} · 하나 프로젝트 AX 실증`;
-  }, [title]);
-
-  const switcher = (
+  return (
     <div className="flex items-center gap-1.5">
       <DeviceSwitch mode={mode} setMode={(m) => setModePref(m)} />
       {mode !== "pc" && (
@@ -324,14 +353,62 @@ export function LabShell({ children, sidebar }: { children: React.ReactNode; sid
       )}
     </div>
   );
+}
+
+/** 왼쪽 전체 메뉴 (실증 메뉴 + 기타 · 기존 기능) — 화면 폭과 상관없이 서랍으로 연다 */
+function MenuDrawer({ open, onClose, sidebar }: { open: boolean; onClose: () => void; sidebar: (onNavigate?: () => void) => React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0 bg-ink/45" onClick={onClose} />
+      <div className="absolute inset-y-0 left-0 w-[min(22.5rem,88vw)] shadow-2xl">
+        <button onClick={onClose} aria-label="메뉴 닫기" className="absolute top-4 right-3 z-10 rounded-full p-2.5 text-white/60 hover:bg-white/10">
+          <X size={26} />
+        </button>
+        {sidebar(onClose)}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 실증판 틀. 기존 기능 화면도 Mobile · PC+Mobile 보기일 때는 이 틀로 그린다 (legacy · title 전달).
+ * PC 보기의 기존 기능 화면은 원래 틀(AppShell)을 그대로 쓴다.
+ */
+export function LabShell({
+  children,
+  sidebar,
+  title: titleProp,
+  legacy = false,
+}: {
+  children: React.ReactNode;
+  sidebar: (onNavigate?: () => void) => React.ReactNode;
+  title?: string;
+  legacy?: boolean;
+}) {
+  const pathname = usePathname();
+  const inFrame = useInFrame();
+  const [widthPref] = usePref("device-width", "390");
+  const [drawer, setDrawer] = useState(false);
+  const title = titleProp ?? TITLE[pathname] ?? "실증";
+  const mode = useDeviceMode();
+  const width = widthPref === "430" ? 430 : 390;
+
+  useEffect(() => {
+    document.title = `${title} · 하나 프로젝트 AX${legacy ? "" : " 실증"}`;
+  }, [title, legacy]);
+
+  const switcher = <DeviceSwitcher />;
+  const drawerEl = <MenuDrawer open={drawer} onClose={() => setDrawer(false)} sidebar={sidebar} />;
 
   if (inFrame) {
     return (
       <div className="min-h-screen bg-bg" data-frame="mobile">
         <FrameBridge />
-        <Header title={title} pathname={pathname} />
+        <Header title={title} pathname={pathname} legacy={legacy} />
         <main className="px-3 py-3 pb-[6rem]">{children}</main>
-        <BottomNav pathname={pathname} />
+        <BottomNav pathname={pathname} onMore={() => setDrawer(true)} />
+        {drawerEl}
       </div>
     );
   }
@@ -339,10 +416,11 @@ export function LabShell({ children, sidebar }: { children: React.ReactNode; sid
   if (mode === "mobile") {
     return (
       <div className="min-h-screen bg-bg" data-device="mobile">
-        <Header title={title} pathname={pathname} tabs switcher={switcher} />
+        <Header title={title} pathname={pathname} tabs switcher={switcher} onMenu={() => setDrawer(true)} menuAlways legacy={legacy} />
         <main className="flex justify-center px-4 py-5">
           <PhoneFrame width={width} height="min(844px, calc(100vh - 190px))" label={`모바일 화면 ${width}px`} />
         </main>
+        {drawerEl}
       </div>
     );
   }
@@ -350,16 +428,17 @@ export function LabShell({ children, sidebar }: { children: React.ReactNode; sid
   if (mode === "both") {
     return (
       <div className="flex h-screen flex-col bg-bg" data-device="both">
-        <Header title={title} pathname={pathname} tabs switcher={switcher} />
-        <LabFlow />
+        <Header title={title} pathname={pathname} tabs switcher={switcher} onMenu={() => setDrawer(true)} menuAlways legacy={legacy} />
+        {!legacy && <LabFlow />}
         <div className="grid min-h-0 flex-1 grid-cols-[2fr_1fr]">
           <div className="min-w-0 overflow-y-auto px-5 py-5" data-pane="pc">
             {children}
           </div>
-          <div className="flex min-w-0 justify-center overflow-y-auto border-l border-line bg-[#e9ecf1] py-3" data-pane="mobile">
-            <PhoneFrame width={width} height="calc(100vh - 265px)" label={`모바일 화면 ${width}px`} />
+          <div className="flex min-h-0 min-w-0 justify-center overflow-hidden border-l border-line bg-[#e9ecf1] py-3" data-pane="mobile">
+            <PhoneFrame width={width} label={`모바일 화면 ${width}px`} />
           </div>
         </div>
+        {drawerEl}
       </div>
     );
   }
@@ -367,19 +446,9 @@ export function LabShell({ children, sidebar }: { children: React.ReactNode; sid
   return (
     <div className="flex min-h-screen" data-device="pc">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[22.5rem] lg:block print:hidden">{sidebar()}</aside>
-      {drawer && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-ink/45" onClick={() => setDrawer(false)} />
-          <div className="absolute inset-y-0 left-0 w-[min(22.5rem,88vw)] shadow-2xl">
-            <button onClick={() => setDrawer(false)} aria-label="메뉴 닫기" className="absolute top-4 right-3 z-10 rounded-full p-2.5 text-white/60 hover:bg-white/10">
-              <X size={26} />
-            </button>
-            {sidebar(() => setDrawer(false))}
-          </div>
-        </div>
-      )}
+      <div className="lg:hidden">{drawerEl}</div>
       <div className="flex min-w-0 flex-1 flex-col lg:pl-[22.5rem] print:pl-0">
-        <Header title={title} pathname={pathname} onMenu={() => setDrawer(true)} switcher={switcher} />
+        <Header title={title} pathname={pathname} onMenu={() => setDrawer(true)} switcher={switcher} legacy={legacy} />
         <main className="mx-auto w-full max-w-[1500px] flex-1 px-4 py-5 pb-[6.5rem] lg:px-7 lg:pb-8">{children}</main>
         <BottomNav pathname={pathname} />
       </div>
