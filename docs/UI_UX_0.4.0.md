@@ -163,7 +163,21 @@
 
 ## 6. 전체 회귀
 
-`docs/evidence/ui-0.4.0/test-run-0.4.0.txt` 참고. 결과는 아래 표에 적는다.
+원문: `docs/evidence/ui-0.4.0/test-run-0.4.0.txt`
+- 실행 시각: 2026-11-16 11:13:58 ~ 11:20:21 KST
+- 대상 코드: 커밋 `255cca9`와 같은 코드 (실행할 때는 커밋 전 작업 트리였다)
+
+| 묶음 | 0.3.2 | 0.4.0 | 차이 |
+|---|---|---|---|
+| lint · build | 통과 | **통과** | — |
+| `npm test` | 113 | **113** | — |
+| 비교시험 정답표 | 62 | **62** | — |
+| `test:pilot` | 78 | **78** | — |
+| `test:pilot:db` | 57 | **57** | — |
+| `test:pilot:e2e` | 98 | **98** | 주소 · 첫 화면 제목만 바꿈 |
+| `test:pilot:cases` | 89 | **89** | 의견 탭 누르기 1줄 |
+| `test:lab:e2e` | 128 | **128** | — |
+| **합계** | 625 | **625** | 첫 실행에서 실패 없음 |
 
 ## 7. 화면 사진 (`docs/evidence/ui-0.4.0/`)
 
@@ -180,7 +194,7 @@
 | `pc02_cases.png` | 문제·지원 — 우선 처리 목록 |
 | `pc03_case_detail.png` · `pc03b_risk_chain.png` · `pc03_case_detail_full.png` | 사건 상세 · 연쇄 영향 그림 · 인쇄 증빙까지 전체 |
 | `pc04_safety.png` · `pc05_schedule.png` · `pc06_measures.png` | 안전관리 · 현장·일정 · 성과·증빙 |
-| `pc08_login.png` · `pc09_lab_pc_mobile.png` | 로그인 · 실증판 PC+Mobile (처리 흐름 띠) |
+| `pc08_login.png` · `pc09_lab_pc_mobile.png` | 로그인 · 실증판 PC+Mobile (처리 흐름 띠 — 새 브라우저라 아직 기록이 없는 첫 상태) |
 
 ## 8. 한계
 
