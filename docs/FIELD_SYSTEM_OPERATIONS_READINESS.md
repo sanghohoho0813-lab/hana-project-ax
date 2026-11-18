@@ -91,6 +91,7 @@
 - **내용 · 미검증 항목 · Supabase 연결 뒤 작업 순서**: [`docs/STABILIZATION_0.6.1.md`](STABILIZATION_0.6.1.md)
 - **벤처확인 핵심 사례 1건**: [`docs/VENTURE_CORE_CASE.md`](VENTURE_CORE_CASE.md)
 - **실기기 확인 추가**: 시험 A18~A23 (`docs/FIELD_TEST_EXECUTION.md`).
+- **전체 회귀**: 746 / 746 통과 (`docs/evidence/ui-0.6.0/test-run-0.6.1.txt`). 실제 휴대폰 · 운영 Supabase에서는 아직 확인하지 않음.
 
 ## 0.6.0 안전 1순위 (2026-11-16) — 사용자 지시
 
