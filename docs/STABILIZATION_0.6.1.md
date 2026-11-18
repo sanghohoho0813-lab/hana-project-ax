@@ -45,7 +45,7 @@
 
 ## 3. 시험 결과
 
-전체 회귀 결과는 `docs/evidence/ui-0.6.0/test-run-0.6.1.txt`에 원문으로 남긴다 (5장 표 참고). 이번에 새로 더한 시험:
+전체 회귀 결과는 `docs/evidence/ui-0.6.0/test-run-0.6.1.txt`에 원문으로 남긴다. 이번에 새로 더한 시험:
 
 | 시험 | 건수 | 무엇을 |
 |---|---|---|
@@ -53,7 +53,7 @@
 | `tests-pilot/connection.test.ts` | 6 | 연결 상태 문장 · 색 · 마지막 정상 확인 · 늦어짐 |
 | `tests-pilot/watch.test.ts` 추가 | 5 | 사후 입력 · 시작 전 보고 제외 · 순수 함수 · 자정 근처 · 현장 화면 같은 규칙 |
 | `tests-pilot/measures.test.ts` 추가 | 1 | 사진 없는 점검은 단계 제출로 세지 않음 |
-| `tests-pilot/core-case.test.ts` | 8 | 벤처확인 핵심 사례 계산값 고정 (`docs/VENTURE_CORE_CASE.md`) |
+| `tests-pilot/core-case.test.ts` | 9 | 벤처확인 핵심 사례 계산값 고정 (`docs/VENTURE_CORE_CASE.md`) |
 | `tests-pilot/e2e/stability.mjs` | 27 | 실제 화면 · 로컬 DB · 저장소로 B-1~B-4 · C-1 · A-1 확인 |
 
 ---

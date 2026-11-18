@@ -2,7 +2,7 @@
 // 가상 시나리오(시험용 가정값)이며 실제 현장 기록이 아니다. 계산은 기존 연쇄위험 판단엔진(chain-risk/1.1.0)과 조기 확인 규칙을 그대로 쓴다.
 import { describe, expect, it } from "vitest";
 import { judgeAt, type EventRow, type ScheduleRow } from "@/lib/pilot/core";
-import { impactOf } from "@/lib/pilot/cases";
+import { impactOf, rankCases, type CaseRow } from "@/lib/pilot/cases";
 import { watchInputOf, watchOf, safetyTiming } from "@/lib/pilot/watch";
 import { progressOf } from "@/lib/pilot/core";
 import { RISK_RULE_VERSION } from "@/lib/risk-engine";
@@ -78,6 +78,18 @@ describe("핵심 사례 — 설치환경 문제 → 숙련 기술자 지원 → 
     expect([bc.grade, bc.slack]).toEqual(["매우 높음", -45]); // 홍성 11:20 시작 · 60분 유지 → 12:20 종료 + 25 = 12:45 도착 · 12:00 → 45분 부족
     expect(impactOf(r, "A", "w1", startOf)).toMatchObject({ risky: 2, maxShortfall: 50 });
     expect(RISK_RULE_VERSION).toBe("chain-risk/1.1.0");
+  });
+
+  it("④-2 본사 파악: 같은 시각 다른 보고(더 오래 기다림 · '보고만')보다 이 사건이 먼저 — 지원 요청 + 후속 위험 계산값", () => {
+    const r = judgeAt([A, B, C], [start, report], at("09:20"));
+    const kase = (id: string, no: string, needs: string[], reported: string): CaseRow =>
+      ({ id, case_no: no, schedule_id: "A", data_kind: "검증 시나리오", evidence_class: "가상 시나리오", work_date: D, worker_id: "w1", reporter_id: "w1", source: "현장 직원", info_source: "현장기사 앱", issue_type: "예상과 다른 설치환경", type_note: null, progress: "분해·설치 시작 후", needs, request: null, urgency: "보통", discovered_at: at("09:15"), discovered_basis: "현장 직원 진술", reported_at: at(reported), report_mode: "즉시 기록", report_basis: "", send_delay_seconds: 0, recorded_at: at(reported), expected_end: "11:00:00", end_event_id: null, status: "보고됨", handler_id: null, app_version: "0.6.1", updated_at: at(reported) }) as CaseRow;
+    const mine = kase("k1", "HT-2", ["숙련 기술자 지원"], "09:20");
+    const other = kase("k2", "HT-1", ["보고만"], "09:05");
+    const ranked = rankCases([other, mine], new Map([["k1", impactOf(r, "A", "w1", startOf)], ["k2", null]]), new Date(at("09:22")));
+    expect(ranked.map((x) => x.c.case_no)).toEqual(["HT-2", "HT-1"]);
+    expect(ranked[0].reasons).toContain("지원 요청: 숙련 기술자 지원");
+    expect(ranked[0].reasons).toContain("후속 현장 2곳 위험(최대 50분 늦음, 계산값)");
   });
 
   const B2 = { ...B, planned_start: "11:25:00", planned_end: "12:25:00", version: 2 }; // 1차 조치: 홍성 고객 연락 후 시간 조정
