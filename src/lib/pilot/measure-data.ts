@@ -47,10 +47,14 @@ export async function loadMeasures(sb: PilotClient, from: string, to: string, ki
     if (m && !m.has(e.schedule_id)) m.set(e.schedule_id, e.occurred_at);
   }
   const checks = (sf.data ?? []) as { id: string; schedule_id: string; stage: string; review_status: string; checked_at: string | null; recorded_at: string }[];
-  const reviews = checks.length
-    ? (((await sb.from("safety_reviews").select("check_id, kind, source, occurred_at").in("check_id", checks.map((c) => c.id))).data ?? []) as { check_id: string; kind: string; source: string; occurred_at: string }[])
-    : [];
-  const safety = safetyCompletion((sc.data ?? []) as { id: string; status: string }[], { starts, ends }, checks, reviews);
+  const [reviews, photos] = checks.length
+    ? await Promise.all([
+        sb.from("safety_reviews").select("check_id, kind, source, occurred_at").in("check_id", checks.map((c) => c.id)).then((r) => (r.data ?? []) as { check_id: string; kind: string; source: string; occurred_at: string }[]),
+        sb.from("case_photos").select("safety_check_id, deleted_at").in("safety_check_id", checks.map((c) => c.id)).then((r) => (r.data ?? []) as { safety_check_id: string; deleted_at: string | null }[]),
+      ])
+    : [[], []];
+  const withPhoto = new Set(photos.filter((p) => !p.deleted_at).map((p) => p.safety_check_id));
+  const safety = safetyCompletion((sc.data ?? []) as { id: string; status: string }[], { starts, ends }, checks, reviews, withPhoto);
   const cases = (c.data ?? []) as CaseRow[];
   const ids = cases.map((x) => x.id);
   const steps = ids.length ? (((await sb.from("case_steps").select(STEP_COLS).in("case_id", ids).order("step_no")).data ?? []) as StepRow[]) : [];

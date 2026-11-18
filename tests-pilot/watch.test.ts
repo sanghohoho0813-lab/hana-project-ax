@@ -104,3 +104,55 @@ describe("safetyTiming — 시작 전 점검을 시작 전에 · 마무리 점�
     expect(safetyTiming({ startedAt: T("09:05"), endedAt: null }, [chk("작업 전", "09:30"), chk("작업 전", "09:00")]).pre).toBe("제때");
   });
 });
+
+describe("조기 확인 경계 (0.6.1 안정화)", () => {
+  const ev = (seq: number, kind: EventRow["kind"], at: string, extra: Partial<EventRow> = {}) =>
+    ({ seq, id: `e${seq}`, schedule_id: "s1", data_kind: "실제 업무", work_date: "2026-11-18", kind, occurred_at: at, entered_time: null, expected_end: null, entry_mode: "즉시 기록", recorded_at: at, source: "현장 직원", actor_id: "u", voids_event_id: null, ...extra }) as EventRow;
+  const s = { planned_start: "09:00:00", planned_end: "10:00:00", status: "예정" };
+
+  it("작업 시작을 나중에 사후 입력해도, 그 시작 뒤에 일어난 예상 종료 보고는 진행 보고로 본다 (기록 순서가 아니라 발생 시각으로 비교)", () => {
+    // 09:40 예상 종료 보고(먼저 기록) → 10:05에 '09:05 작업 시작'을 사후 입력(나중 기록)
+    const report = ev(1, "예상 종료 보고", "2026-11-18T00:40:00Z", { expected_end: "10:30:00" });
+    const lateStart = ev(2, "작업개시", "2026-11-18T00:05:00Z", { entry_mode: "사후 입력", entered_time: "09:05:00", recorded_at: "2026-11-18T01:05:00Z" });
+    const input = watchInputOf(s, { started: lateStart, expectedEnd: report }, false);
+    expect(input).toMatchObject({ startedAt: "09:05", lastReport: { at: "09:40", end: "10:30" } });
+    expect(watchOf(input, "10:10").level).toBe("정상");
+  });
+
+  it("현장 화면도 같다 — 작업 시작이 나중에 기록(사후 입력)돼도 그 뒤에 일어난 보고를 진행 보고로 본다", async () => {
+    const { lastReportAfterStart } = await import("@/lib/pilot/watch");
+    // 기록 순서: 09:40 예상 종료 보고 → (10:05에) 09:05 작업 시작 사후 입력. 예전 화면은 '작업 시작 다음 칸'만 봐서 보고를 놓쳤다.
+    const recorded = [
+      { kind: "예상 종료 보고", time: "09:40", expectedEnd: "10:30" },
+      { kind: "작업개시", time: "09:05", expectedEnd: null },
+    ];
+    expect(lastReportAfterStart("09:05", recorded)).toEqual({ at: "09:40", end: "10:30" });
+    expect(watchOf({ ...base, startedAt: "09:05", lastReport: lastReportAfterStart("09:05", recorded) }, "10:10").level).toBe("정상");
+    // 작업 시작 전에 일어난 보고는 빼고, 아직 보내는 중인 보고는 가장 최근으로 본다 · 시작 전이면 없음
+    expect(lastReportAfterStart("09:50", recorded)).toBeNull();
+    expect(lastReportAfterStart("09:05", recorded, [{ at: "10:12", end: "10:45" }])).toEqual({ at: "10:12", end: "10:45" });
+    expect(lastReportAfterStart(null, recorded)).toBeNull();
+  });
+
+  it("작업 시작 전에 보낸 예상 종료 보고는 진행 보고가 아니다 (발생 시각 기준)", () => {
+    const report = ev(1, "예상 종료 보고", "2026-11-17T23:50:00Z", { expected_end: "10:30:00" }); // 08:50
+    const start = ev(2, "작업개시", "2026-11-18T00:05:00Z");
+    expect(watchInputOf(s, { started: start, expectedEnd: report }, false).lastReport).toBeNull();
+  });
+
+  it("같은 입력이면 언제 · 몇 번 계산해도 같은 결과 (순수 함수)", () => {
+    const x = { ...base, lastReport: { at: "09:35", end: "10:30" } };
+    const a = watchOf(x, "10:41");
+    expect(watchOf(structuredClone(x), "10:41")).toEqual(a);
+    expect(x).toEqual({ ...base, lastReport: { at: "09:35", end: "10:30" } }); // 입력을 바꾸지 않음
+  });
+
+  it("자정 근처: 예상 종료가 하루를 넘으면 23:59로 막고, 시계가 작업 시작보다 앞서면 경과 0분 (음수 없음)", () => {
+    const night = { plannedStart: "23:20", plannedEnd: "23:50", startedAt: "23:55", ended: false, lastReport: null, openCase: false };
+    expect(watchOf(night, "23:58").expectedEnd).toBe("23:59");
+    const skew = watchOf(night, "00:05"); // 기기 시계가 다음 날로 넘어간 경우 — 이 화면은 오늘 날짜에서만 계산한다
+    expect(skew.elapsed).toBe(0);
+    expect(skew.overBy).toBe(0);
+    expect(skew.level).toBe("정상");
+  });
+});

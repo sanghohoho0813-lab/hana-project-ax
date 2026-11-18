@@ -108,7 +108,7 @@ export default async function MeasuresPage({ searchParams }: { searchParams: Pro
             점검 제출 → 관리자 첫 확인(적합 확인 또는 보완 요청): <b>{fmtStat(m.safety.reviewMinutes, "분")}</b> · 아직 확인 안 된 점검 {m.safety.unreviewed}건
           </li>
           <li className="text-[15.5px] text-ink-2">
-            점검 제출 {m.safety.checks}건 · 관리자 적합(육안 확인) · 조치 완료 {m.safety.reviewed}건 · 보완 진행 {m.safety.supplement}건
+            점검 제출 {m.safety.checks}건 · 관리자 적합(육안 확인) · 조치 완료 {m.safety.reviewed}건 · 보완 진행 {m.safety.supplement}건 · 사진 없는 점검 {m.safety.noPhoto}건 (단계를 낸 것으로 세지 않음)
           </li>
         </ul>
         <p className="text-[14.5px] text-ink-3">

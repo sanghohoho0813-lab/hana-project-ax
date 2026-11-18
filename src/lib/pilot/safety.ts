@@ -64,3 +64,9 @@ export const SAFETY_COLS =
   "id, check_no, schedule_id, data_kind, work_date, worker_id, reporter_id, source, stage, items, deficient, note, checked_at, check_mode, check_basis, recorded_at, review_status, app_version, updated_at";
 export const REVIEW_COLS = "id, review_no, check_id, kind, result, message, occurred_at, recorded_at, actor_id, source, app_version";
 export const PENDING_REVIEW: ReviewStatus[] = ["확인 대기", "보완 제출"];
+
+/**
+ * 사진이 올라간 점검인가 — 점검 기록은 사진보다 먼저 저장되므로, 사진 올리기가 실패하면 '사진 없는 점검'이 남는다.
+ * 그런 점검은 단계를 낸 것으로 세지 않는다 (작업 시작 · 종료 전 확인 · 빠진 단계 · 측정 10).
+ */
+export const hasLivePhoto = (photos: { deleted_at: string | null }[]) => photos.some((p) => !p.deleted_at);

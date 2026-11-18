@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { HardHat, PhoneCall } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
-import { preparePhoto, uploadPhoto } from "@/lib/pilot/photo";
-import { SAFETY_ITEMS, SAFETY_STAGES, STAGE_LABEL, itemLabel, type ReviewStatus, type SafetyAnswer, type SafetyCheckRow, type SafetyReviewRow, type SafetyStage } from "@/lib/pilot/safety";
+import { sendPhoto } from "@/lib/pilot/photo";
+import { SAFETY_ITEMS, SAFETY_STAGES, STAGE_LABEL, hasLivePhoto, itemLabel, type ReviewStatus, type SafetyAnswer, type SafetyCheckRow, type SafetyReviewRow, type SafetyStage } from "@/lib/pilot/safety";
 import type { PhotoRow } from "@/lib/pilot/cases";
 import { attachSafetyPhotoAction, safetyReviewAction, submitSafetyAction } from "../safety/actions";
 import { btn, cx, Notice, Pill, type PillTone } from "../_ui/ds";
@@ -28,13 +28,13 @@ const TONE: Record<ReviewStatus, PillTone> = {
 
 /** 대기·실패 사진만 올린다 — 실패하면 오류를 던져 '다시 올리기'를 안내한다 */
 async function uploadAll(userId: string, checkId: string, items: PhotoItem[], patch: (key: string, p: Partial<PhotoItem>) => void) {
-  const r = await uploadEach(items, patch, async (f) => {
-    const p = await preparePhoto(f);
-    const up = await uploadPhoto(userId, `safety-${checkId}`, p);
-    const a = await attachSafetyPhotoAction({ opId: newOpId(), checkId, path: up.path, mime: p.mime, size: up.size, sha256: up.sha256, exifRemoved: p.exifRemoved });
-    if (!a.ok) throw new Error(a.error);
-    return { exifRemoved: p.exifRemoved };
-  });
+  // 사진마다 저장 위치 · 요청 번호를 한 번 정해 다시 쓴다 — 다시 올려도 중복 사진이 생기지 않는다
+  const r = await uploadEach(items, patch, (f) =>
+    sendPhoto(userId, `safety-${checkId}`, f, async (x) => {
+      const a = await attachSafetyPhotoAction({ checkId, ...x });
+      if (!a.ok) throw new Error(a.error);
+    }),
+  );
   if (r.failed > 0) throw new Error(`사진 ${r.failed}장 실패`);
 }
 
@@ -59,21 +59,24 @@ export function SafetyPanel({
   const [notice, setNotice] = useState<string | null>(null);
   const [seen, setSeen] = useState(0);
   const latest = (s: SafetyStage) => checks.filter((x) => x.c.stage === s).at(-1);
+  // 사진이 올라간 점검만 단계를 낸 것으로 센다
+  const done = (s: SafetyStage) => checks.some((x) => x.c.stage === s && hasLivePhoto(x.photos));
+  const noPhoto = checks.filter((x) => !hasLivePhoto(x.photos));
   // 첫 화면 '안전점검' 버튼 — 아직 안 한 첫 단계를 바로 연다
   if (openSignal > 0 && openSignal !== seen) {
     setSeen(openSignal);
-    const next = openStage && !latest(openStage) ? openStage : SAFETY_STAGES.find((s) => !latest(s));
+    const next = openStage && !done(openStage) ? openStage : SAFETY_STAGES.find((s) => !done(s));
     if (canCheck && next) setStage(next);
   }
   return (
     <div className="space-y-3 rounded-2xl bg-[#f7f8fa] p-3.5" aria-label="안전점검">
       <p className="flex items-center gap-2 text-[16px] font-extrabold">
         <HardHat size={19} className="text-primary" /> 안전점검
-        <span className="ml-auto text-[14.5px] font-semibold text-ink-3">{SAFETY_STAGES.filter((s) => latest(s)).length}/3 단계</span>
+        <span className="ml-auto text-[14.5px] font-semibold text-ink-3">{SAFETY_STAGES.filter((s) => done(s)).length}/3 단계</span>
       </p>
       <div className="grid grid-cols-3 gap-2">
         {SAFETY_STAGES.map((s) => {
-          const l = latest(s);
+          const l = checks.filter((x) => x.c.stage === s && hasLivePhoto(x.photos)).at(-1) ?? latest(s);
           return (
             <button
               key={s}
@@ -86,11 +89,22 @@ export function SafetyPanel({
               )}
             >
               {STAGE_LABEL[s]}
-              {l ? <Pill tone={TONE[l.c.review_status]} className="!text-[12.5px]">{l.c.review_status}</Pill> : <Pill tone="neutral" dot={false} className="!text-[12.5px]">미점검</Pill>}
+              {l && !hasLivePhoto(l.photos) ? (
+                <Pill tone="danger" className="!text-[12.5px]">사진 없음</Pill>
+              ) : l ? (
+                <Pill tone={TONE[l.c.review_status]} className="!text-[12.5px]">{l.c.review_status}</Pill>
+              ) : (
+                <Pill tone="neutral" dot={false} className="!text-[12.5px]">미점검</Pill>
+              )}
             </button>
           );
         })}
       </div>
+      {noPhoto
+        .filter((x) => x.c.stage !== stage)
+        .map((x) => (
+          <PhotoRetry key={x.c.id} userId={userId} x={x} canSend={canCheck} onDone={setNotice} />
+        ))}
       {checks
         .filter((x) => x.c.review_status === "보완 요청")
         .map((x) => (
@@ -143,8 +157,9 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
   async function send() {
     setBusy(true);
     setErr(null);
+    // 이번에 점검이 저장됐는지는 지역 변수로 본다 (화면 상태 saved 는 다음 그림에서야 바뀜 — 사진만 실패해도 '저장 안 됨'으로 안내하던 문제)
+    let s = saved;
     try {
-      let s = saved;
       if (!s) {
         const t = new Date().toISOString();
         const r = await submitSafetyAction({ opId, scheduleId, stage, items: Object.entries(answers).map(([key, answer]) => ({ key, answer })), note, pressedAt: t, sentAt: t });
@@ -156,7 +171,8 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
       router.refresh();
       onDone(`${STAGE_LABEL[stage]} ${s.checkNo} 제출 · 사진 ${photos.items.length}장 — 관리자가 사진을 눈으로 확인한 뒤 결과를 보냅니다.`);
     } catch {
-      setErr(saved ? "점검은 저장됐지만 사진을 올리지 못했습니다 — 다시 눌러 사진을 올리세요." : "보내지 못했습니다 — 연결을 확인하고 다시 누르세요 (같은 점검으로 한 번만 저장).");
+      // 사진이 없는 점검은 '낸 것'으로 세지 않는다 — 닫아도 안전점검 칸에 '사진 없음'과 다시 올리기 칸이 남는다
+      setErr(s ? "점검은 저장됐지만 사진을 올리지 못했습니다 — 다시 눌러 사진을 올리세요. 사진이 올라가야 점검을 낸 것으로 셉니다." : "보내지 못했습니다 — 연결을 확인하고 다시 누르세요 (같은 점검으로 한 번만 저장).");
     } finally {
       setBusy(false);
     }
@@ -206,6 +222,48 @@ function CheckSheet({ userId, scheduleId, stage, onDone, onCancel }: { userId: s
           닫기
         </button>
       </div>
+    </div>
+  );
+}
+
+/** 사진이 올라가지 않은 점검 — 점검 기록은 저장됐으므로 사진만 다시 올린다 (같은 점검에 붙음) */
+function PhotoRetry({ userId, x, canSend, onDone }: { userId: string; x: FieldSafety; canSend: boolean; onDone: (t: string) => void }) {
+  const router = useRouter();
+  const photos = usePhotos(4);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  return (
+    <div className="space-y-3 rounded-2xl bg-white p-3.5 ring-2 ring-danger/40" aria-label={`사진 없는 점검 ${x.c.check_no}`}>
+      <p className="text-[15.5px] font-bold text-danger">
+        {STAGE_LABEL[x.c.stage]} {x.c.check_no} — 사진이 올라가지 않았습니다. 사진을 올려야 점검을 낸 것으로 셉니다.
+      </p>
+      {canSend ? (
+        <>
+          <PhotoPicker items={photos.items} onAdd={photos.add} onRemove={photos.remove} max={4} disabled={busy} inputLabel="다시 올릴 착용 사진" title="착용 사진" required />
+          {err && <Notice kind="error">{err}</Notice>}
+          <button
+            disabled={photos.items.length === 0 || busy}
+            onClick={async () => {
+              setBusy(true);
+              setErr(null);
+              try {
+                await uploadAll(userId, x.c.id, photos.items, photos.patch);
+                router.refresh();
+                onDone(`${x.c.check_no} 사진 ${photos.items.length}장 올림 — 관리자가 사진을 눈으로 확인합니다.`);
+              } catch {
+                setErr("사진을 올리지 못했습니다 — 연결을 확인하고 다시 눌러 주세요 (같은 사진이 두 번 저장되지 않음).");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className={btn("primary", "lg", true)}
+          >
+            {busy ? "올리는 중…" : "사진 올리기"}
+          </button>
+        </>
+      ) : (
+        <p className="text-[15px] text-ink-2">오늘 날짜가 아니라 여기서 올릴 수 없습니다. 관리자에게 알려 주세요.</p>
+      )}
     </div>
   );
 }

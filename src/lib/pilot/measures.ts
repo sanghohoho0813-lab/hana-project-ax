@@ -209,6 +209,8 @@ export interface SafetyCompletion {
   reviewMinutes: Stat;
   /** 아직 관리자 확인이 없는 점검 수 */
   unreviewed: number;
+  /** 사진이 올라가지 않은 점검 수 (업로드 실패 등 — 단계를 낸 것으로 세지 않음) */
+  noPhoto: number;
 }
 
 /**
@@ -220,9 +222,12 @@ export function safetyCompletion(
   times: { starts: Map<string, string>; ends: Map<string, string> },
   checks: { id: string; schedule_id: string; stage: string; review_status: string; checked_at: string | null; recorded_at: string }[],
   reviews: { check_id: string; kind: string; source: string; occurred_at: string }[] = [],
+  /** 사진이 올라간 점검 id — 주면 이 점검만 단계를 낸 것으로 센다 (안 주면 모든 점검) */
+  withPhoto?: Set<string>,
 ): SafetyCompletion {
   const live = schedules.filter((s) => s.status !== "취소");
-  const of = (id: string) => checks.filter((c) => c.schedule_id === id);
+  const counted = withPhoto ? checks.filter((c) => withPhoto.has(c.id)) : checks;
+  const of = (id: string) => counted.filter((c) => c.schedule_id === id);
   const started = live.filter((s) => times.starts.has(s.id));
   const done = live.filter((s) => times.ends.has(s.id));
   const has = (id: string, st: string) => of(id).some((c) => c.stage === st);
@@ -248,5 +253,6 @@ export function safetyCompletion(
     supplement: checks.filter((c) => c.review_status === "보완 요청" || c.review_status === "보완 제출").length,
     reviewMinutes: stat(waits),
     unreviewed: waits.filter((w) => w === null).length,
+    noPhoto: checks.length - counted.length,
   };
 }

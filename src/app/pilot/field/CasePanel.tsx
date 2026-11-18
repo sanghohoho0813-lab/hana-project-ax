@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Camera, CheckCircle2, Clock, Megaphone } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
-import { preparePhoto, uploadPhoto } from "@/lib/pilot/photo";
+import { sendPhoto } from "@/lib/pilot/photo";
 import { RESOLUTIONS, STATUS_TEXT, isOpen, type CaseRow, type CaseStatus, type PhotoRow, type StepRow } from "@/lib/pilot/cases";
 import { attachPhotoAction, caseEndAction, caseStepAction } from "../cases/actions";
 import { CaseReport, type CaseTarget } from "../_ui/CaseReport";
@@ -200,13 +200,12 @@ function MyCase({ userId, x, target, onNotice, photoSignal }: { userId: string; 
             onCancel={() => setSheet(null)}
             onSend={() =>
               void run(async () => {
-                const r = await uploadEach(photos.items, photos.patch, async (f) => {
-                  const p = await preparePhoto(f);
-                  const up = await uploadPhoto(userId, c.id, p);
-                  const a = await attachPhotoAction({ opId: newOpId(), caseId: c.id, path: up.path, mime: p.mime, size: up.size, sha256: up.sha256, exifRemoved: p.exifRemoved });
-                  if (!a.ok) throw new Error(a.error);
-                  return { exifRemoved: p.exifRemoved };
-                });
+                const r = await uploadEach(photos.items, photos.patch, (f) =>
+                  sendPhoto(userId, c.id, f, async (x) => {
+                    const a = await attachPhotoAction({ caseId: c.id, ...x });
+                    if (!a.ok) throw new Error(a.error);
+                  }),
+                );
                 return r.failed > 0 ? { ok: false, error: `사진 ${r.failed}장을 올리지 못했습니다 — 다시 누르면 실패한 사진만 다시 올립니다.` } : { ok: true };
               }, `${c.case_no} 사진 ${photos.items.length}장을 올렸습니다.`)
             }

@@ -6,7 +6,7 @@ import { judgeAt, progressOf, type EventRow } from "@/lib/pilot/core";
 import { loadRankedInbox } from "@/lib/pilot/case-rank";
 import { loadSafetyInbox } from "@/lib/pilot/case-data";
 import { impactOf, isOpen, NEXT_ADMIN_ACTION, type CaseStatus } from "@/lib/pilot/cases";
-import { itemLabel, STAGE_LABEL } from "@/lib/pilot/safety";
+import { hasLivePhoto, itemLabel, STAGE_LABEL } from "@/lib/pilot/safety";
 import { safetyGaps, safetyTiming, watchInputOf, watchOf, WATCH_RULE_VERSION } from "@/lib/pilot/watch";
 import { gradeRank, RISK_RULE_VERSION } from "@/lib/risk-engine";
 import { hhmm, kst, kstLabel } from "@/lib/pilot/time";
@@ -41,11 +41,13 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   const isToday = date === kst(now).date;
   const nowHM = kst(now).time;
   const openSites = new Set(inbox.cases.filter(isOpen).map((c) => c.schedule_id));
+  const photoOk = (checkId: string) => hasLivePhoto(safety.photos.filter((ph) => ph.safety_check_id === checkId));
   const sites = active.map((x) => {
     const p = progressOf(x, today.events);
     // 조기 확인은 오늘 날짜에서만 계산한다 (지난 날짜는 '지금 시각'과 비교할 수 없음)
     const w = isToday ? watchOf(watchInputOf(x, p, openSites.has(x.id)), nowHM) : null;
-    const mine = safety.checks.filter((c) => c.schedule_id === x.id);
+    // 사진이 올라간 점검만 단계를 낸 것으로 센다 (사진 없는 점검은 아래 '사진 없음'으로 따로 표시)
+    const mine = safety.checks.filter((c) => c.schedule_id === x.id && photoOk(c.id));
     const gaps = safetyGaps({ started: !!p.started, ended: !!p.ended, midDue: !!w?.checkAt && nowHM >= w.checkAt }, mine.map((c) => c.stage)).filter((g) => g.state === "누락");
     const timing = safetyTiming({ startedAt: p.started?.occurred_at ?? null, endedAt: p.ended?.occurred_at ?? null }, mine);
     return { x, p, w, gaps, timing };
@@ -61,13 +63,16 @@ export default async function AdminDashboard({ searchParams }: { searchParams: P
   const safetyItems: SafetyItem[] = [
     ...pendingReview.filter((c) => c.deficient.length > 0).map((c) => ({ key: `d-${c.id}`, tone: "danger" as const, rank: 0 as const, at: c.recorded_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 미흡: ${c.deficient.map(itemLabel).join(", ")} — 작업 중지 여부를 전화로 확인`, pill: "미흡" })),
     ...ranked.filter((r) => r.c.issue_type === "안전 위험").map((r) => ({ key: `c-${r.c.id}`, tone: "danger" as const, rank: 0 as const, at: r.c.reported_at, site: site(r.c.schedule_id), worker: who(r.c.worker_id), what: `안전 위험 보고 ${r.c.case_no} · ${r.c.status}`, pill: "안전 위험" })),
+    ...safety.checks
+      .filter((c) => !photoOk(c.id))
+      .map((c) => ({ key: `n-${c.id}`, tone: "danger" as const, rank: 0 as const, at: c.recorded_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} ${c.check_no} — 사진이 올라가지 않음 (업로드 실패 가능 · 현장에 다시 올리기 요청)`, pill: "사진 없음" })),
     ...supplement.map((c) => ({ key: `s-${c.id}`, tone: "danger" as const, rank: 0 as const, at: c.updated_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 보완 요청 — 보완 사진 대기`, pill: "보완 중" })),
     ...sites.filter((v) => v.timing.pre === "없음").map((v) => ({ key: `p-${v.x.id}`, tone: "danger" as const, rank: 1 as const, at: v.p.started!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "시작 전 점검(착용 사진) 없이 작업 시작", pill: "점검 전 시작" })),
     ...sites.filter((v) => v.timing.final === "없음").map((v) => ({ key: `f-${v.x.id}`, tone: "danger" as const, rank: 1 as const, at: v.p.ended!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "마무리 점검(착용 사진) 없이 작업 종료", pill: "마무리 점검 없음" })),
     ...sites.flatMap((v) => v.gaps.filter((g) => g.stage === "작업 중").map(() => ({ key: `m-${v.x.id}`, tone: "warning" as const, rank: 2 as const, at: v.p.ended?.occurred_at ?? "", site: v.x.site_name, worker: who(v.x.assignee_id), what: "진행 중 점검(착용 사진) 없이 작업 종료", pill: "단계 누락" }))),
     ...sites.filter((v) => v.timing.pre === "시작 뒤 제출").map((v) => ({ key: `pl-${v.x.id}`, tone: "warning" as const, rank: 2 as const, at: v.p.started!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "시작 전 점검을 작업 시작 뒤에 제출", pill: "시작 뒤 제출" })),
     ...sites.filter((v) => v.timing.final === "종료 뒤 제출").map((v) => ({ key: `fl-${v.x.id}`, tone: "warning" as const, rank: 2 as const, at: v.p.ended!.occurred_at, site: v.x.site_name, worker: who(v.x.assignee_id), what: "마무리 점검을 작업 종료 뒤에 제출", pill: "종료 뒤 제출" })),
-    ...pendingReview.filter((c) => c.deficient.length === 0).map((c) => ({ key: `r-${c.id}`, tone: "warning" as const, rank: 2 as const, at: c.recorded_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 사진 확인 대기 · ${kst(c.recorded_at).time} 제출`, pill: c.review_status })),
+    ...pendingReview.filter((c) => c.deficient.length === 0 && photoOk(c.id)).map((c) => ({ key: `r-${c.id}`, tone: "warning" as const, rank: 2 as const, at: c.recorded_at, site: site(c.schedule_id), worker: who(c.worker_id), what: `${STAGE_LABEL[c.stage]} 사진 확인 대기 · ${kst(c.recorded_at).time} 제출`, pill: c.review_status })),
   ];
   safetyItems.sort((a, b) => a.rank - b.rank || (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
   const safetyDanger = safetyItems.filter((i) => i.tone === "danger").length;

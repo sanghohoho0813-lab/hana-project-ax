@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, PhoneCall, Send, X } from "lucide-react";
 import { newOpId } from "@/lib/pilot/op-id";
 import { kst } from "@/lib/pilot/time";
-import { preparePhoto, uploadPhoto } from "@/lib/pilot/photo";
+import { sendPhoto } from "@/lib/pilot/photo";
 import { BASES, INFO_SOURCES, ISSUE_TYPES, NEEDS, PROGRESS } from "@/lib/pilot/cases";
 import { attachPhotoAction, reportCaseAction } from "../cases/actions";
 import { btn, chip, cx, Steps } from "./ds";
@@ -125,13 +125,13 @@ export function CaseReport({
         setSaved(s);
       }
       const caseId = s.caseId;
-      const res = await uploadEach(photos.items, photos.patch, async (file) => {
-        const prepared = await preparePhoto(file);
-        const up = await uploadPhoto(userId, caseId, prepared);
-        const r = await attachPhotoAction({ opId: newOpId(), caseId, path: up.path, mime: prepared.mime, size: up.size, sha256: up.sha256, exifRemoved: prepared.exifRemoved });
-        if (!r.ok) throw new Error(r.error);
-        return { exifRemoved: prepared.exifRemoved };
-      });
+      // 사진마다 저장 위치 · 요청 번호를 한 번 정해 다시 쓴다 — 다시 올려도 중복 사진이 생기지 않는다
+      const res = await uploadEach(photos.items, photos.patch, (file) =>
+        sendPhoto(userId, caseId, file, async (x) => {
+          const r = await attachPhotoAction({ caseId, ...x });
+          if (!r.ok) throw new Error(r.error);
+        }),
+      );
       router.refresh();
       if (res.failed > 0) {
         setErr({ text: `사건 ${s.caseNo} 보고는 저장됐습니다. 사진 ${res.failed}장을 올리지 못했습니다 — '사진 다시 올리기'를 누르세요.`, retry: true });

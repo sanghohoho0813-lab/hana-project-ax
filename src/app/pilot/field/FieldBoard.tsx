@@ -8,8 +8,8 @@ import { newOpId } from "@/lib/pilot/op-id";
 import { enqueue, flushQueue, removeItem, type QueuedEvent } from "@/lib/pilot/queue";
 import { kst } from "@/lib/pilot/time";
 import { isOpen, STATUS_TEXT } from "@/lib/pilot/cases";
-import { SAFETY_STAGES, STAGE_LABEL, type SafetyStage } from "@/lib/pilot/safety";
-import { safetyGaps, watchOf, type SafetyGap, type Watch } from "@/lib/pilot/watch";
+import { SAFETY_STAGES, STAGE_LABEL, hasLivePhoto, itemLabel, type SafetyStage } from "@/lib/pilot/safety";
+import { lastReportAfterStart, safetyGaps, watchOf, type SafetyGap, type Watch } from "@/lib/pilot/watch";
 import { recordEventAction, type EventResult } from "./actions";
 import { getQueue, isStorable, serverSnapshot, setQueue as storeQueue, subscribe } from "./queueStore";
 import { adminSteps, CasePanel, type FieldCase } from "./CasePanel";
@@ -76,7 +76,7 @@ type Tap = Pick<QueuedEvent, "kind" | "mode" | "enteredTime" | "expectedEnd" | "
 /** 첫 화면의 빠른 버튼이 해당 현장 카드의 보고 · 사진 · 안전점검을 바로 연다 */
 export type Focus = { id: string; act: "report" | "photo" | "safety" | "view"; n: number; stage?: SafetyStage };
 /** 안전 1순위 (0.6.0) — 즉시 작업 시작 · 작업 종료를 누를 때 그 단계 점검이 없으면 먼저 묻는다 */
-type Gate = { card: FieldCard; t: Tap; kind: "start" | "end" };
+type Gate = { card: FieldCard; t: Tap; kind: "start" | "end" | "deficient" };
 
 /** 기록된 단계 + 아직 보내는 중인 단계를 합친 진행 상태 */
 function progress(c: FieldCard, pending: QueuedEvent[]) {
@@ -104,10 +104,12 @@ function fieldWatch(c: FieldCard, pending: QueuedEvent[], now: string): Watch {
   const startIdx = alive.findIndex((x) => x.kind === "작업개시");
   const queuedStart = live.find((x) => x.kind === "작업개시");
   const startedAt = startIdx >= 0 ? alive[startIdx].time : queuedStart ? kst(queuedStart.pressedAt).time : null;
-  const reports = [
-    ...alive.slice(startIdx + 1).filter((x) => startIdx >= 0 && x.kind === "예상 종료 보고" && x.expectedEnd).map((x) => ({ at: x.time, end: x.expectedEnd! })),
-    ...live.filter((x) => x.kind === "예상 종료 보고" && x.expectedEnd).map((x) => ({ at: kst(x.pressedAt).time, end: x.expectedEnd! })),
-  ];
+  // 작업 시작 뒤에 '일어난' 예상 종료 보고 — 기록 순서가 아니라 발생시각으로 비교 (작업 시작을 나중에 사후 입력한 경우)
+  const lastReport = lastReportAfterStart(
+    startedAt,
+    alive,
+    live.filter((x) => x.kind === "예상 종료 보고" && x.expectedEnd).map((x) => ({ at: kst(x.pressedAt).time, end: x.expectedEnd! })),
+  );
   return watchOf(
     {
       plannedStart: c.plannedStart,
@@ -115,7 +117,7 @@ function fieldWatch(c: FieldCard, pending: QueuedEvent[], now: string): Watch {
       startedAt,
       ended: progress(c, pending).ended,
       cancelled: c.status === "취소",
-      lastReport: startedAt ? (reports.at(-1) ?? null) : null,
+      lastReport,
       openCase: c.cases.some((x) => isOpen(x.c)),
     },
     now,
@@ -125,7 +127,10 @@ function fieldWatch(c: FieldCard, pending: QueuedEvent[], now: string): Watch {
 /** 이 현장 안전점검 3단계 가운데 빠졌거나 지금 낼 차례인 단계 */
 function cardGaps(c: FieldCard, pending: QueuedEvent[], w: Watch | null, now: string | null): SafetyGap[] {
   const p = progress(c, pending);
-  return safetyGaps({ started: p.started, ended: p.ended, midDue: !!(w?.checkAt && now && now >= w.checkAt), cancelled: c.status === "취소" }, c.safety.map((x) => x.c.stage));
+  return safetyGaps(
+    { started: p.started, ended: p.ended, midDue: !!(w?.checkAt && now && now >= w.checkAt), cancelled: c.status === "취소" },
+    c.safety.filter((x) => hasLivePhoto(x.photos)).map((x) => x.c.stage),
+  );
 }
 
 export function FieldBoard({
@@ -219,8 +224,11 @@ export function FieldBoard({
   // 안전 1순위: 시작 전 점검 없이 '작업 시작', 마무리 점검 없이 '작업 종료'를 누르면 먼저 점검을 권한다 (점검 없이 진행도 가능 · 본사에 표시됨)
   const tap = (card: FieldCard, t: Tap) => {
     if (t.mode === "즉시" && !t.voidsEventId) {
-      const has = new Set(card.safety.map((x) => x.c.stage));
+      // 사진이 올라간 점검만 낸 것으로 본다 (사진 올리기가 실패한 점검은 다시 올려야 함)
+      const has = new Set(card.safety.filter((x) => hasLivePhoto(x.photos)).map((x) => x.c.stage));
       if (t.kind === "작업개시" && !has.has("작업 전")) return setGate({ card, t, kind: "start" });
+      // 시작 전 점검에 '미흡'이 있고 본사 보완 확인(조치 완료) 전이면 한 번 더 묻는다
+      if (t.kind === "작업개시" && openDeficiency(card)) return setGate({ card, t, kind: "deficient" });
       if (t.kind === "작업종료" && !has.has("작업 종료")) return setGate({ card, t, kind: "end" });
     }
     send(card, t);
@@ -309,7 +317,7 @@ export function FieldBoard({
               items={[
                 { label: "오늘 현장", value: `${active.length}곳` },
                 { label: "작업 종료", value: `${active.filter((c) => progress(c, queue).ended).length}곳`, tone: "success" },
-                { label: "안전점검", value: `${active.reduce((n, c) => n + new Set(c.safety.map((s) => s.c.stage)).size, 0)}/${active.length * 3}`, tone: supplements.length ? "danger" : "info" },
+                { label: "안전점검", value: `${active.reduce((n, c) => n + new Set(c.safety.filter((s) => hasLivePhoto(s.photos)).map((s) => s.c.stage)).size, 0)}/${active.length * 3}`, tone: supplements.length ? "danger" : "info" },
                 { label: "열린 요청", value: `${openCases.length}건`, tone: openCases.length ? "warning" : "neutral" },
               ]}
             />
@@ -535,9 +543,40 @@ function Hero({
 }
 
 /** 안전 1순위 확인 — 작업 시작 · 종료 전에 그 단계 안전점검(착용 사진)을 먼저 권한다 */
+/** 시작 전 점검(사진 있음) 가운데 마지막 것에 '미흡'이 남아 있고 아직 조치 완료 전인가 */
+function openDeficiency(card: FieldCard): string[] | null {
+  const pre = card.safety.filter((x) => x.c.stage === "작업 전" && hasLivePhoto(x.photos)).at(-1);
+  return pre && pre.c.deficient.length > 0 && pre.c.review_status !== "조치 완료" ? pre.c.deficient : null;
+}
+
 function SafetyGate({ gate, onCheck, onSkip, onClose }: { gate: Gate; onCheck: () => void; onSkip: () => void; onClose: () => void }) {
+  if (gate.kind === "deficient") {
+    const items = (openDeficiency(gate.card) ?? []).map(itemLabel).join(", ");
+    return (
+      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-3 pb-3 sm:items-center" onClick={onClose}>
+        <div role="dialog" aria-modal="true" aria-label="안전점검 확인" className="w-full max-w-[34rem] rounded-[24px] bg-white p-5 shadow-[var(--shadow-modal)]" onClick={(e) => e.stopPropagation()}>
+          <p className="flex items-center gap-2 text-[19px] font-extrabold text-danger">
+            <HardHat size={22} /> 시작 전 점검에 &lsquo;미흡&rsquo;이 남아 있습니다
+          </p>
+          <p className="mt-1 text-[15px] font-semibold text-ink-3">{gate.card.siteName}</p>
+          <p className="mt-3 text-[15.5px] text-ink-2">
+            미흡: <b>{items}</b> — 본사 보완 확인(조치 완료) 전입니다. 보완하지 않고 시작하면 기록은 되지만 본사 화면에 미흡이 그대로 남습니다.
+          </p>
+          <p className="mt-2 rounded-xl bg-danger-bg px-3 py-2 text-[14.5px] font-semibold text-danger">위험하면 작업하지 말고 관리자 · 안전 책임자에게 바로 전화하세요. 이 화면은 알림을 기다리는 용도가 아닙니다.</p>
+          <div className="mt-4 grid gap-2">
+            <button onClick={onClose} className={btn("primary", "lg", true)}>
+              작업 시작 안 함 (닫기)
+            </button>
+            <button onClick={onSkip} className={btn("ghost", "md", true)}>
+              그래도 작업 시작
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const start = gate.kind === "start";
-  const midMissing = !start && !gate.card.safety.some((x) => x.c.stage === "작업 중");
+  const midMissing = !start && !gate.card.safety.some((x) => x.c.stage === "작업 중" && hasLivePhoto(x.photos));
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-3 pb-3 sm:items-center" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="안전점검 확인" className="w-full max-w-[34rem] rounded-[24px] bg-white p-5 shadow-[var(--shadow-modal)]" onClick={(e) => e.stopPropagation()}>

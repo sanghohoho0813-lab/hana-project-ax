@@ -164,4 +164,17 @@ describe("측정 10 — 안전점검 3단계 (0.5.0 제출 · 0.6.0 시점과 �
     });
     expect(r.reviewMinutes).toMatchObject({ n: 3, median: 6, min: 4, max: 10 });
   });
+
+  it("사진이 올라가지 않은 점검은 단계를 낸 것으로 세지 않는다 (0.6.1 안정화)", async () => {
+    const { safetyCompletion } = await import("@/lib/pilot/measures");
+    const starts = new Map([["a", K("09:00")]]);
+    const ends = new Map([["a", K("09:50")]]);
+    const chk = (id: string, stage: string, at: string) => ({ id, schedule_id: "a", stage, review_status: "확인 대기", checked_at: K(at), recorded_at: K(at) });
+    const checks = [chk("1", "작업 전", "08:55"), chk("2", "작업 중", "09:20"), chk("3", "작업 종료", "09:45")];
+    const all = safetyCompletion([{ id: "a", status: "예정" }], { starts, ends }, checks, [], new Set(["1", "2", "3"]));
+    expect(all).toMatchObject({ full: 1, preOnTime: 1, finalBeforeEnd: 1, noPhoto: 0 });
+    const missing = safetyCompletion([{ id: "a", status: "예정" }], { starts, ends }, checks, [], new Set(["2", "3"])); // 시작 전 점검 사진 실패
+    expect(missing).toMatchObject({ full: 0, preOnTime: 0, finalBeforeEnd: 1, noPhoto: 1, checks: 3 });
+    expect(missing.byStage[0]).toEqual({ stage: "작업 전", sites: 0 });
+  });
 });

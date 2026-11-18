@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, ImagePlus, RotateCw, X } from "lucide-react";
 import { cx } from "./ds";
+import { PHOTO_ERR } from "@/lib/pilot/photo";
+
+/** 다시 눌러도 같은 결과인 실패 — 사진을 빼고 다른 사진을 골라야 한다 */
+const NO_RETRY = new Set<string>(Object.values(PHOTO_ERR));
 
 /**
  * 사진 첨부 — 카메라 촬영 · 앨범 선택 · 미리보기 · 장별 올리기 상태 · 실패한 사진만 다시 올리기.
@@ -128,7 +132,14 @@ export function PhotoPicker({
           ))}
         </ul>
       )}
-      {failed > 0 && <p className="text-[15px] font-semibold text-danger">실패한 사진은 아래 버튼을 다시 누르면 그 사진만 다시 올립니다.</p>}
+      {failed > 0 && (
+        <div role="alert" className="space-y-1 rounded-xl bg-danger-bg px-3 py-2 text-[15px] font-semibold text-danger" aria-label="사진 실패 이유">
+          {[...new Set(items.filter((x) => x.status === "실패").map((x) => x.error ?? ""))].map((e) => (
+            <p key={e}>{e || "사진을 올리지 못했습니다."}</p>
+          ))}
+          {items.some((x) => x.status === "실패" && !NO_RETRY.has(x.error ?? "")) && <p className="font-normal text-ink-2">연결 문제라면 아래 버튼을 다시 누르면 실패한 사진만 다시 올립니다 (같은 사진이 두 번 저장되지 않음).</p>}
+        </div>
+      )}
       {hint && <p className="text-[14.5px] text-ink-3">{hint}</p>}
     </div>
   );

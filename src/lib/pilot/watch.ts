@@ -86,14 +86,17 @@ export function watchOf(x: WatchInput, now: string): Watch {
   return { level: "정상", overBy: 0, reason: x.lastReport ? `${x.lastReport.at}에 예상 종료 ${x.lastReport.end} 보고` : "예정 시간 안", ...base };
 }
 
-/** DB 기록(progressOf 결과)에서 입력 만들기 — 작업 시작 뒤에 보낸 예상 종료 보고만 진행 보고로 본다 */
+/**
+ * DB 기록(progressOf 결과)에서 입력 만들기 — 작업 시작 뒤에 일어난 예상 종료 보고만 진행 보고로 본다.
+ * 비교는 기록 순서(seq)가 아니라 실제 발생시각으로 한다: 작업 시작을 나중에 사후 입력해도 그 전에 보낸 진행 보고가 빠지지 않게 (0.6.1 안정화).
+ */
 export function watchInputOf(
   s: { planned_start: string; planned_end: string; status: string },
   p: Pick<ScheduleProgress, "started" | "ended" | "expectedEnd">,
   openCase: boolean,
 ): WatchInput {
   const startedAt = p.started ? kst(p.started.occurred_at).time : null;
-  const r = p.expectedEnd && p.expectedEnd.expected_end && p.started && p.expectedEnd.seq > p.started.seq ? p.expectedEnd : null;
+  const r = p.expectedEnd && p.expectedEnd.expected_end && p.started && Date.parse(p.expectedEnd.occurred_at) >= Date.parse(p.started.occurred_at) ? p.expectedEnd : null;
   return {
     plannedStart: hhmm(s.planned_start)!,
     plannedEnd: hhmm(s.planned_end)!,
@@ -103,6 +106,25 @@ export function watchInputOf(
     lastReport: r ? { at: kst(r.occurred_at).time, end: hhmm(r.expected_end)! } : null,
     openCase,
   };
+}
+
+/**
+ * 현장 화면용 — 작업 시작 뒤에 '일어난' 마지막 예상 종료 보고 (같은 날 HH:MM 비교).
+ *   recorded : 서버에 기록된 단계 (기록 순서 · 정정 · 무효 제외)
+ *   queued   : 아직 보내는 중인 보고 (누른 시각) — 기록된 것보다 나중이다
+ * 기록 순서로 '작업 시작 다음 칸'만 보면, 작업 시작을 나중에 사후 입력했을 때 그 전에 보낸 진행 보고가 빠진다 (0.6.1 안정화).
+ */
+export function lastReportAfterStart(
+  startedAt: string | null,
+  recorded: { kind: string; time: string; expectedEnd: string | null }[],
+  queued: { at: string; end: string }[] = [],
+): { at: string; end: string } | null {
+  if (!startedAt) return null;
+  const reports = [
+    ...recorded.filter((x) => x.kind === "예상 종료 보고" && x.expectedEnd && x.time >= startedAt).map((x) => ({ at: x.time, end: x.expectedEnd! })),
+    ...queued,
+  ];
+  return reports.at(-1) ?? null;
 }
 
 /* ── 안전점검 단계 빠짐 ─────────────────────────────── */

@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/pilot/session";
 import { loadDay, loadStaff, parseDay } from "@/lib/pilot/board";
 import { loadSafetyInbox } from "@/lib/pilot/case-data";
-import { PENDING_REVIEW, SAFETY_STAGES, STAGE_LABEL } from "@/lib/pilot/safety";
+import { PENDING_REVIEW, SAFETY_STAGES, STAGE_LABEL, hasLivePhoto } from "@/lib/pilot/safety";
 import { progressOf } from "@/lib/pilot/core";
 import { safetyGaps, safetyTiming, watchInputOf, watchOf } from "@/lib/pilot/watch";
 import { kst } from "@/lib/pilot/time";
@@ -38,8 +38,10 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
       const p = progressOf(x, day.events);
       const w = isToday ? watchOf(watchInputOf(x, p, false), kst(now).time) : null;
       const mine = inbox.checks.filter((c) => c.schedule_id === x.id);
-      const gaps = safetyGaps({ started: !!p.started, ended: !!p.ended, midDue: !!w?.checkAt && kst(now).time >= w.checkAt }, mine.map((c) => c.stage));
-      const timing = safetyTiming({ startedAt: p.started?.occurred_at ?? null, endedAt: p.ended?.occurred_at ?? null }, mine);
+      // 사진이 올라간 점검만 단계를 낸 것으로 센다
+      const withPhoto = mine.filter((c) => hasLivePhoto(inbox.photos.filter((ph) => ph.safety_check_id === c.id)));
+      const gaps = safetyGaps({ started: !!p.started, ended: !!p.ended, midDue: !!w?.checkAt && kst(now).time >= w.checkAt }, withPhoto.map((c) => c.stage));
+      const timing = safetyTiming({ startedAt: p.started?.occurred_at ?? null, endedAt: p.ended?.occurred_at ?? null }, withPhoto);
       return { x, phase: p.phase, mine, gaps, timing };
     });
   const gapCount = rows.reduce((n, r) => n + r.gaps.filter((g) => g.state === "누락").length, 0);
@@ -77,13 +79,16 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
                     <td className="py-2 pr-2 text-ink-2">{r.phase}</td>
                     {SAFETY_STAGES.map((st) => {
                       const c = r.mine.filter((m) => m.stage === st).at(-1);
+                      const noPhoto = !!c && !hasLivePhoto(inbox.photos.filter((ph) => ph.safety_check_id === c.id));
                       const g = r.gaps.find((x) => x.stage === st);
                       // 시점 표시 (0.6.0): 시작 전 점검 없이 시작 · 마무리 점검 없이 종료 · 늦게 제출
                       const late = (st === "작업 전" && r.timing.pre === "시작 뒤 제출") || (st === "작업 종료" && r.timing.final === "종료 뒤 제출");
                       const without = st === "작업 전" && r.timing.pre === "없음" ? "없이 시작" : st === "작업 종료" && r.timing.final === "없음" ? "없이 종료" : null;
                       return (
                         <td key={st} className="py-2 pr-2">
-                          {c ? (
+                          {c && noPhoto ? (
+                            <Pill tone="danger">사진 없음</Pill>
+                          ) : c ? (
                             <>
                               <Pill tone={c.review_status === "보완 요청" ? "danger" : c.review_status === "적합(육안 확인)" || c.review_status === "조치 완료" ? "success" : "warning"}>{c.review_status}</Pill>
                               {late && <span className="mt-0.5 block text-[13.5px] font-bold text-warning">{st === "작업 전" ? "시작 뒤 제출" : "종료 뒤 제출"}</span>}
