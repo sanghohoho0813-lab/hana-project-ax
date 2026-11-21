@@ -137,7 +137,7 @@ ol.num { padding-left: 4mm; display: flex; flex-direction: column; gap: 1.2mm; }
 .sites i { font-style: normal; font-size: 7pt; font-weight: 800; color: var(--teal); white-space: nowrap; }
 ol.tl { list-style: none; display: flex; flex-direction: column; gap: 1.2mm; }
 ol.tl li { display: flex; align-items: center; gap: 2mm; font-size: 8.2pt; }
-ol.tl time { font-weight: 850; color: var(--navy); width: 9mm; }
+ol.tl time { font-weight: 850; color: var(--navy); width: 10mm; flex: none; white-space: nowrap; }
 .p { font-size: 5.8pt; font-weight: 850; border-radius: 1mm; padding: .3mm 1.2mm; white-space: nowrap; }
 .p1 { background: #fdf0e5; color: #a8551d; }
 .p2 { background: var(--teal-bg); color: var(--teal-d); }
@@ -230,3 +230,119 @@ table.mini td.g { color: var(--teal-d); }
 .probs .thumb img { display: block; width: 100%; height: 100%; }
 .probs .thumb .tag { position: absolute; left: 1.4mm; top: 1.4mm; }
 .metrics.m2 { grid-template-columns: 1fr 1fr; align-content: start; }
+
+/* ═════ 110점 개정 (2026-11-22) — 화면 표시 · 단계 카드 · 한 장 그림 ═════ */
+:root { --mk: #e5484d; }
+.hl { color: #9fe3d4; }
+.cap { font-size: 7.9pt; line-height: 1.5; color: var(--ink2); }
+.cap b { color: var(--ink); }
+.fill { font-size: 7.8pt; font-weight: 750; color: #8a5a00; background: #fff7e0; border: 1px dashed #e6c46b; border-radius: 1.6mm; padding: 1.8mm 3mm; }
+
+/* 실제 화면 + 표시 */
+.shot { background: #fff; border: 1px solid var(--line); border-radius: 2.2mm; overflow: hidden; }
+.shot .bar { display: flex; align-items: center; gap: 1.6mm; padding: 1mm 2.2mm; background: #eef1f2; border-bottom: 1px solid var(--line); font-size: 6.4pt; color: var(--ink2); }
+.shot .bar b { font-weight: 800; color: var(--ink); }
+.shot .bar span:last-child { margin-left: auto; font-weight: 750; }
+.shot.phone { border: 2px solid #1b232b; border-radius: 3.4mm; }
+.shot.phone .bar { background: #1b232b; color: #cfd6dc; border-bottom: 0; }
+.shot.phone .bar b { color: #fff; }
+.shot .frame { position: relative; }
+.shot .frame img { display: block; width: 100%; }
+.mk { position: absolute; border: 2.2px solid var(--mk); border-radius: 1.4mm; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85); font-style: normal; }
+.mk b { position: absolute; left: -2.6mm; top: -2.6mm; width: 4.8mm; height: 4.8mm; border-radius: 50%; background: var(--mk); color: #fff; font-size: 7pt; font-weight: 850; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1.2px #fff; }
+.mk-demo { position: relative; display: inline-block; width: 9mm; height: 4.4mm; border: 2px solid var(--mk); border-radius: 1.2mm; margin-left: 2.4mm; }
+.mk-demo b { position: absolute; left: -2.4mm; top: -2.2mm; width: 4.2mm; height: 4.2mm; border-radius: 50%; background: var(--mk); color: #fff; font-size: 6.4pt; display: flex; align-items: center; justify-content: center; }
+ol.mkl { list-style: none; display: flex; flex-direction: column; gap: 1mm; margin: 1.8mm 0 0; }
+ol.mkl li { display: flex; gap: 1.6mm; align-items: flex-start; font-size: 8pt; line-height: 1.45; color: var(--ink2); }
+ol.mkl li b { flex: none; width: 4.4mm; height: 4.4mm; border-radius: 50%; background: var(--mk); color: #fff; font-size: 6.6pt; font-weight: 850; display: flex; align-items: center; justify-content: center; margin-top: .2mm; }
+ol.mkl li span b, ol.mkl li span strong { color: var(--ink); }
+ol.mkl li span > b { all: unset; font-weight: 800; color: var(--ink); }
+
+/* 단계 카드 */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2mm; align-items: start; }
+.stp { background: #fff; border: 1px solid var(--line); border-radius: 2.4mm; padding: 2.8mm 3mm 3mm; display: flex; flex-direction: column; gap: 1.6mm; }
+.stp-h { display: flex; align-items: center; gap: 2mm; }
+.stp .sn { background: var(--navy); color: #fff; font-size: 6.6pt; font-weight: 850; letter-spacing: .8pt; border-radius: 1mm; padding: .5mm 1.8mm; }
+.stp time { font-size: 8pt; font-weight: 850; color: var(--teal-d); }
+.stp h3 { font-size: 10.6pt; line-height: 1.3; margin-bottom: .6mm; }
+.stp .shot.mini { width: 72%; margin-top: 2mm; }
+.stp .shot + .shot { margin-top: 2mm; }
+.stp .cap { margin: 1.2mm 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2mm; align-items: start; }
+
+/* 기존 → 이 프로그램 */
+.ba { display: grid; grid-template-columns: 1fr 7mm 1.25fr; align-items: stretch; }
+.ba > div { border-radius: 2mm; padding: 2.8mm 3.4mm; font-size: 8.6pt; line-height: 1.55; }
+.ba small { display: block; font-size: 6.8pt; font-weight: 850; letter-spacing: .4pt; margin-bottom: .8mm; }
+.ba .b { background: #fff; border: 1px solid var(--line); color: var(--ink3); }
+.ba .a { background: var(--teal-bg); border: 1px solid var(--teal-line); color: var(--ink); }
+.ba .a small { color: var(--teal-d); }
+.ba i { font-style: normal; align-self: center; text-align: center; font-weight: 900; color: var(--teal); font-size: 12pt; }
+.why3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.why3 > div { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm 3.2mm; font-size: 8.2pt; line-height: 1.5; color: var(--ink2); }
+.why3 > div > b { display: block; font-size: 15pt; font-weight: 900; color: var(--teal); line-height: 1.1; margin-bottom: 1mm; }
+.flow4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; }
+.flow4 > div { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm; text-align: center; font-size: 7.8pt; line-height: 1.45; color: var(--ink2); }
+.flow4 span { display: inline-block; background: var(--teal); color: #fff; border-radius: 99px; padding: .6mm 2.6mm; font-size: 7pt; font-weight: 850; }
+.flow4 b { display: block; color: var(--navy); font-size: 9.2pt; margin: 1.6mm 0 .8mm; }
+.flow4 .hq span { background: var(--navy); }
+
+/* 한 장 그림 */
+.ov { display: grid; grid-template-columns: 1fr 15mm 1.25fr 15mm 1fr; align-items: stretch; margin-top: 1mm; }
+.ov-box { border-radius: 2.6mm; padding: 3.4mm; font-size: 8.4pt; line-height: 1.5; }
+.ov-box.field, .ov-box.hq { background: #fff; border: 1px solid var(--line); }
+.ov-box.engine { background: var(--navy); color: #fff; }
+.ov-t { display: flex; align-items: center; gap: 1.6mm; flex-wrap: wrap; margin-bottom: 2.2mm; }
+.ov-t b { font-size: 10.4pt; font-weight: 880; }
+.ov-t small { width: 100%; font-size: 7pt; color: #a9c6d8; font-weight: 700; }
+.ic { width: 6mm; height: 6mm; color: var(--teal); flex: none; }
+.engine .ic { color: #9fe3d4; }
+.ov-box ul { list-style: none; display: flex; flex-direction: column; gap: 1.4mm; }
+.ov-box ul li { background: var(--soft); border-radius: 1.4mm; padding: 1.4mm 2.2mm; font-weight: 700; color: var(--ink); }
+.ov-r { display: flex; align-items: center; gap: 2mm; background: rgba(255,255,255,.08); border-radius: 1.6mm; padding: 1.8mm 2.2mm; margin-top: 1.6mm; font-weight: 750; font-size: 8.6pt; }
+.ov-r > b { flex: none; width: 5mm; height: 5mm; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7.4pt; color: #fff; }
+.ov-r.r1 > b { background: #d9822b; }
+.ov-r.r2 > b { background: var(--teal); }
+.ov-r.r3 > b { background: #4f6bd8; }
+.ov-r.r3 { background: rgba(159,227,212,.16); box-shadow: inset 0 0 0 1px rgba(159,227,212,.5); }
+.ov-r em { margin-left: auto; font-style: normal; font-size: 6.6pt; background: #9fe3d4; color: var(--navy); border-radius: 1mm; padding: .3mm 1.4mm; font-weight: 850; }
+.ov-ar { display: flex; align-items: center; justify-content: center; position: relative; }
+.ov-ar::before { content: ""; position: absolute; left: 1.5mm; right: 3mm; top: 50%; border-top: 2px solid var(--teal); }
+.ov-ar::after { content: ""; position: absolute; right: 1.5mm; top: calc(50% - 1.6mm); border-left: 2.6mm solid var(--teal); border-top: 1.6mm solid transparent; border-bottom: 1.6mm solid transparent; }
+.ov-ar span { position: relative; top: -3.4mm; font-size: 6.6pt; font-weight: 850; color: var(--teal-d); background: var(--bg); padding: 0 .8mm; white-space: nowrap; }
+.ov-loop { background: var(--teal-bg); border: 1px solid var(--teal-line); border-radius: 2mm; padding: 2.4mm 3.4mm; font-size: 8.6pt; line-height: 1.5; color: var(--ink); }
+.ov-loop > b:first-child { color: var(--teal-d); font-size: 11pt; margin-right: 1mm; }
+table.tri { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; font-size: 8.2pt; line-height: 1.45; }
+table.tri th { background: var(--navy); color: #fff; text-align: left; padding: 2mm 2.6mm; font-size: 7.6pt; font-weight: 800; }
+table.tri td { padding: 2.4mm 2.6mm; border-top: 1px solid var(--line); color: var(--ink2); vertical-align: top; }
+table.tri td:first-child { width: 48mm; color: var(--ink); }
+table.tri td:nth-child(2) { width: 38mm; color: var(--ink3); }
+table.tri td:last-child { width: 14mm; font-weight: 800; color: var(--teal-d); white-space: nowrap; }
+.pn { display: inline-flex; width: 4.6mm; height: 4.6mm; border-radius: 50%; color: #fff; font-size: 6.8pt; font-weight: 850; align-items: center; justify-content: center; margin-right: 1.4mm; vertical-align: -.8mm; }
+.pn.p1 { background: #d9822b; }
+.pn.p2 { background: var(--teal); }
+.pn.p3 { background: #4f6bd8; }
+ol.tl .pn { margin-right: 0; }
+.legend .mk-demo + span { margin-left: 1mm; }
+
+/* 계산 · 등급 */
+.calc .c span.g { color: var(--ink3); font-weight: 700; }
+.grade { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2mm; }
+.grade span { border-radius: 1.4mm; padding: 1.6mm 1mm; text-align: center; font-size: 6.6pt; line-height: 1.35; color: var(--ink2); }
+.grade b { display: block; font-size: 8.4pt; color: var(--ink); }
+.grade .g0 { background: #e9f3f0; } .grade .g1 { background: #fff4d6; } .grade .g2 { background: #ffe8d9; } .grade .g3 { background: #fbd9cf; } .grade .g4 { background: #f6c1b5; }
+
+/* 용어 풀이 */
+table.gl { width: 100%; border-collapse: separate; border-spacing: 0 2mm; font-size: 8.6pt; line-height: 1.6; }
+table.gl th { width: 30mm; text-align: left; vertical-align: top; background: var(--navy); color: #fff; border-radius: 1.6mm 0 0 1.6mm; padding: 2.6mm 3mm; font-size: 9pt; }
+table.gl td { background: #fff; border: 1px solid var(--line); border-left: 0; border-radius: 0 1.6mm 1.6mm 0; padding: 2.6mm 3.4mm; color: var(--ink2); }
+
+.thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.thumbs > div { background: #fff; border: 1px solid var(--line); border-radius: 2.2mm; padding: 2.4mm; }
+.thumbs p { font-size: 8pt; line-height: 1.4; color: var(--ink2); margin-bottom: 1.6mm; min-height: 7.4mm; }
+.thumbs p b { color: var(--ink); }
+.ov-box { font-size: 9pt; }
+.ov-r { font-size: 9pt; padding: 2.2mm 2.4mm; }
+.ov-box ul li { padding: 1.8mm 2.4mm; }
+.feature .pic { height: 62mm; }
+.trio { height: 64mm; }

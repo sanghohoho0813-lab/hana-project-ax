@@ -1,22 +1,19 @@
 // 이의신청 자료용 화면 촬영 — 핵심 사례(보령 → 홍성 → 예산)를 실제 프로그램으로 처음부터 끝까지 돌리며 찍는다 (회귀 시험 아님)
 // 문제 1 보고 지연 · 문제 2 안전확인 지연 · 문제 3 다음 현장 지연 전파 — 각 문제를 프로그램이 어떤 절차로 다루는지 화면으로 남긴다.
-// 실행: APPEAL_OUT=<폴더> node tests-pilot/e2e/appeal-shots.mjs   (약 45분 — '중간 확인'은 실제로 30분이 지나야 뜬다)
+// 실행: APPEAL_OUT=<폴더> [APPEAL_P=09:00] node tests-pilot/e2e/appeal-shots.mjs   (약 45분 — '중간 확인'은 실제로 30분이 지나야 뜬다)
+//       APPEAL_P   보령 지사 예정 시작(한국 시각 HH:MM). 없으면 지금부터 약 3분 뒤. 기사 화면은 그 4분 전부터 찍는다.
 //       APPEAL_FAST=1 이면 30분 기다림과 중간 확인 화면을 건너뛴다 (선택자 점검용)
+// 화면마다 전체 화면(NN_id.jpg)과 핵심 부분(NN_id_crop.jpg)을 남기고, 문서에 ①②③ 표시를 그릴 위치(crop 안의 비율)를 steps.json에 적는다.
 // 로컬 시험 DB · '검증 시나리오(가상)' 자료만 쓴다. 사람 · 현장 이름은 시험용이다. 같은 컴퓨터의 별도 브라우저 세션(관리자 PC · 기사 휴대폰)이다.
 // 시각: 보령 지사 예정 시작 P(실행 시각 기준) — 핵심 사례(docs/VENTURE_CORE_CASE.md)의 09:00과 간격 · 이동시간이 같다.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { APP, PASSWORD, adminApi, uniq, newBrowser, waitPath, adminLogin, activate, loginAs, kstDate, kstHour, psql } from "./common.mjs";
+import { APP, PASSWORD, adminApi, uniq, newBrowser, waitPath, adminLogin, activate, loginAs, kstDate, psql } from "./common.mjs";
 
 const OUT = process.env.APPEAL_OUT ?? join(tmpdir(), "appeal");
 const FAST = process.env.APPEAL_FAST === "1";
 mkdirSync(OUT, { recursive: true });
-if (kstHour() < 5 || kstHour() >= 19) {
-  // 일정이 P+290분(약 5시간)까지 이어진다 — 자정을 넘기지 않게
-  console.log("한국 시각 05~19시에만 실행합니다");
-  process.exit(0);
-}
 const D = kstDate(0);
 const KIND = "scenario";
 const steps = [];
@@ -28,7 +25,15 @@ const until = async (ms) => {
   while (Date.now() < ms) await sleep(500);
 };
 
-async function step(pg, id, title, { el, top = false, full = false, wait = 600, toast = false, clip } = {}) {
+/** 표시 위치 — crop 상자 안의 비율 (0~1) */
+const rel = (b, c) => b && { x: (b.x - c.x) / c.width, y: (b.y - c.y) / c.height, w: b.width / c.width, h: b.height / c.height };
+
+/**
+ * 한 장면 — 전체 화면을 찍고, crop(핵심 부분)이 있으면 그 부분만 따로 찍는다.
+ *   crop: 요소(locator) 또는 "viewport"(보이는 화면 그대로) · marks: ①②③으로 표시할 요소들
+ * 핵심 부분을 찍을 때는 위 · 아래에 고정된 띠(머리띠 · 하단 메뉴)를 잠깐 숨긴다 — 겹쳐 찍히지 않게.
+ */
+async function step(pg, id, title, { el, top = false, full = false, wait = 600, toast = false, crop, marks = [] } = {}) {
   if (!toast) {
     const close = pg.locator('button[aria-label="알림 닫기"]');
     if (await close.count()) await close.first().click().catch(() => {});
@@ -37,9 +42,37 @@ async function step(pg, id, title, { el, top = false, full = false, wait = 600, 
   if (el) await el.evaluate((e, t) => (e.scrollIntoView({ block: t ? "start" : "center" }), t && window.scrollBy(0, -96)), top).catch(() => {});
   await pg.evaluate(() => document.fonts.ready).catch(() => {});
   await pg.waitForTimeout(wait);
-  const file = `${String(++shotNo).padStart(2, "0")}_${id}.jpg`;
-  await pg.screenshot({ path: join(OUT, file), type: "jpeg", quality: 86, fullPage: full, ...(clip ? { clip } : {}) });
-  steps.push({ id, title, img: file, device: pg.viewportSize().width < 600 ? "phone" : "pc", at: kstSec() });
+  const base = `${String(++shotNo).padStart(2, "0")}_${id}`;
+  const file = `${base}.jpg`;
+  await pg.screenshot({ path: join(OUT, file), type: "jpeg", quality: 86, fullPage: full });
+  const rec = { id, title, img: file, device: pg.viewportSize().width < 600 ? "phone" : "pc", at: kstSec() };
+  if (crop === "viewport") {
+    const v = pg.viewportSize();
+    const c = { x: 0, y: 0, width: v.width, height: v.height };
+    const mb = [];
+    for (const m of marks) mb.push(rel(await m.first().boundingBox().catch(() => null), c));
+    rec.crop = { img: file, w: v.width, h: v.height, marks: mb };
+  } else if (crop) {
+    const target = crop.first();
+    await target.evaluate((t) => {
+      window.__hid = [];
+      for (const e of document.querySelectorAll("body *")) {
+        const p = getComputedStyle(e).position;
+        if ((p === "fixed" || p === "sticky") && !e.contains(t) && !t.contains(e)) {
+          window.__hid.push([e, e.style.visibility]);
+          e.style.visibility = "hidden";
+        }
+      }
+    });
+    await target.scrollIntoViewIfNeeded().catch(() => {});
+    const c = await target.boundingBox();
+    const mb = [];
+    for (const m of marks) mb.push(rel(await m.first().boundingBox().catch(() => null), c));
+    await target.screenshot({ path: join(OUT, `${base}_crop.jpg`), type: "jpeg", quality: 90 });
+    await pg.evaluate(() => (window.__hid ?? []).forEach(([e, v]) => (e.style.visibility = v)));
+    rec.crop = { img: `${base}_crop.jpg`, w: c.width, h: c.height, marks: mb };
+  }
+  steps.push(rec);
   writeFileSync(join(OUT, "steps.json"), JSON.stringify({ date: D, P: P ? kst(P) : null, steps }, null, 1));
   console.log(`${kstSec()} [${id}] ${title}`);
 }
@@ -69,8 +102,11 @@ const casesUrl = `${APP}/pilot/admin/cases?date=${D}&kind=${KIND}`;
 const safetyUrl = `${APP}/pilot/admin/safety?date=${D}&kind=${KIND}`;
 const fieldUrl = `${APP}/pilot/field?date=${D}&kind=${KIND}`;
 
-// 보령 예정 시작 P = 지금부터 약 3분 뒤 정각 분 (기사가 시작 전 점검을 먼저 내고, P 분에 작업 시작을 누른다)
-P = Math.ceil((Date.now() + 150_000) / 60_000) * 60_000;
+// 보령 예정 시작 P — APPEAL_P(예: 09:00) 또는 지금부터 약 3분 뒤 (기사가 시작 전 점검을 먼저 내고, P 분에 작업 시작을 누른다)
+P = process.env.APPEAL_P ? Date.parse(`${D}T${process.env.APPEAL_P}:00+09:00`) : Math.ceil((Date.now() + 150_000) / 60_000) * 60_000;
+if (!(P > Date.now() + 60_000)) throw new Error(`예정 시작 ${process.env.APPEAL_P}가 이미 지났거나 너무 가깝습니다`);
+// 일정이 P+290분까지 이어진다 — 자정을 넘기지 않게
+if (P + 295 * 60_000 > Date.parse(`${D}T23:59:00+09:00`)) throw new Error("일정이 자정을 넘깁니다 — 더 이른 시작으로 실행하세요");
 const at = (min) => kst(P + min * 60_000);
 
 async function addSchedule(site, start, end, travel = "") {
@@ -91,7 +127,7 @@ async function act(card, button, fill, shot) {
   await card.locator(`button:text-is("${button}")`).click();
   const f = card.locator('[aria-label$=" 입력"]');
   if (fill) await fill(f);
-  if (shot) await step(admin, shot.id, shot.title, { el: f });
+  if (shot) await step(admin, shot.id, shot.title, { el: f, crop: f, marks: shot.marks ? shot.marks(f) : [] });
   await f.locator('button:text-is("기록")').click();
   await card.locator('[aria-label$=" 입력"]').waitFor({ state: "detached", timeout: 20000 });
   await admin.waitForTimeout(500);
@@ -106,14 +142,20 @@ try {
   await addSchedule(S.A, at(0), at(60));
   await addSchedule(S.B, at(90), at(150), "20");
   await addSchedule(S.C, at(180), at(230), "25");
-  await step(admin, "setup_board", "관리자 일정판 — 김현장 기사 하루 3곳", { el: admin.locator(`tr:has-text("${S.C}")`).first() });
+  const tbl = admin.locator(`table:has(tr:has-text("${S.A}"))`);
+  const tblCard = tbl.locator("xpath=..");
+  await step(admin, "setup_board", "관리자 일정판 — 김현장 기사 하루 3곳", { el: admin.locator(`tr:has-text("${S.C}")`).first(), crop: tblCard, marks: [tbl.locator(`tr:has-text("${S.A}")`), tbl.locator(`tr:has-text("${S.B}")`), tbl.locator(`tr:has-text("${S.C}")`)] });
+
+  // 기사 화면은 예정 시작 4분 전부터 (시작 전 점검이 작업 시작 바로 앞에 오게)
+  if (P - Date.now() > 4 * 60_000) console.log(`${kstSec()} 기사 화면은 ${kst(P - 4 * 60_000)}부터`);
+  await until(P - 4 * 60_000);
 
   /* ═════ 문제 2 (작업 전): 안전점검이 먼저 ═════ */
   await loginAs(m1, e1);
   await waitPath(m1, "/pilot/field");
   await m1.goto(fieldUrl);
   await m1.locator('section[aria-label="지금 할 일"]').waitFor();
-  await step(m1, "p2_field_first", "기사 첫 화면 — ① 시작 전 안전점검 → ② 작업 시작");
+  await step(m1, "p2_field_first", "기사 첫 화면 — ① 시작 전 안전점검 → ② 작업 시작", { crop: m1.locator('section[aria-label="지금 할 일"]'), marks: [m1.locator('[aria-label="시작 전 안전점검 안내"]')] });
   const card = m1.locator(`section[aria-label="${S.A} 일정"]`);
   await card.locator('button:has-text("업무 확인")').click();
   await m1.locator(`[role=status]:has-text("${S.A} 업무 확인 기록됨")`).waitFor();
@@ -121,14 +163,14 @@ try {
   await m1.locator('div.fixed button:has-text("작업 시작")').first().click();
   const gate = m1.locator('[role=dialog][aria-label="안전점검 확인"]');
   await gate.waitFor();
-  await step(m1, "p2_gate_start", "점검 없이 '작업 시작'을 누르면 먼저 묻는다");
+  await step(m1, "p2_gate_start", "점검 없이 '작업 시작'을 누르면 먼저 묻는다", { crop: "viewport", marks: [gate.locator("text=시작 전 안전점검을 먼저"), gate.locator('button:has-text("시작 전 점검 하기")')] });
   await gate.locator('button:has-text("시작 전 점검 하기")').click();
   const pre = card.locator('[aria-label="시작 전 점검"]');
   await pre.waitFor();
   await items3(pre);
   await pre.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
   await pre.locator('ul[aria-label="첨부할 사진"] img').waitFor();
-  await step(m1, "p2_pre_check", "시작 전 안전점검 — 항목 확인 + 착용 사진", { el: pre.locator('ul[aria-label="첨부할 사진"]') });
+  await step(m1, "p2_pre_check", "시작 전 안전점검 — 항목 확인 + 착용 사진", { el: pre.locator('ul[aria-label="첨부할 사진"]'), crop: "viewport", marks: [pre.locator('li[aria-label="작업구역 표시·통제"]'), pre.locator('ul[aria-label="첨부할 사진"]')] });
   await pre.locator('button:has-text("시작 전 점검 제출")').click();
   await card.locator('[aria-label="안전점검"] button:has-text("시작 전 점검") >> text=확인 대기').waitFor({ timeout: 30000 });
 
@@ -143,12 +185,13 @@ try {
   await admin.goto(safetyUrl);
   const preLi = admin.locator(`li[aria-label^="안전점검 "]:has-text("${S.A}"):has(button:has-text("적합 (육안)"))`).first();
   await preLi.waitFor();
-  await step(admin, "p2_admin_review", "안전관리 — 시작 전 점검 사진 확인 대기", { el: preLi, top: true });
+  await step(admin, "p2_admin_review", "안전관리 — 시작 전 점검 사진 확인 대기", { el: preLi, top: true, crop: preLi, marks: [preLi.locator('ul[aria-label="점검 사진"]'), preLi.locator('button:has-text("적합 (육안)")')] });
   await admin.waitForTimeout(800);
   await preLi.locator('button:has-text("적합 (육안)")').click({ timeout: 15000 });
   await admin.locator('[role=status]:has-text("적합(육안 확인)")').first().waitFor();
   await admin.goto(safetyUrl);
-  await step(admin, "p2_admin_stage1", "현장별 3단계 현황 — 시작 전 '적합(육안)'", { el: admin.locator('section[aria-label="현장별 3단계 현황"]'), top: true });
+  const stages = admin.locator('section[aria-label="현장별 3단계 현황"]');
+  await step(admin, "p2_admin_stage1", "현장별 3단계 현황 — 시작 전 '적합(육안)'", { el: stages, top: true, crop: stages, marks: [stages.locator(`tr:has-text("${S.A}")`)] });
 
   /* ═════ 문제 1: 30분째 진행 보고가 없으면 시스템이 먼저 묻는다 ═════ */
   if (!FAST) {
@@ -158,11 +201,12 @@ try {
     const ask = m1.locator('[aria-label="진행 확인"]');
     await ask.waitFor({ timeout: 30000 });
     await m1.evaluate(() => window.scrollTo(0, 0));
-    await step(m1, "p1_field_ask", "30분째 진행 보고 없음 — 휴대폰이 먼저 묻는다");
+    const hero = m1.locator('section[aria-label="지금 할 일"]');
+    await step(m1, "p1_field_ask", "30분째 진행 보고 없음 — 휴대폰이 먼저 묻는다", { el: hero, top: true, crop: hero, marks: [ask.locator("p").first(), ask.locator('button:has-text("막혔어요")')] });
     await admin.goto(dash);
     const w = admin.locator('section[aria-label="연락 없이 늦어지는 현장"]');
     await w.waitFor();
-    await step(admin, "p1_admin_watch", "관리자 대시보드 — 연락 없이 늦어지는 현장 (중간 확인)", { el: w, top: true });
+    await step(admin, "p1_admin_watch", "관리자 대시보드 — 연락 없이 늦어지는 현장 (중간 확인)", { el: w, top: true, crop: w, marks: [w.locator("li").first(), w.locator('a:has-text("전화 확인")')] });
     await step(admin, "p1_admin_watch_full", "관리자 대시보드 전체 — 안전 · 연락 없이 늦어짐이 맨 앞", { full: true });
     await ask.locator('button:has-text("막혔어요")').click();
   } else {
@@ -180,35 +224,39 @@ try {
   await step(m1, "p1_report_state", "② 지금 상태 · 문제를 처음 발견한 시각", { el: sh.locator('[aria-label="문제 발견시각"]') });
   await sh.locator('[aria-label="요청 (여러 개 가능)"] button:text-is("숙련 기술자 지원")').click();
   await sh.locator('[aria-label="변경 예상 종료"] button:text-is("+1시간")').click();
-  await step(m1, "p1_report_need_end", "③ 필요한 지원 · ④ 바뀐 예상 종료", { el: sh.locator('[aria-label="변경 예상 종료"]') });
+  await step(m1, "p1_report_need_end", "③ 필요한 지원 · ④ 바뀐 예상 종료", { el: sh.locator('[aria-label="요청 (여러 개 가능)"]'), top: true, crop: "viewport", marks: [sh.locator('[aria-label="요청 (여러 개 가능)"] button[aria-pressed="true"]'), sh.locator('[aria-label="변경 예상 종료"] p')] });
   await sh.locator('input[aria-label="현장 사진"]').setInputFiles(PHOTO);
   await sh.locator('ul[aria-label="첨부할 사진"] img').waitFor();
   await step(m1, "p1_report_photo", "⑤ 사진 (촬영정보 지우고 비공개 저장)", { el: sh.locator('ul[aria-label="첨부할 사진"]') });
   await sh.locator('button:has-text("보고 보내기")').click();
   await card.locator('[role=status]:has-text("보고됨")').waitFor({ timeout: 30000 });
-  await step(m1, "p1_report_sent", "⑥ 보고 완료 — 사건번호 · 본사 확인 전", { el: card.locator('section[aria-label^="사건 "]').first() });
+  const sent = card.locator('section[aria-label^="사건 "]').first();
+  await step(m1, "p1_report_sent", "⑥ 보고 완료 — 사건번호 · 본사 확인 전", { el: sent, crop: sent, marks: [sent.locator("text=본사 확인 전")] });
 
   /* ═════ 본사: 우선 확인 · 다음 현장 영향 (문제 1 · 3) ═════ */
   await admin.goto(dash);
   await admin.locator('[aria-label="오늘 핵심 숫자"]').waitFor();
-  await step(admin, "p13_admin_dash", "관리자 대시보드 — 새 보고 · 다음 현장 지연 위험", { full: true });
+  const nextSite = admin.locator('section[aria-label="다음 현장 지연 위험"]');
+  await step(admin, "p13_admin_dash", "관리자 대시보드 — 새 보고 · 다음 현장 지연 위험", { full: true, crop: nextSite, marks: [nextSite.locator("li").nth(0), nextSite.locator("li").nth(1)] });
   await admin.goto(casesUrl);
   const c1 = caseCard();
   await c1.waitFor();
-  await step(admin, "p13_case_card", "문제·지원 — 우선 확인 이유(지원 요청 · 후속 현장 위험 계산값)", { el: c1, top: true });
+  await step(admin, "p13_case_card", "문제·지원 — 우선 확인 이유(지원 요청 · 후속 현장 위험 계산값)", { el: c1, top: true, crop: c1, marks: [c1.locator("text=우선 확인 이유"), c1.locator("text=변경 예상 종료")] });
   const detailHref = await c1.locator('a[href*="/pilot/admin/cases/"]').first().getAttribute("href");
   await admin.goto(`${APP}${detailHref}`);
   await admin.locator('section[aria-label="사건 한눈에"]').waitFor();
-  await step(admin, "p3_chain_report", "사건 상세 — 보고 직후 연쇄 영향 (보령 → 홍성 → 예산)", { el: admin.locator('[aria-label="연쇄 영향 그림"]') });
+  const chainCard = () => admin.locator('div.card:has(h2:text-is("후속 현장 위험 · 조치 전후"))');
+  await step(admin, "p3_chain_report", "사건 상세 — 보고 직후 연쇄 영향 (보령 → 홍성 → 예산)", { el: admin.locator('[aria-label="연쇄 영향 그림"]'), crop: chainCard(), marks: [chainCard().locator("text=50분 늦음"), chainCard().locator("text=45분 늦음"), chainCard().locator('div:has(> p:text-is("남은 위험"))')] });
 
   await admin.goto(casesUrl);
   await c1.waitFor();
   await act(c1, "접수");
-  await act(c1, "지원 결정", (f) => f.locator('[aria-label="지원 조치"] button:text-is("숙련 직원 투입")').click(), { id: "p1_admin_support", title: "접수 → 지원 결정 (숙련 직원 투입)" });
-  await act(c1, "현장 전달", (f) => f.locator('input[aria-label="내용"]').fill("숙련 기술자가 30분 안에 도착합니다. 분해 상태 그대로 두세요."), { id: "p1_admin_deliver", title: "현장 전달 — 기사에게 보낼 말" });
+  await act(c1, "지원 결정", (f) => f.locator('[aria-label="지원 조치"] button:text-is("숙련 직원 투입")').click(), { id: "p1_admin_support", title: "접수 → 지원 결정 (숙련 직원 투입)", marks: (f) => [f.locator('[aria-label="지원 조치"] button:text-is("숙련 직원 투입")')] });
+  await act(c1, "현장 전달", (f) => f.locator('input[aria-label="내용"]').fill("숙련 기술자가 30분 안에 도착합니다. 분해 상태 그대로 두세요."), { id: "p1_admin_deliver", title: "현장 전달 — 기사에게 보낼 말", marks: (f) => [f.locator('input[aria-label="내용"]')] });
   await m1.goto(fieldUrl);
   await m1.locator('section[aria-label="본사 메시지"]').waitFor({ timeout: 30000 });
-  await step(m1, "p1_field_hq", "기사 휴대폰 — 본사에서 온 소식", { el: m1.locator('section[aria-label="본사 메시지"]') });
+  const hq = m1.locator('section[aria-label="본사 메시지"]');
+  await step(m1, "p1_field_hq", "기사 휴대폰 — 본사에서 온 소식", { el: hq, crop: hq, marks: [hq.locator("li, button").first()] });
 
   /* ═════ 문제 3: 일정 조정 → 재판단 (1차 · 2차) ═════ */
   await admin.goto(casesUrl);
@@ -223,9 +271,10 @@ try {
       await f.locator('input[aria-label="새 예정 종료"]').fill(at(205));
       await f.locator('input[aria-label="내용"]').fill("보령 지원으로 홍성 시작 조정 (고객 연락 완료)");
     },
-    { id: "p3_adjust1_form", title: "1차 조치 — 홍성 물류센터 시작을 늦춤" },
+    { id: "p3_adjust1_form", title: "1차 조치 — 홍성 물류센터 시작을 늦춤", marks: (f) => [f.locator('select[aria-label="조정할 일정"]'), f.locator('input[aria-label="새 예정 시작"]')] },
   );
-  await step(admin, "p3_adjust1_result", "1차 조치 직후 재판단 — 풀린 위험 · 남은 위험", { el: admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first(), toast: true });
+  const st1 = admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first();
+  await step(admin, "p3_adjust1_result", "1차 조치 직후 재판단 — 풀린 위험 · 남은 위험", { el: st1, toast: true, crop: st1 });
   await act(
     c1,
     "일정 조정",
@@ -236,19 +285,21 @@ try {
       await f.locator('input[aria-label="새 예정 종료"]').fill(at(290));
       await f.locator('input[aria-label="내용"]').fill("예산 매장 고객 연락 후 시작 조정");
     },
-    { id: "p3_adjust2_form", title: "2차 조치 — 예산 매장 시작을 늦춤" },
+    { id: "p3_adjust2_form", title: "2차 조치 — 예산 매장 시작을 늦춤", marks: (f) => [f.locator('select[aria-label="조정할 일정"]'), f.locator('input[aria-label="새 예정 시작"]')] },
   );
-  await step(admin, "p3_adjust2_result", "2차 조치 직후 재판단 — 남은 위험 0", { el: admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first(), toast: true });
+  const st2 = admin.locator('section[aria-label="처리 중 지원 요청"] [role=status]').first();
+  await step(admin, "p3_adjust2_result", "2차 조치 직후 재판단 — 남은 위험 0", { el: st2, toast: true, crop: st2 });
   await admin.goto(`${APP}${detailHref}`);
   await admin.locator('section[aria-label="사건 한눈에"]').waitFor();
   await step(admin, "p3_case_summary", "사건 상세 — 조치로 풀린 위험 / 남은 위험", { el: admin.locator('section[aria-label="사건 한눈에"]'), top: true });
-  await step(admin, "p3_chain_after", "연쇄 영향 그림 — 보고 직후 vs 조치 후", { el: admin.locator('[aria-label="연쇄 영향 그림"]') });
+  await step(admin, "p3_chain_after", "연쇄 영향 그림 — 보고 직후 vs 조치 후", { el: admin.locator('[aria-label="연쇄 영향 그림"]'), crop: chainCard(), marks: [chainCard().locator("text=여유 5분"), chainCard().locator("text=여유 10분"), chainCard().locator('div:has(> p:text-is("남은 위험"))')] });
   await admin.goto(board);
   await admin.locator(`tr:has-text("${S.C}")`).first().waitFor();
-  await step(admin, "p3_board_after", "일정판 — 조정된 시각과 다음 현장 판단", { el: admin.locator(`tr:has-text("${S.C}")`).first() });
+  await step(admin, "p3_board_after", "일정판 — 조정된 시각과 다음 현장 판단", { el: admin.locator(`tr:has-text("${S.C}")`).first(), crop: tblCard, marks: [tbl.locator(`tr:has-text("${S.B}")`), tbl.locator(`tr:has-text("${S.C}")`)] });
   await m1.goto(fieldUrl);
   await m1.locator(`section[aria-label="${S.B} 일정"]`).waitFor();
-  await step(m1, "p3_field_next", "기사 휴대폰 — 조정된 다음 현장 시각", { el: m1.locator(`section[aria-label="${S.B} 일정"]`), top: true });
+  const nb = m1.locator(`section[aria-label="${S.B} 일정"]`);
+  await step(m1, "p3_field_next", "기사 휴대폰 — 조정된 다음 현장 시각", { el: nb, top: true, crop: nb });
 
   /* ═════ 문제 2 (작업 중): 진행 중 점검 '미흡' → 보완 요청 → 보완 → 조치 완료 ═════ */
   await m1.evaluate(() => window.scrollTo(0, 0));
@@ -256,7 +307,7 @@ try {
   const mid = card.locator('[aria-label="진행 중 점검"]');
   await mid.waitFor();
   await items3(mid, "작업구역 표시·통제");
-  await step(m1, "p2_mid_deficient", "진행 중 점검 — '미흡'이면 작업 멈춤 · 직접 전화 안내", { el: mid.locator("[role=alert]").first() });
+  await step(m1, "p2_mid_deficient", "진행 중 점검 — '미흡'이면 작업 멈춤 · 직접 전화 안내", { el: mid.locator("[role=alert]").first(), crop: "viewport", marks: [mid.locator("[role=alert]")] });
   await mid.locator('input[aria-label="안전점검 사진"]').setInputFiles(PHOTO);
   await mid.locator('ul[aria-label="첨부할 사진"] img').waitFor();
   await mid.locator('button:has-text("진행 중 점검 제출")').click();
@@ -265,12 +316,13 @@ try {
   const midNo = psql(`select c.check_no from safety_checks c join schedules s on s.id = c.schedule_id where s.site_name = '${S.A}' and s.work_date = '${D}' and c.stage = '작업 중' order by c.recorded_at desc limit 1;`);
   await admin.goto(dash);
   await admin.locator('[aria-label="오늘 핵심 숫자"]').waitFor();
-  await step(admin, "p2_admin_dash_safety", "관리자 대시보드 — 안전 확인 필요(1순위)에 미흡", { el: admin.locator('section[aria-label="안전 확인 필요"]'), top: true });
+  const safeSec = admin.locator('section[aria-label="안전 확인 필요"]');
+  await step(admin, "p2_admin_dash_safety", "관리자 대시보드 — 안전 확인 필요(1순위)에 미흡", { el: safeSec, top: true, crop: safeSec, marks: [safeSec.locator("li").first()] });
   await admin.goto(safetyUrl);
   const midLi = admin.locator(`li[aria-label="안전점검 ${midNo}"]`);
   await midLi.waitFor();
   await midLi.locator('input[aria-label="보완할 내용"]').fill("작업구역 통제선 설치 후 사진 다시 보내 주세요");
-  await step(admin, "p2_admin_supp_req", "미흡 점검 — '적합'은 막히고 보완 요청만", { el: midLi });
+  await step(admin, "p2_admin_supp_req", "미흡 점검 — '적합'은 막히고 보완 요청만", { el: midLi, crop: midLi, marks: [midLi.locator("text=작업구역 표시·통제: 미흡"), midLi.locator('button:has-text("적합")'), midLi.locator('button:text-is("보완 요청")')] });
   await midLi.locator('button:text-is("보완 요청")').click();
   await midLi.locator('[role=status]:has-text("보완 요청")').waitFor();
   await m1.goto(fieldUrl);
@@ -280,14 +332,14 @@ try {
   await sup.locator('input[aria-label="보완 사진"]').setInputFiles(PHOTO);
   await sup.locator('input[aria-label="보완한 내용"]').fill("통제선 설치 완료");
   await sup.locator('ul[aria-label="첨부할 사진"] img').waitFor();
-  await step(m1, "p2_field_supp", "보완 요청 도착 → 보완 사진 · 내용 제출", { el: sup });
+  await step(m1, "p2_field_supp", "보완 요청 도착 → 보완 사진 · 내용 제출", { el: sup, crop: sup, marks: [sup.locator('button:has-text("보완 제출")')] });
   await sup.locator('button:has-text("보완 제출")').click();
   await card.locator('[aria-label="안전점검"] [role=status]:has-text("보완 제출")').waitFor({ timeout: 30000 });
   await admin.goto(safetyUrl);
   await midLi.waitFor();
   await midLi.locator('button:has-text("조치 완료")').click();
   await midLi.locator('[role=status]:has-text("조치 완료")').waitFor();
-  await step(admin, "p2_admin_supp_done", "보완 확인 → 조치 완료 (확인 이력이 남음)", { el: midLi });
+  await step(admin, "p2_admin_supp_done", "보완 확인 → 조치 완료 (확인 이력이 남음)", { el: midLi, crop: midLi, marks: [midLi.locator('[aria-label="확인 이력"]')] });
 
   /* ═════ 마무리: 해결 보고 · 마무리 점검 · 작업 종료 · 해결 확인 ═════ */
   await m1.goto(fieldUrl);
@@ -303,7 +355,7 @@ try {
   await sleep(1500);
   await m1.locator('div.fixed button:has-text("작업 종료")').first().click();
   await gate.waitFor();
-  await step(m1, "p2_gate_end", "마무리 점검 없이 '작업 종료'를 누르면 먼저 묻는다");
+  await step(m1, "p2_gate_end", "마무리 점검 없이 '작업 종료'를 누르면 먼저 묻는다", { crop: "viewport", marks: [gate.locator("text=마무리 안전점검을 먼저"), gate.locator('button:has-text("마무리 점검 하기")')] });
   await gate.locator('button:has-text("마무리 점검 하기")').click();
   const fin = card.locator('[aria-label="마친 뒤 점검"]');
   await fin.waitFor();
@@ -330,12 +382,13 @@ try {
     await admin.locator(`li[aria-label="${label}"] [role=status]:has-text("적합(육안 확인)")`).waitFor();
   }
   await admin.goto(safetyUrl);
-  await step(admin, "p2_admin_stage3", "현장별 3단계 현황 — 시작 전 · 진행 중 · 마친 뒤", { el: admin.locator('section[aria-label="현장별 3단계 현황"]'), top: true });
+  await step(admin, "p2_admin_stage3", "현장별 3단계 현황 — 시작 전 · 진행 중 · 마친 뒤", { el: stages, top: true, crop: stages, marks: [stages.locator(`tr:has-text("${S.A}")`)] });
 
   await admin.goto(`${APP}${detailHref}`);
   await admin.locator('section[aria-label="사건 한눈에"]').waitFor();
   await step(admin, "ev_case_top", "사건 상세 — 처리 흐름(시각 기록)", { el: admin.locator('section[aria-label="사건 한눈에"]'), top: true });
-  await step(admin, "ev_case_print", "사건 증빙 — 핵심 흐름 요약", { el: admin.locator('section[aria-label="핵심 흐름 요약"]'), top: true });
+  const summ = admin.locator('section[aria-label="핵심 흐름 요약"]');
+  await step(admin, "ev_case_print", "사건 증빙 — 핵심 흐름 요약", { el: summ, top: true, crop: summ });
   await admin.goto(`${APP}/pilot/admin/measures?kind=${KIND}`);
   await admin.waitForLoadState("domcontentloaded");
   await step(admin, "ev_measures", "성과 측정 — 측정 항목 (이 시험 기록 기준)", { full: true });
