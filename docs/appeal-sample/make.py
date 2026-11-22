@@ -255,7 +255,7 @@ page(
 <div class="grid2">
   {stp(1, at('p1_field_ask'), "휴대폰이 먼저 묻습니다", shot("p1_field_ask", aspect=1.4) + marks_list("‘작업 시작 30분째예요 — 예정대로 되고 있나요?’", "막혔으면 <b>‘막혔어요’</b> 한 번으로 지원 요청"))}
   {stp(2, at('p1_admin_watch'), "같은 시각, 본사 화면에도 뜹니다", shot("p1_admin_watch") + marks_list("보령 지사 · <b>중간 확인</b> — 작업 시작 30분째 · 진행 보고 없음", "본사가 먼저 전화해 받은 내용을 대신 기록하는 바로가기"))}
-  {stp(3, F['reported'], "고르기만 하면 보고 끝", shot("p1_report_need_end", aspect=1.4) + marks_list("필요한 지원: <b>숙련 기술자 지원</b>", f"바뀐 예상 종료 <b>{F['new_end']}</b> → ‘다음 현장 도착을 다시 계산합니다’"))}
+  {stp(3, F['reported'], "고르기만 하면 보고 끝", shot("p1_report_need_end", show=[2], focus=60, aspect=1.4) + marks_list(f"‘+1시간’ 한 번 → 바뀐 예상 종료 <b>{F['new_end']}</b> → ‘이 값으로 다음 현장 도착 · 위험을 다시 계산합니다’") + '<p class="cap">유형 · 상태 · 발견 시각 · 필요한 지원(숙련 기술자) · 사진도 같은 방식으로 고르기만 합니다.</p>')}
   {stp(4, F['decided'], "본사는 이유와 함께 보고 바로 지원", shot("p13_case_card", show=[1], focus=True, aspect=2.6) + marks_list("먼저 볼 이유: <b>지원 요청 · 다음 현장 2곳 위험(최대 50분)</b> — 자동 계산") + shot("p1_field_hq", cls="mini") + marks_list("기사 휴대폰에 ‘숙련 기술자 30분 안에 도착’ 전달"))}
 </div>
 """,
