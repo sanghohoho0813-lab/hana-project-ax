@@ -1,0 +1,571 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>하나정보통신 이의신청 보완자료 (간결판)</title><style>@font-face {
+  font-family: "Pretendard";
+  src: url("fonts/PretendardVariable.woff2") format("woff2-variations"),
+    url("https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");
+  font-weight: 45 920;
+}
+@page { size: A4; margin: 0; }
+:root {
+  --navy: #11293b; --navy2: #183a57; --teal: #17786a; --teal-d: #0f5f54; --teal-bg: #e9f3f0; --teal-line: #cde4dd;
+  --ink: #1e2a33; --ink2: #4d5963; --ink3: #7d8890; --line: #dde2e5; --bg: #f6f7f5; --soft: #eff3f2;
+  --red: #bf513b; --red-bg: #fbefea; --red-line: #f0cfc4;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Pretendard, "Noto Sans KR", sans-serif; color: var(--ink); background: #9aa3a8; word-break: keep-all; overflow-wrap: anywhere; }
+b, strong { font-weight: 750; }
+.page { width: 210mm; height: 297mm; background: var(--bg); padding: 12mm 14mm 9mm; position: relative; overflow: hidden; break-after: page; display: flex; flex-direction: column; margin: 0 auto; }
+@media screen { .page { margin: 6mm auto; box-shadow: 0 2mm 6mm rgba(0,0,0,.2); } }
+
+/* 머리 · 꼬리 */
+header { display: flex; justify-content: space-between; align-items: center; }
+.logo { display: flex; align-items: center; gap: 2.2mm; }
+.logo .mark { position: relative; font: italic 900 21pt/1 Pretendard; color: var(--navy); letter-spacing: -1pt; padding-right: 1mm; }
+.logo .mark i { position: absolute; right: -0.6mm; bottom: 1.2mm; width: 1.6mm; height: 1.6mm; border-radius: 50%; background: var(--teal); }
+.logo b { display: block; font-size: 12pt; font-weight: 850; color: var(--navy); letter-spacing: -0.3pt; line-height: 1.15; }
+.logo small { display: block; font-size: 4.9pt; font-weight: 750; letter-spacing: .5pt; color: var(--ink3); }
+.ref { font-size: 6.8pt; letter-spacing: 1.6pt; color: var(--ink3); font-weight: 750; }
+.pill { border: 1px solid var(--teal-line); background: #fff; border-radius: 99px; padding: 1.8mm 3.8mm; font-size: 7.4pt; font-weight: 750; color: var(--ink2); }
+.rule { margin-top: 5mm; border-top: 1px solid var(--line); padding-top: 2.6mm; display: flex; justify-content: space-between; font-size: 6.8pt; }
+.rule span { letter-spacing: 1.5pt; font-weight: 850; color: var(--ink2); }
+.rule b { color: var(--ink2); font-weight: 750; }
+main { flex: 1; margin-top: 3.4mm; display: flex; flex-direction: column; gap: 3mm; min-height: 0; }
+footer { border-top: 1px solid var(--line); padding-top: 2mm; display: flex; justify-content: space-between; font-size: 6.1pt; color: var(--ink3); margin-top: 2.5mm; }
+footer b { font-weight: 750; letter-spacing: .4pt; }
+
+/* 글 */
+.kicker { color: var(--teal); font-weight: 850; font-size: 8.2pt; letter-spacing: .2pt; }
+.eyebrow { color: var(--teal); font-weight: 850; font-size: 8pt; letter-spacing: 2.2pt; }
+h1 { font-size: 35pt; line-height: 1.2; font-weight: 880; letter-spacing: -1.2pt; color: var(--navy); }
+h1 em, h2 em { font-style: normal; color: var(--teal); }
+h2 { font-size: 23pt; line-height: 1.24; font-weight: 880; letter-spacing: -.8pt; color: var(--navy); margin-top: -1mm; }
+h3 { font-size: 11pt; font-weight: 850; color: var(--navy); letter-spacing: -.3pt; }
+h4 { font-size: 9.8pt; font-weight: 850; color: var(--navy); margin-bottom: 1.2mm; letter-spacing: -.2pt; }
+.lead { font-size: 10pt; line-height: 1.62; color: var(--ink2); }
+.lead b { color: var(--ink); }
+.note { font-size: 7.7pt; line-height: 1.55; color: var(--ink3); border-left: 2px solid var(--teal-line); padding-left: 2.2mm; }
+.note b { color: var(--ink2); }
+.fine { font-size: 6.6pt; line-height: 1.5; color: var(--ink3); }
+h3.sec { display: flex; align-items: center; gap: 2.4mm; font-size: 10.2pt; border-bottom: 1px solid var(--line); padding-bottom: 1.8mm; margin-top: 1mm; }
+h3.sec > span:first-child { font-size: 6.2pt; letter-spacing: 1.2pt; color: var(--teal-d); background: var(--teal-bg); border: 1px solid var(--teal-line); padding: .8mm 2mm; border-radius: 1mm; }
+
+/* 표시 */
+.tag { display: inline-block; font-size: 5.9pt; font-weight: 850; border-radius: 1mm; padding: .45mm 1.4mm; letter-spacing: .1pt; vertical-align: middle; white-space: nowrap; background: #eef1f2; color: var(--ink2); border: 1px solid var(--line); }
+.tag.real { background: var(--teal); color: #fff; border-color: var(--teal); }
+.tag.teal { background: var(--teal-bg); color: var(--teal-d); border-color: var(--teal-line); }
+.tag.ai { background: rgba(17,41,59,.78); color: #fff; border-color: transparent; }
+.tag.calc { background: var(--red-bg); color: var(--red); border-color: var(--red-line); }
+.tag.virt { background: #eef0fb; color: #4a4fb0; border: 1px dashed #a9acdf; }
+.chip { display: inline-block; margin-top: 2mm; font-size: 6.6pt; font-weight: 750; color: var(--teal-d); background: var(--teal-bg); border-radius: 1mm; padding: 1mm 2mm; }
+
+/* 그림 */
+figure { margin: 0; }
+.pic { position: relative; border-radius: 2mm; overflow: hidden; background: #ccd; }
+.pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pic .tag.ai { position: absolute; left: 1.6mm; bottom: 1.6mm; }
+.pc { background: #fff; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; }
+.pc .bar { display: flex; align-items: center; gap: 1.8mm; padding: 1.1mm 2.3mm; background: #eef1f2; border-bottom: 1px solid var(--line); font-size: 6.4pt; color: var(--ink2); }
+.pc .bar b { font-weight: 800; color: var(--ink); }
+.pc .bar span:last-child { margin-left: auto; font-weight: 700; }
+.pc img { display: block; width: 100%; }
+.pc figcaption { font-size: 8pt; line-height: 1.5; color: var(--ink2); padding: 1.6mm 2.4mm 2mm; }
+.pc figcaption b, .phone figcaption b { color: var(--ink); }
+.phone .bezel { background: #1b232b; border-radius: 4.6mm; padding: 1.3mm; box-shadow: 0 .6mm 1.6mm rgba(0,0,0,.15); }
+.phone .bezel img { display: block; width: 100%; border-radius: 3.5mm; }
+.phone figcaption { font-size: 7.6pt; line-height: 1.48; color: var(--ink2); padding: 1.6mm .4mm 0; }
+.phone .num { display: inline-block; background: var(--teal); color: #fff; font-weight: 850; font-size: 6pt; border-radius: 99px; padding: .25mm 1.5mm; margin-right: 1mm; }
+.phone .t { font-size: 6pt; color: var(--ink3); font-weight: 700; }
+.phone .t::after { content: ""; display: block; height: .5mm; }
+
+/* 배치 */
+.row { display: grid; gap: 3mm; align-items: start; }
+.ph-pc { grid-template-columns: 54mm 1fr; }
+.ph-pc.n40 { grid-template-columns: 41mm 1fr; }
+.ph-pc.big { grid-template-columns: 68mm 1fr; }
+.phones4 { grid-template-columns: repeat(4, 1fr); gap: 3.2mm; }
+.pc2 { grid-template-columns: 1fr 1fr; }
+.pc-ph { grid-template-columns: 1fr 44mm; }
+.ph2-pc { grid-template-columns: 86mm 1fr; }
+.pc-wide { grid-template-columns: 1.3fr 1fr; }
+.stack { display: flex; flex-direction: column; gap: 3mm; }
+.stack.ph2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.trio { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 2.4mm; height: 58mm; }
+.cover .trio { height: 104mm; }
+.box { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3.2mm 3.6mm; font-size: 8.4pt; line-height: 1.55; color: var(--ink2); }
+.box.soft { background: var(--soft); }
+.box.teal { background: var(--teal-bg); border-color: var(--teal-line); }
+.box p + p { margin-top: 1.6mm; }
+ul.dots { list-style: none; display: flex; flex-direction: column; gap: 1.1mm; }
+ul.dots li { padding-left: 3mm; position: relative; }
+ul.dots li::before { content: ""; position: absolute; left: .4mm; top: 1.7mm; width: 1.2mm; height: 1.2mm; border-radius: 50%; background: var(--teal); }
+ol.num { padding-left: 4mm; display: flex; flex-direction: column; gap: 1.2mm; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3.2mm 3.4mm; font-size: 8.2pt; line-height: 1.5; color: var(--ink2); }
+.card .big { display: block; font-size: 14pt; font-weight: 880; color: var(--teal); margin-bottom: 1mm; }
+.cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.navy { background: var(--navy); color: #fff; border-radius: 2mm; padding: 4mm 5mm; }
+.navy small { display: block; font-size: 6.8pt; font-weight: 750; color: #9fd6cb; margin-bottom: 1.4mm; }
+.navy p { font-size: 11pt; font-weight: 800; line-height: 1.5; letter-spacing: -.2pt; }
+.cover .navy.one p { font-size: 14pt; }
+
+/* 표지 */
+.cover main { gap: 4.2mm; margin-top: 16mm; }
+.cover .lead { font-size: 11pt; }
+.facts3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; }
+.facts3 > div { border-top: 2px solid var(--navy); padding-top: 2.4mm; font-size: 8.4pt; line-height: 1.45; color: var(--ink2); }
+.facts3 small { display: block; font-size: 6.6pt; color: var(--ink3); font-weight: 750; margin-bottom: .6mm; }
+.facts3 b { display: block; color: var(--navy); font-size: 9.6pt; font-weight: 850; }
+
+/* 요지 */
+.probs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.probs article { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 4mm; display: flex; flex-direction: column; gap: 2.2mm; font-size: 8.6pt; line-height: 1.5; color: var(--ink2); }
+.probs .pno { font-size: 18pt; font-weight: 900; color: var(--teal); }
+.probs h3 { font-size: 11.6pt; line-height: 1.3; }
+.probs .why { color: var(--ink3); }
+.probs ol { padding-left: 3.6mm; display: flex; flex-direction: column; gap: 1.3mm; border-top: 1px dashed var(--line); padding-top: 2mm; }
+.probs .go { margin-top: auto; font-weight: 850; color: var(--teal-d); font-size: 8pt; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 1.8mm 2mm; background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3.2mm 3.6mm; font-size: 7.8pt; color: var(--ink2); }
+.legend > b { width: 100%; font-size: 7.4pt; color: var(--navy); }
+.legend span:not(.tag) { margin-right: 2.4mm; }
+
+/* 시험 사례 */
+.sites { display: flex; align-items: center; gap: 2.4mm; }
+.sites > div { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 2.4mm 3mm; }
+.sites small { display: block; font-size: 6.4pt; color: var(--ink3); font-weight: 750; }
+.sites b { display: block; font-size: 11.4pt; color: var(--navy); font-weight: 850; }
+.sites span { font-size: 9pt; font-weight: 750; color: var(--teal-d); }
+.sites i { font-style: normal; font-size: 7pt; font-weight: 800; color: var(--teal); white-space: nowrap; }
+ol.tl { list-style: none; display: flex; flex-direction: column; gap: 1.2mm; }
+ol.tl li { display: flex; align-items: center; gap: 2mm; font-size: 8.2pt; }
+ol.tl time { font-weight: 850; color: var(--navy); width: 10mm; flex: none; white-space: nowrap; }
+.p { font-size: 5.8pt; font-weight: 850; border-radius: 1mm; padding: .3mm 1.2mm; white-space: nowrap; }
+.p1 { background: #fdf0e5; color: #a8551d; }
+.p2 { background: var(--teal-bg); color: var(--teal-d); }
+.p3 { background: #eaeefb; color: #3c4f9c; }
+
+/* 문제 정의 */
+.feature { display: grid; grid-template-columns: 74mm 1fr; background: #fff; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; }
+.feature .pic { border-radius: 0; height: 56mm; }
+.feature > div { padding: 4.4mm 5mm; font-size: 8.8pt; line-height: 1.6; color: var(--ink2); }
+.feature small { display: block; font-size: 6.6pt; font-weight: 850; color: var(--teal); margin-bottom: 1mm; }
+.feature h3 { font-size: 14.5pt; line-height: 1.3; margin-bottom: 1.6mm; }
+.flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; }
+.step { display: flex; gap: 2mm; background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm; font-size: 7.9pt; line-height: 1.48; color: var(--ink2); }
+.step .n { flex: none; min-width: 5.6mm; height: 5.6mm; border-radius: 99px; background: var(--teal); color: #fff; font-weight: 850; font-size: 7pt; display: flex; align-items: center; justify-content: center; padding: 0 1.4mm; }
+.f4 .step { flex-direction: column; text-align: center; align-items: center; }
+.f4 .step .n { font-size: 6.6pt; }
+.step h4 { margin-bottom: .6mm; font-size: 9.2pt; }
+.kv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; }
+.kv > div { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 2.2mm 2.8mm; }
+.kv small { display: block; font-size: 7pt; color: var(--ink3); font-weight: 750; }
+.kv b { display: block; font-size: 12.5pt; font-weight: 880; color: var(--navy); line-height: 1.3; }
+.kv span { font-size: 6.2pt; color: var(--ink3); }
+.kv > div:last-child b { font-size: 7.4pt; line-height: 1.4; }
+
+/* 계산 */
+.calc { display: flex; align-items: stretch; gap: 2mm; }
+.calc .c { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 2.4mm; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+.calc .c small { font-size: 7pt; color: var(--ink3); font-weight: 750; }
+.calc .c b { font-size: 16pt; font-weight: 900; color: var(--navy); }
+.calc .c span { font-size: 6.4pt; font-weight: 800; color: var(--red); }
+.calc .c.dark { background: var(--navy); border-color: var(--navy); }
+.calc .c.dark small { color: #a9c6d8; }
+.calc .c.dark b { color: #fff; }
+.calc .c.red { background: var(--red-bg); border-color: var(--red-line); }
+.calc .c.red b { color: var(--red); font-size: 17pt; }
+.calc i { font-style: normal; align-self: center; font-weight: 900; color: var(--teal); font-size: 9pt; }
+p.vs { display: block; }
+p.vs .tag { margin-right: 1.6mm; }
+
+/* 증빙 · 근거 */
+.metrics { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3.4mm 3.6mm; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; font-size: 8.2pt; color: var(--ink2); }
+.metrics h4 { grid-column: 1 / -1; }
+.metrics div { display: flex; gap: 1.6mm; align-items: baseline; line-height: 1.45; }
+.metrics div b { color: var(--teal); font-size: 9pt; }
+.big2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.big2 .navy b { display: block; font-size: 26pt; font-weight: 900; line-height: 1.1; }
+.big2 .navy b i { font-style: normal; font-size: 11pt; margin-left: 1mm; }
+.big2 .navy span { display: block; font-size: 7pt; line-height: 1.5; color: #c9d6de; margin-top: 1mm; }
+.big2 .navy.blue { background: var(--navy2); }
+table.ev { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; font-size: 8pt; line-height: 1.45; }
+table.ev th { background: var(--navy); color: #fff; text-align: left; padding: 1.8mm 2.6mm; font-weight: 800; font-size: 7pt; }
+table.ev td { padding: 1.8mm 2.6mm; border-top: 1px solid var(--line); color: var(--ink2); vertical-align: top; }
+table.ev td:first-child { width: 36mm; color: var(--ink); }
+table.ev td:last-child { width: 40mm; }
+.ok, .no { display: inline-block; font-weight: 850; font-size: 6.4pt; border-radius: 1mm; padding: .3mm 1.4mm; margin-right: 1mm; }
+.ok { background: var(--teal-bg); color: var(--teal-d); }
+.no { background: var(--red-bg); color: var(--red); }
+.cards4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; }
+.cards4 .card small { font-size: 6.4pt; font-weight: 850; color: var(--teal); }
+.cards4 .card .big { font-size: 17pt; color: var(--navy); }
+.cards4 .card .big.red { color: var(--red); }
+.cards4 .card.warn { background: #fbf6f3; border-color: var(--red-line); }
+.t-ok, .t-no { display: block; margin-top: 1.4mm; font-size: 6.4pt; font-weight: 850; }
+.t-ok { color: var(--teal-d); }
+.t-no { color: var(--red); }
+.timeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1.6mm; background: var(--soft); border-radius: 2mm; padding: 2.8mm 3.2mm; }
+.timeline h4 { grid-column: 1 / -1; margin: 0; }
+.timeline div { border-top: 2.4px solid var(--teal); padding-top: 1.4mm; font-size: 7.4pt; color: var(--ink2); line-height: 1.4; }
+.timeline b { display: block; font-size: 8.6pt; color: var(--teal-d); }
+
+/* 심사 답변 */
+.qa { display: grid; grid-template-columns: 1fr 1fr; gap: 2.6mm; }
+.qa .card small { font-size: 6.4pt; font-weight: 850; color: var(--teal); }
+.qa .card h4 { font-size: 10.2pt; margin: .6mm 0 1mm; }
+.next { display: flex; flex-direction: column; gap: 2.4mm; }
+.next > div { display: grid; grid-template-columns: 38mm 1fr; gap: 3.4mm; background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 2.2mm; align-items: center; }
+.next .pic { height: 27mm; }
+.next > div > div { position: relative; padding-left: 8mm; font-size: 8.1pt; line-height: 1.5; color: var(--ink2); }
+.next > div > div > b { position: absolute; left: 0; top: 0; width: 5.6mm; height: 5.6mm; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 7.6pt; }
+.next > div > div > span { display: block; margin-top: .8mm; font-size: 6.5pt; font-weight: 850; color: var(--teal-d); }
+.navy.msg p { font-size: 10.2pt; line-height: 1.6; }
+
+table.mini { width: 100%; border-collapse: collapse; font-size: 7.8pt; margin: 1mm 0 2mm; }
+table.mini th { text-align: left; font-size: 7pt; color: var(--ink3); font-weight: 750; border-bottom: 1px solid var(--line); padding: .8mm 1mm; }
+table.mini td { padding: 1.2mm 1mm; border-bottom: 1px solid var(--line); color: var(--ink); font-weight: 700; }
+table.mini td.r { color: var(--red); }
+table.mini td.g { color: var(--teal-d); }
+
+.probs .thumb { position: relative; height: 44mm; border-radius: 1.6mm; overflow: hidden; border: 1px solid var(--line); background: #fff; margin: -1mm -1mm 1mm; }
+.probs .thumb img { display: block; width: 100%; height: 100%; }
+.probs .thumb .tag { position: absolute; left: 1.4mm; top: 1.4mm; }
+.metrics.m2 { grid-template-columns: 1fr 1fr; align-content: start; }
+
+/* ═════ 110점 개정 (2026-11-22) — 화면 표시 · 단계 카드 · 한 장 그림 ═════ */
+:root { --mk: #e5484d; }
+.hl { color: #9fe3d4; }
+.cap { font-size: 7.9pt; line-height: 1.5; color: var(--ink2); }
+.cap b { color: var(--ink); }
+.fill { font-size: 7.8pt; font-weight: 750; color: #8a5a00; background: #fff7e0; border: 1px dashed #e6c46b; border-radius: 1.6mm; padding: 1.8mm 3mm; }
+
+/* 실제 화면 + 표시 */
+.shot { background: #fff; border: 1px solid var(--line); border-radius: 2.2mm; overflow: hidden; }
+.shot .bar { display: flex; align-items: center; gap: 1.6mm; padding: 1mm 2.2mm; background: #eef1f2; border-bottom: 1px solid var(--line); font-size: 6.4pt; color: var(--ink2); }
+.shot .bar b { font-weight: 800; color: var(--ink); }
+.shot .bar span:last-child { margin-left: auto; font-weight: 750; }
+.shot.phone { border: 2px solid #1b232b; border-radius: 3.4mm; }
+.shot.phone .bar { background: #1b232b; color: #cfd6dc; border-bottom: 0; }
+.shot.phone .bar b { color: #fff; }
+.shot .frame { position: relative; }
+.shot .frame img { display: block; width: 100%; }
+.mk { position: absolute; border: 2.2px solid var(--mk); border-radius: 1.4mm; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85); font-style: normal; }
+.mk b { position: absolute; left: -2.6mm; top: -2.6mm; width: 4.8mm; height: 4.8mm; border-radius: 50%; background: var(--mk); color: #fff; font-size: 7pt; font-weight: 850; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1.2px #fff; }
+.mk-demo { position: relative; display: inline-block; width: 9mm; height: 4.4mm; border: 2px solid var(--mk); border-radius: 1.2mm; margin-left: 2.4mm; }
+.mk-demo b { position: absolute; left: -2.4mm; top: -2.2mm; width: 4.2mm; height: 4.2mm; border-radius: 50%; background: var(--mk); color: #fff; font-size: 6.4pt; display: flex; align-items: center; justify-content: center; }
+ol.mkl { list-style: none; display: flex; flex-direction: column; gap: 1mm; margin: 1.8mm 0 0; }
+ol.mkl li { display: flex; gap: 1.6mm; align-items: flex-start; font-size: 8pt; line-height: 1.45; color: var(--ink2); }
+ol.mkl li b { flex: none; width: 4.4mm; height: 4.4mm; border-radius: 50%; background: var(--mk); color: #fff; font-size: 6.6pt; font-weight: 850; display: flex; align-items: center; justify-content: center; margin-top: .2mm; }
+ol.mkl li span b, ol.mkl li span strong { color: var(--ink); }
+ol.mkl li span > b { all: unset; font-weight: 800; color: var(--ink); }
+
+/* 단계 카드 */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2mm; align-items: start; }
+.stp { background: #fff; border: 1px solid var(--line); border-radius: 2.4mm; padding: 2.8mm 3mm 3mm; display: flex; flex-direction: column; gap: 1.6mm; }
+.stp-h { display: flex; align-items: center; gap: 2mm; }
+.stp .sn { background: var(--navy); color: #fff; font-size: 6.6pt; font-weight: 850; letter-spacing: .8pt; border-radius: 1mm; padding: .5mm 1.8mm; }
+.stp time { font-size: 8pt; font-weight: 850; color: var(--teal-d); }
+.stp h3 { font-size: 10.6pt; line-height: 1.3; margin-bottom: .6mm; }
+.stp .shot.mini { width: 72%; margin-top: 2mm; }
+.stp .shot + .shot { margin-top: 2mm; }
+.stp .cap { margin: 1.2mm 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 3.2mm; align-items: start; }
+
+/* 기존 → 이 프로그램 */
+.ba { display: grid; grid-template-columns: 1fr 7mm 1.25fr; align-items: stretch; }
+.ba > div { border-radius: 2mm; padding: 2.8mm 3.4mm; font-size: 8.6pt; line-height: 1.55; }
+.ba small { display: block; font-size: 6.8pt; font-weight: 850; letter-spacing: .4pt; margin-bottom: .8mm; }
+.ba .b { background: #fff; border: 1px solid var(--line); color: var(--ink3); }
+.ba .a { background: var(--teal-bg); border: 1px solid var(--teal-line); color: var(--ink); }
+.ba .a small { color: var(--teal-d); }
+.ba i { font-style: normal; align-self: center; text-align: center; font-weight: 900; color: var(--teal); font-size: 12pt; }
+.why3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.why3 > div { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm 3.2mm; font-size: 8.2pt; line-height: 1.5; color: var(--ink2); }
+.why3 > div > b { display: block; font-size: 15pt; font-weight: 900; color: var(--teal); line-height: 1.1; margin-bottom: 1mm; }
+.flow4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2.4mm; }
+.flow4 > div { background: #fff; border: 1px solid var(--line); border-radius: 2mm; padding: 3mm; text-align: center; font-size: 7.8pt; line-height: 1.45; color: var(--ink2); }
+.flow4 span { display: inline-block; background: var(--teal); color: #fff; border-radius: 99px; padding: .6mm 2.6mm; font-size: 7pt; font-weight: 850; }
+.flow4 b { display: block; color: var(--navy); font-size: 9.2pt; margin: 1.6mm 0 .8mm; }
+.flow4 .hq span { background: var(--navy); }
+
+/* 한 장 그림 */
+.ov { display: grid; grid-template-columns: 1fr 15mm 1.25fr 15mm 1fr; align-items: stretch; margin-top: 1mm; }
+.ov-box { border-radius: 2.6mm; padding: 3.4mm; font-size: 8.4pt; line-height: 1.5; }
+.ov-box.field, .ov-box.hq { background: #fff; border: 1px solid var(--line); }
+.ov-box.engine { background: var(--navy); color: #fff; }
+.ov-t { display: flex; align-items: center; gap: 1.6mm; flex-wrap: wrap; margin-bottom: 2.2mm; }
+.ov-t b { font-size: 10.4pt; font-weight: 880; }
+.ov-t small { width: 100%; font-size: 7pt; color: #a9c6d8; font-weight: 700; }
+.ic { width: 6mm; height: 6mm; color: var(--teal); flex: none; }
+.engine .ic { color: #9fe3d4; }
+.ov-box ul { list-style: none; display: flex; flex-direction: column; gap: 1.4mm; }
+.ov-box ul li { background: var(--soft); border-radius: 1.4mm; padding: 1.4mm 2.2mm; font-weight: 700; color: var(--ink); }
+.ov-r { display: flex; align-items: center; gap: 2mm; background: rgba(255,255,255,.08); border-radius: 1.6mm; padding: 1.8mm 2.2mm; margin-top: 1.6mm; font-weight: 750; font-size: 8.6pt; }
+.ov-r > b { flex: none; width: 5mm; height: 5mm; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 7.4pt; color: #fff; }
+.ov-r.r1 > b { background: #d9822b; }
+.ov-r.r2 > b { background: var(--teal); }
+.ov-r.r3 > b { background: #4f6bd8; }
+.ov-r.r3 { background: rgba(159,227,212,.16); box-shadow: inset 0 0 0 1px rgba(159,227,212,.5); }
+.ov-r em { margin-left: auto; font-style: normal; font-size: 6.6pt; background: #9fe3d4; color: var(--navy); border-radius: 1mm; padding: .3mm 1.4mm; font-weight: 850; }
+.ov-ar { display: flex; align-items: center; justify-content: center; position: relative; }
+.ov-ar::before { content: ""; position: absolute; left: 1.5mm; right: 3mm; top: 50%; border-top: 2px solid var(--teal); }
+.ov-ar::after { content: ""; position: absolute; right: 1.5mm; top: calc(50% - 1.6mm); border-left: 2.6mm solid var(--teal); border-top: 1.6mm solid transparent; border-bottom: 1.6mm solid transparent; }
+.ov-ar span { position: relative; top: -3.4mm; font-size: 6.6pt; font-weight: 850; color: var(--teal-d); background: var(--bg); padding: 0 .8mm; white-space: nowrap; }
+.ov-loop { background: var(--teal-bg); border: 1px solid var(--teal-line); border-radius: 2mm; padding: 2.4mm 3.4mm; font-size: 8.6pt; line-height: 1.5; color: var(--ink); }
+.ov-loop > b:first-child { color: var(--teal-d); font-size: 11pt; margin-right: 1mm; }
+table.tri { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; font-size: 8.2pt; line-height: 1.45; }
+table.tri th { background: var(--navy); color: #fff; text-align: left; padding: 2mm 2.6mm; font-size: 7.6pt; font-weight: 800; }
+table.tri td { padding: 2.4mm 2.6mm; border-top: 1px solid var(--line); color: var(--ink2); vertical-align: top; }
+table.tri td:first-child { width: 48mm; color: var(--ink); }
+table.tri td:nth-child(2) { width: 38mm; color: var(--ink3); }
+table.tri td:last-child { width: 14mm; font-weight: 800; color: var(--teal-d); white-space: nowrap; }
+.pn { display: inline-flex; width: 4.6mm; height: 4.6mm; border-radius: 50%; color: #fff; font-size: 6.8pt; font-weight: 850; align-items: center; justify-content: center; margin-right: 1.4mm; vertical-align: -.8mm; }
+.pn.p1 { background: #d9822b; }
+.pn.p2 { background: var(--teal); }
+.pn.p3 { background: #4f6bd8; }
+ol.tl .pn { margin-right: 0; }
+.legend .mk-demo + span { margin-left: 1mm; }
+
+/* 계산 · 등급 */
+.calc .c span.g { color: var(--ink3); font-weight: 700; }
+.grade { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2mm; }
+.grade span { border-radius: 1.4mm; padding: 1.6mm 1mm; text-align: center; font-size: 6.6pt; line-height: 1.35; color: var(--ink2); }
+.grade b { display: block; font-size: 8.4pt; color: var(--ink); }
+.grade .g0 { background: #e9f3f0; } .grade .g1 { background: #fff4d6; } .grade .g2 { background: #ffe8d9; } .grade .g3 { background: #fbd9cf; } .grade .g4 { background: #f6c1b5; }
+
+/* 용어 풀이 */
+table.gl { width: 100%; border-collapse: separate; border-spacing: 0 2mm; font-size: 8.6pt; line-height: 1.6; }
+table.gl th { width: 30mm; text-align: left; vertical-align: top; background: var(--navy); color: #fff; border-radius: 1.6mm 0 0 1.6mm; padding: 2.6mm 3mm; font-size: 9pt; }
+table.gl td { background: #fff; border: 1px solid var(--line); border-left: 0; border-radius: 0 1.6mm 1.6mm 0; padding: 2.6mm 3.4mm; color: var(--ink2); }
+
+.thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.thumbs > div { background: #fff; border: 1px solid var(--line); border-radius: 2.2mm; padding: 2.4mm; }
+.thumbs p { font-size: 8pt; line-height: 1.4; color: var(--ink2); margin-bottom: 1.6mm; min-height: 7.4mm; }
+.thumbs p b { color: var(--ink); }
+.ov-box { font-size: 9pt; }
+.ov-r { font-size: 9pt; padding: 2.2mm 2.4mm; }
+.ov-box ul li { padding: 1.8mm 2.4mm; }
+.feature .pic { height: 62mm; }
+.trio { height: 64mm; }
+
+/* ═════ 간결판 — 큰 글씨 · 넓은 여백 · 한 쪽 한 메시지 ═════ */
+.page.s { padding: 14mm 16mm 10mm; }
+.page.s main { gap: 6mm; margin-top: 9mm; }
+.page.s footer b { font-size: 7pt; }
+.s-tag { display: inline-block; align-self: flex-start; font-size: 8.6pt; font-weight: 850; color: var(--teal-d); background: var(--teal-bg); border-radius: 99px; padding: 1.2mm 3.6mm; }
+.s-tag.c1 { color: #a8551d; background: #fdf0e5; }
+.s-tag.c3 { color: #3c4f9c; background: #eaeefb; }
+.s-h { font-size: 30pt; line-height: 1.2; font-weight: 900; letter-spacing: -1.2pt; color: var(--navy); margin-top: -2mm; }
+.s-h em { font-style: normal; color: var(--teal); }
+.s-lead { font-size: 13pt; line-height: 1.6; color: var(--ink2); }
+.s-lead b { color: var(--ink); }
+.s-note { font-size: 10pt; color: var(--ink2); text-align: center; }
+.s-note b { color: var(--ink); }
+.s-cap { font-size: 11pt; color: var(--ink2); margin-bottom: -3mm; }
+.s-cap b { color: var(--navy); font-weight: 850; }
+.s-arrow { text-align: center; font-size: 10pt; font-weight: 800; color: var(--teal-d); position: relative; padding-top: 6mm; }
+.s-arrow::before { content: "↓"; position: absolute; left: 50%; top: -1mm; transform: translateX(-50%); font-size: 14pt; color: var(--teal); }
+.s-fill { font-size: 9pt; font-weight: 750; color: #8a5a00; background: #fff7e0; border: 1px dashed #e6c46b; border-radius: 1.6mm; padding: 2mm 3.4mm; }
+
+/* 표지 */
+.page.s.cover main { margin-top: 22mm; gap: 7mm; }
+.page.s.cover h1 { font-size: 38pt; }
+.s-trio { height: 98mm; }
+.s-facts { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 4mm; margin-top: auto; }
+.s-facts > div { border-top: 2px solid var(--navy); padding-top: 2.6mm; font-size: 8.6pt; color: var(--ink3); line-height: 1.5; }
+.s-facts small { display: block; font-size: 7.4pt; font-weight: 750; }
+.s-facts b { display: block; font-size: 10.6pt; color: var(--navy); font-weight: 850; }
+
+/* 기존 → 이 프로그램 */
+.s-ba { display: grid; grid-template-columns: 1fr 9mm 1.3fr; align-items: stretch; }
+.s-ba > div { border-radius: 2.4mm; padding: 3.4mm 4.4mm; font-size: 12pt; font-weight: 750; line-height: 1.4; background: #fff; border: 1px solid var(--line); color: var(--ink3); }
+.s-ba > div.a { background: var(--teal-bg); border-color: var(--teal-line); color: var(--navy); }
+.s-ba small { display: block; font-size: 7.6pt; font-weight: 850; letter-spacing: .4pt; margin-bottom: 1mm; color: var(--ink3); }
+.s-ba > div.a small { color: var(--teal-d); }
+.s-ba > i { position: relative; }
+.s-ba > i::after { content: "→"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 15pt; font-weight: 900; color: var(--teal); }
+
+/* 화면 3장 */
+.s-story { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; align-items: start; }
+.s-story > div > p { display: flex; align-items: center; gap: 2mm; font-size: 10.4pt; font-weight: 850; color: var(--navy); margin-bottom: 2.4mm; min-height: 12mm; line-height: 1.3; }
+.s-story > div > p b { flex: none; width: 6.4mm; height: 6.4mm; border-radius: 50%; background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 9pt; }
+.page.s .mk { border-width: 2.6px; }
+
+/* 한 장 그림 */
+.s-ov { display: grid; grid-template-columns: 1fr 12mm 1.25fr 12mm 1fr; align-items: stretch; margin-top: 2mm; }
+.s-ov > div { border-radius: 3mm; padding: 4.4mm; display: flex; flex-direction: column; gap: 2mm; }
+.s-ov .box1 { background: #fff; border: 1px solid var(--line); }
+.s-ov .box2 { background: var(--navy); color: #fff; }
+.s-ov h4 { font-size: 11.6pt; margin-bottom: 1mm; color: inherit; }
+.s-ov .box1 h4 { color: var(--navy); }
+.s-ov h4 small { display: block; font-size: 7.6pt; color: #a9c6d8; font-weight: 700; margin-top: .6mm; }
+.s-ov .box1 p { background: var(--soft); border-radius: 1.6mm; padding: 2.2mm 2.8mm; font-size: 10pt; font-weight: 750; }
+.s-ov .box2 p { display: flex; align-items: center; gap: 2mm; background: rgba(255,255,255,.08); border-radius: 1.6mm; padding: 2.2mm 2.6mm; font-size: 10pt; font-weight: 750; }
+.s-ov .box2 p.core { background: rgba(159,227,212,.16); box-shadow: inset 0 0 0 1px rgba(159,227,212,.5); }
+.s-ov .box2 p em { margin-left: auto; font-style: normal; font-size: 7pt; background: #9fe3d4; color: var(--navy); border-radius: 1mm; padding: .4mm 1.6mm; font-weight: 850; }
+.s-ov > i { position: relative; }
+.s-ov > i::before { content: ""; position: absolute; left: 2mm; right: 3.6mm; top: 50%; border-top: 2.4px solid var(--teal); }
+.s-ov > i::after { content: ""; position: absolute; right: 1.6mm; top: calc(50% - 2mm); border-left: 3mm solid var(--teal); border-top: 2mm solid transparent; border-bottom: 2mm solid transparent; }
+.n1, .n2, .n3 { flex: none; width: 6mm; height: 6mm; border-radius: 50%; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 8.4pt; font-weight: 850; }
+.n1 { background: #d9822b; } .n2 { background: var(--teal); } .n3 { background: #4f6bd8; }
+.s-loop { text-align: center; font-size: 11.4pt; color: var(--ink2); background: var(--teal-bg); border-radius: 99px; padding: 2.6mm 4mm; }
+.s-loop b { color: var(--teal-d); }
+.s-rows { display: flex; flex-direction: column; gap: 3mm; margin-top: 2mm; }
+.s-rows > div { display: grid; grid-template-columns: 8mm 1fr 10mm 1.25fr; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 2.4mm; padding: 3.6mm 4.4mm; }
+.s-rows span { font-size: 12pt; font-weight: 750; color: var(--ink3); }
+.s-rows strong { font-size: 13pt; font-weight: 880; color: var(--navy); }
+.s-rows i::after { content: "→"; font-style: normal; font-weight: 900; color: var(--teal); font-size: 14pt; }
+
+/* 계산 */
+.s-sites { display: flex; align-items: center; gap: 3mm; }
+.s-sites > div { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 2.4mm; padding: 3mm 4mm; font-size: 11pt; font-weight: 800; color: var(--teal-d); }
+.s-sites b { display: block; font-size: 13pt; color: var(--navy); }
+.s-sites i { font-style: normal; font-size: 9pt; font-weight: 850; color: var(--teal); white-space: nowrap; }
+.s-calc { display: flex; align-items: stretch; gap: 2.4mm; }
+.s-calc > div { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 2.4mm; padding: 3.4mm 2mm; text-align: center; }
+.s-calc small { display: block; font-size: 8pt; color: var(--ink3); font-weight: 750; }
+.s-calc b { font-size: 19pt; font-weight: 900; color: var(--navy); }
+.s-calc > div.d { background: var(--navy); border-color: var(--navy); }
+.s-calc > div.d small { color: #a9c6d8; }
+.s-calc > div.d b { color: #fff; }
+.s-calc > div.r { background: var(--red-bg); border-color: var(--red-line); flex: 1.15; }
+.s-calc > div.r b { color: var(--red); font-size: 22pt; }
+.s-calc > i { font-style: normal; align-self: center; font-weight: 900; color: var(--teal); font-size: 11pt; }
+
+/* 근거 */
+.s-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4mm; }
+.s-cards > div { background: var(--navy); color: #fff; border-radius: 3mm; padding: 6mm; }
+.s-cards small { display: block; font-size: 9pt; font-weight: 750; color: #9fd6cb; }
+.s-cards b { display: block; font-size: 30pt; font-weight: 900; line-height: 1.2; margin: 1mm 0; }
+.s-cards span { font-size: 9pt; color: #c9d6de; }
+.s-cards > div.r { background: #fbf1ee; color: var(--red); border: 1px solid var(--red-line); }
+.s-cards > div.r small, .s-cards > div.r span { color: var(--red); }
+.s-two { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+.s-two > div { background: #fff; border: 1px solid var(--line); border-radius: 3mm; padding: 5mm; }
+.s-two h4 { font-size: 12pt; color: var(--teal-d); margin-bottom: 2.4mm; }
+.s-two > div.r h4 { color: var(--red); }
+.s-two p { font-size: 11pt; font-weight: 700; color: var(--ink); padding: 1.6mm 0; border-top: 1px solid var(--line); }
+
+/* 심사 답변 */
+.s-qa { display: flex; flex-direction: column; gap: 3.4mm; }
+.s-qa > div { display: grid; grid-template-columns: 38mm 1fr 14mm; align-items: center; gap: 3mm; background: #fff; border: 1px solid var(--line); border-radius: 2.6mm; padding: 4.6mm 5mm; }
+.s-qa p { font-size: 12pt; font-weight: 850; color: var(--ink3); }
+.s-qa strong { font-size: 12pt; font-weight: 800; color: var(--navy); line-height: 1.45; }
+.s-qa span { font-size: 8.6pt; font-weight: 850; color: var(--teal-d); text-align: right; }
+
+/* 다음 단계 */
+.s-next { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.s-next .pic { height: 62mm; }
+.s-next p { display: flex; align-items: center; gap: 2mm; margin-top: 2.6mm; font-size: 12pt; font-weight: 850; color: var(--navy); }
+.s-next p b { width: 6.4mm; height: 6.4mm; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 9pt; flex: none; }
+.s-msg { padding: 8mm; text-align: center; }
+.s-msg p { font-size: 15pt !important; line-height: 1.6; }
+
+/* 채움 조정 */
+.s-duo { display: grid; grid-template-columns: 80mm 1fr; gap: 5mm; align-items: start; }
+.s-col { display: flex; flex-direction: column; gap: 5mm; }
+.s-item > p { display: flex; align-items: center; gap: 2mm; font-size: 11.4pt; font-weight: 850; color: var(--navy); margin-bottom: 2.4mm; }
+.s-item > p b { flex: none; width: 7mm; height: 7mm; border-radius: 50%; background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 9.6pt; }
+.s-proof { background: #fff; border: 1px solid var(--line); border-radius: 3mm; padding: 4mm; display: grid; grid-template-columns: 1fr 1.1fr; gap: 5mm; align-items: center; }
+.s-proof > p { font-size: 13pt; font-weight: 850; color: var(--navy); line-height: 1.4; }
+.s-tl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3mm; }
+.s-tl > div { border-top: 3px solid var(--teal); padding-top: 2.4mm; font-size: 10pt; font-weight: 750; color: var(--ink2); }
+.s-tl b { display: block; font-size: 13pt; color: var(--teal-d); }
+.s-ov .box1 p, .s-ov .box2 p { font-size: 11pt; padding: 3mm 3.2mm; }
+.s-ov h4 { font-size: 12.6pt; }
+.s-ov > div { padding: 5.4mm; gap: 2.6mm; }
+.s-rows > div { padding: 5.4mm 5mm; }
+.s-rows span { font-size: 13pt; }
+.s-rows strong { font-size: 14.4pt; }
+.s-cards > div { padding: 8mm 7mm; }
+.s-cards b { font-size: 34pt; }
+.s-two p { font-size: 12pt; padding: 2.4mm 0; }
+.s-qa > div { padding: 7mm 6mm; }
+.s-qa p, .s-qa strong { font-size: 13pt; }
+.s-next .pic { height: 92mm; }
+.s-next p { font-size: 13pt; }
+.s-msg { padding: 11mm; }
+.s-msg p { font-size: 17pt !important; }
+.s-calc > div { padding: 5mm 2mm; }
+.s-calc b { font-size: 22pt; }
+.s-calc > div.r b { font-size: 26pt; }
+.s-sites > div { padding: 4mm 5mm; }
+
+/* 여백 균형 (2차) */
+.s-duo { grid-template-columns: 86mm 1fr; }
+.s-rows { gap: 4mm; }
+.s-rows > div { padding: 7mm 5.4mm; }
+.s-ov > div { min-height: 74mm; }
+.s-loop { font-size: 12.4pt; padding: 3.4mm 4mm; }
+.s-cards { gap: 5mm; }
+.s-cards > div { padding: 11mm 8mm; }
+.s-cards b { font-size: 38pt; }
+.s-two > div { padding: 6mm; }
+.s-tl { margin-top: 3mm; }
+.s-qa { gap: 5mm; }
+.s-qa > div { padding: 10mm 6.4mm; }
+.s-qa p, .s-qa strong { font-size: 14pt; }
+.s-next .pic { height: 118mm; }
+.s-msg { padding: 14mm; }
+
+.s-ov .box2 p em { white-space: nowrap; }
+</style></head><body><section class="page s cover"><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="pill">벤처기업확인 이의신청 · 보완자료</span></header><main>
+<p class="eyebrow">THREE FIELD PROBLEMS · ONE WORKING PROGRAM</p>
+<h1>현장에서 생긴 문제가<br><em>다음 현장까지 번지기 전에.</em></h1>
+<p class="s-lead">현장 기록으로 <b>다음 현장 지연을 자동 계산</b>하고,<br>본사가 <b>먼저 할 일</b>을 알려 줍니다.</p>
+<div class="trio s-trio"><figure class="pic "><img src="img-simple/ai-stuck.jpg" alt=""><span class="tag ai">AI 연출 사진</span></figure><figure class="pic "><img src="img-simple/ai-hq.jpg" alt=""><span class="tag ai">AI 연출 사진</span></figure><figure class="pic "><img src="img-simple/ai-van.jpg" alt=""><span class="tag ai">AI 연출 사진</span></figure></div>
+<div class="s-facts"><div><small>신청기술</small><b>복수 현장 업무 위험관리 AX 시스템</b></div><div><small>관련 특허</small><b>10-2026-0173957</b><span>출원 · 등록 아님</span></div><div><small>프로그램</small><b>v0.6.1</b><span>현장기사 휴대폰 + 관리자 PC</span></div></div>
+</main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출 · 실제 현장 성과 아님</span><b>01</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag ">한 장으로 보는 기술</p><h2 class="s-h">기록을 받아,<br><em>먼저 할 일을 알려 줍니다.</em></h2>
+<div class="s-ov">
+  <div class="box1"><h4>현장 기사 휴대폰</h4><p>작업 시작 · 종료</p><p>문제 보고</p><p>안전점검</p></div>
+  <i></i>
+  <div class="box2"><h4>자동 계산<small>정해진 규칙 · AI 예측 아님</small></h4><p><b class="n1">1</b>연락 없이 늦어짐</p><p><b class="n2">2</b>안전점검 빠짐 · 미흡</p><p class="core"><b class="n3">3</b>다음 현장 지연<em>특허 핵심</em></p></div>
+  <i></i>
+  <div class="box1"><h4>본사 관리자 PC</h4><p>먼저 볼 일</p><p>지원 결정</p><p>일정 조정</p></div>
+</div>
+<p class="s-loop">조치하면 <b>다시 계산</b> → 기사 휴대폰에 <b>바로 전달</b></p>
+<div class="s-rows">
+  <div><b class="n1">1</b><span>혼자 오래 붙잡음</span><i></i><strong>30분째 먼저 묻기</strong></div>
+  <div><b class="n2">2</b><span>안전확인이 늦음</span><i></i><strong>점검 먼저 · 미흡은 즉시 중지</strong></div>
+  <div><b class="n3">3</b><span>다음 현장까지 지연</span><i></i><strong>몇 분 늦는지 자동 계산</strong></div>
+</div></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>02</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag c1">문제 1 · 초급 기술자가 혼자 오래 붙잡음</p><h2 class="s-h">30분째 연락이 없으면,<br><em>먼저 묻습니다.</em></h2>
+<div class="s-ba"><div><small>기존</small>혼자 해결하다 늦게 전화</div><i></i><div class="a"><small>이 프로그램</small>시스템이 먼저 묻고, 터치로 보고</div></div>
+<div class="s-duo"><div class="s-col"><div class="s-item"><p><b>1</b>휴대폰이 먼저 묻기</p><figure class="shot phone "><div class="bar"><span class="tag real">실제 화면</span><b>기사 휴대폰</b><span>11:30</span></div><div class="frame"><img src="img-simple/p1_field_ask.jpg" alt=""><i class="mk" style="left:8.66%;top:32.15%;width:82.68%;height:13.14%"></i><i class="mk" style="left:8.66%;top:57.85%;width:27.19%;height:14.92%"></i></div></figure></div></div><div class="s-col"><div class="s-item"><p><b>2</b>본사도 같은 시각에 확인</p><figure class="shot pc "><div class="bar"><span class="tag real">실제 화면</span><b>관리자 PC</b><span>11:30</span></div><div class="frame"><img src="img-simple/p1_admin_watch.jpg" alt=""><i class="mk" style="left:0.00%;top:15.53%;width:100.00%;height:59.47%"></i></div></figure></div><div class="s-item"><p><b>3</b>바로 지원 결정 → 기사에게</p><figure class="shot phone "><div class="bar"><span class="tag real">실제 화면</span><b>기사 휴대폰</b><span>11:30</span></div><div class="frame"><img src="img-simple/p1_field_hq.jpg" alt=""><i class="mk" style="left:0.00%;top:24.67%;width:100.00%;height:75.33%"></i></div></figure></div></div></div>
+<p class="s-note">11:00 작업 시작 → <b>11:30 중간 확인</b> → ‘막혔어요’ 보고 → 지원 결정</p></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>03</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag c2">문제 2 · 안전확인이 뒤늦게 이루어짐</p><h2 class="s-h">점검이 먼저,<br><em>미흡은 바로 멈춤.</em></h2>
+<div class="s-ba"><div><small>기존</small>점검 · 사진을 나중에 정리</div><i></i><div class="a"><small>이 프로그램</small>작업 단계마다 점검 먼저, 미흡은 즉시 중지</div></div>
+<div class="s-duo"><div class="s-col"><div class="s-item"><p><b>1</b>점검 없이 시작 → 먼저 묻기</p><figure class="shot phone "><div class="bar"><span class="tag real">실제 화면</span><b>기사 휴대폰</b><span>10:56</span></div><div class="frame"><img src="img-simple/p2_gate_start.jpg" alt=""><i class="mk" style="left:6.99%;top:35.85%;width:86.01%;height:5.90%"></i><i class="mk" style="left:6.99%;top:73.50%;width:86.01%;height:9.91%"></i></div></figure></div></div><div class="s-col"><div class="s-item"><p><b>2</b>미흡 → 작업 중지 · 직접 전화</p><figure class="shot phone "><div class="bar"><span class="tag real">실제 화면</span><b>기사 휴대폰</b><span>11:30</span></div><div class="frame"><img src="img-simple/p2_mid_deficient.jpg" alt=""><i class="mk" style="left:6.88%;top:16.50%;width:86.25%;height:66.74%"></i></div></figure></div><div class="s-item"><p><b>3</b>본사 1순위로 표시</p><figure class="shot pc "><div class="bar"><span class="tag real">실제 화면</span><b>관리자 PC</b><span>11:30</span></div><div class="frame"><img src="img-simple/p2_admin_dash_safety.jpg" alt=""><i class="mk" style="left:0.00%;top:16.87%;width:100.00%;height:44.33%"></i></div></figure></div></div></div>
+<p class="s-note">사진으로 자동 판정하지 않습니다 — <b>관리자가 눈으로 확인</b></p></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>04</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag c3">문제 3 · 핵심 기술</p><h2 class="s-h">한 곳이 늦으면,<br><em>다음 현장에 몇 분 늦는지.</em></h2>
+<div class="s-ba"><div><small>기존</small>‘늦는다’는 사실만 공유</div><i></i><div class="a"><small>이 프로그램</small>다음 현장 도착을 자동 계산</div></div>
+<div class="s-sites"><div><b>보령</b>11:00~12:00</div><i>20분</i><div><b>홍성</b>12:30~13:30</div><i>25분</i><div><b>예산</b>14:00~14:50</div></div>
+<div class="s-calc"><div><small>보령 끝 예상</small><b>13:00</b></div><i>+</i><div><small>이동</small><b>20분</b></div><i>=</i><div class="d"><small>홍성 도착</small><b>13:20</b></div><i>vs</i><div><small>홍성 시작</small><b>12:30</b></div><div class="r"><small>늦음</small><b>50분</b></div></div>
+<div class="s-calc"><div><small>홍성 끝 예상</small><b>14:20</b></div><i>+</i><div><small>이동</small><b>25분</b></div><i>=</i><div class="d"><small>예산 도착</small><b>14:45</b></div><i>vs</i><div><small>예산 시작</small><b>14:00</b></div><div class="r"><small>늦음</small><b>45분</b></div></div>
+<div class="s-proof"><p>프로그램 화면에서도 바로 보입니다</p><figure class="shot pc "><div class="bar"><span class="tag real">실제 화면</span><b>관리자 PC</b><span>11:30</span></div><div class="frame"><img src="img-simple/s_nextsite.jpg" alt=""><i class="mk" style="left:3.18%;top:15.50%;width:93.64%;height:33.50%"></i><i class="mk" style="left:3.18%;top:45.47%;width:93.64%;height:33.05%"></i></div></figure></div>
+<p class="s-note"><b>AI 예측 아님</b> · 정해진 규칙 · 같은 입력이면 같은 결과</p></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>05</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag c3">문제 3 · 핵심 기술</p><h2 class="s-h">조치하면 다시 계산,<br><em>남은 위험 0까지.</em></h2>
+<p class="s-cap"><b>보고 직후</b> — 홍성 50분 · 예산 45분 늦음</p>
+<figure class="shot pc "><div class="bar"><span class="tag real">실제 화면</span><b>관리자 PC</b><span>11:30</span></div><div class="frame"><img src="img-simple/s_chain_before.jpg" alt=""><i class="mk" style="left:38.53%;top:58.21%;width:15.66%;height:7.42%"></i><i class="mk" style="left:38.53%;top:69.97%;width:15.66%;height:7.42%"></i><i class="mk" style="left:66.13%;top:19.94%;width:32.26%;height:20.69%"></i></div></figure>
+<p class="s-arrow">관리자가 홍성 13:25 · 예산 15:00으로 일정 조정</p>
+<p class="s-cap"><b>조치 후</b> — 여유 5분 · 여유 10분 · <b>남은 위험 0</b></p>
+<figure class="shot pc "><div class="bar"><span class="tag real">실제 화면</span><b>관리자 PC</b><span>11:30</span></div><div class="frame"><img src="img-simple/s_chain_after.jpg" alt=""><i class="mk" style="left:62.04%;top:58.21%;width:12.10%;height:7.41%"></i><i class="mk" style="left:62.03%;top:69.97%;width:12.78%;height:7.41%"></i><i class="mk" style="left:66.13%;top:19.94%;width:32.26%;height:20.68%"></i></div></figure></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>06</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag ">근거</p><h2 class="s-h">확인된 것,<br><em>남은 것.</em></h2>
+<div class="s-cards">
+  <div><small>특허</small><b>출원 1건</b><span>10-2026-0173957 · 등록 아님</span></div>
+  <div><small>자동 시험</small><b>746개</b><span>통과 · 개발환경</span></div>
+  <div><small>실행 화면</small><b>41장</b><span>실제 프로그램 · 가상 일정</span></div>
+  <div class="r"><small>현장 실증</small><b>0건</b><span>다음 단계</span></div>
+</div>
+<div class="s-two">
+  <div><h4>확인됨</h4><p>세 문제를 다루는 기능</p><p>다음 현장 지연 자동 계산</p><p>가상 시나리오 시험</p></div>
+  <div class="r"><h4>남음</h4><p>실제 현장 사용 기록</p><p>시간 · 비용 효과 측정</p><p>효과 수치는 측정 뒤에만</p></div>
+</div>
+<div class="s-tl"><div><b>09.11</b>특허 출원</div><div><b>10.28</b>계산 기능 구현</div><div><b>11.13</b>현장 인터뷰 반영</div><div><b>11.18</b>v0.6.1 · 자체 시험</div><div><b>11.22</b>실행 화면 촬영</div></div></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>07</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag ">심사 의견에 답합니다</p><h2 class="s-h">질문 하나에,<br><em>한 줄로.</em></h2>
+<p class="s-fill">아래 질문은 예시입니다 — 결과 통지서의 보완 사유 문장으로 바꿔 넣으세요</p>
+<div class="s-qa">
+  <div><p>무슨 기술인가?</p><strong>다음 현장에 몇 분 늦는지 자동 계산하고, 먼저 할 일을 정하는 기술</strong><span>2 · 5쪽</span></div>
+  <div><p>차별성은?</p><strong>기록만이 아니라 앞 · 뒤 현장을 이어 계산, 조치하면 다시 계산</strong><span>6쪽</span></div>
+  <div><p>근거는?</p><strong>실행 화면 41장 · 자동 시험 746개 · 특허 출원</strong><span>7쪽</span></div>
+  <div><p>개발 가능성은?</p><strong>세 문제 절차가 이미 동작 — 남은 것은 현장 실증</strong><span>9쪽</span></div>
+</div></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>08</b></footer></section><section class="page s "><header><div class="logo"><span class="mark">H<i></i></span><div><b>하나정보통신</b><small>HANA INFORMATION &amp; COMMUNICATION</small></div></div><span class="ref">VENTURE APPEAL / 2026.11</span></header><main><p class="s-tag ">다음 단계</p><h2 class="s-h">다음은,<br><em>실제 현장 기록입니다.</em></h2>
+<div class="s-next">
+  <div><figure class="pic "><img src="img-simple/ai-stuck.jpg" alt=""><span class="tag ai">AI 연출 사진</span></figure><p><b>1</b>실제 현장 사례 확인</p></div>
+  <div><figure class="pic "><img src="img-simple/ai-tablet.jpg" alt=""><span class="tag ai">AI 연출 사진</span></figure><p><b>2</b>실제 기기로 사용</p></div>
+  <div><figure class="pic "><img src="img-simple/ai-map.jpg" alt=""><span class="tag ai">AI 연출 사진</span></figure><p><b>3</b>실제 업무 1건 기록</p></div>
+</div>
+<div class="navy s-msg"><p>핵심 기술은 구현했습니다.<br>현장 적용으로 효과를 검증하겠습니다.</p></div></main><footer><span>화면: 실제 개발한 프로그램 (시험용 가상 일정) · 사진: AI 연출</span><b>09</b></footer></section></body></html>

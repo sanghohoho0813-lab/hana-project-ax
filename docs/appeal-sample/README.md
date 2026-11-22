@@ -1,9 +1,18 @@
-# 이의신청 보완자료 샘플 (2026-11-22 개정 · A4 14쪽)
+# 이의신청 보완자료 샘플 (2026-11-22 · 간결판 9쪽 / 상세판 14쪽)
 
 세 가지 현장 문제(초급 기술자 보고 지연 · 안전확인 지연 · 다음 현장 지연 전파)를 **실제 프로그램 화면**으로 절차대로 보여 주는 A4 자료의 샘플이다.
 디자인은 회사가 만든 참고 PDF(「이의신청 보완자료 구성 예시」 12쪽)를 따랐고, '처음 보는 사람이 바로 이해하는 것'을 기준으로 다시 짰다.
 
-## 구성 (본문 12쪽 + 부록 2쪽)
+## 두 가지 판
+| 판 | 파일 | 쓰임 |
+|---|---|---|
+| **간결판 (9쪽)** | `appeal-sample-simple.pdf` · `simple.html` · `img-simple/` | 처음 보는 심사위원용 — 한 쪽 한 메시지, 핵심 문장 · 키워드와 화면만 |
+| 상세판 (14쪽) | `appeal-sample.pdf` · `appeal.html` · `img/` | 단계별 설명 · 측정 기록 · 용어 풀이까지 — 질문이 오면 근거로 |
+
+간결판 구성: 표지 → 한 장 그림 → 문제 1 → 문제 2 → 문제 3(계산) → 문제 3(조치 후 다시 계산) → 근거 → 심사 질문 한 줄 답 → 다음 단계.
+두 판 모두 같은 촬영(11:00 정각)의 같은 화면을 쓴다.
+
+## 상세판 구성 (본문 12쪽 + 부록 2쪽)
 
 | 쪽 | 내용 |
 |---|---|
@@ -44,5 +53,8 @@ python3 docs/appeal-sample/facts.py /tmp/appeal/facts.json
 # 3) 문서 · PDF
 python3 docs/appeal-sample/make.py /tmp/appeal docs/appeal-sample/photos
 node docs/appeal-sample/render.mjs docs/appeal-sample/appeal-sample.pdf
+# 간결판
+python3 docs/appeal-sample/make_simple.py /tmp/appeal docs/appeal-sample/photos
+APPEAL_HTML=simple.html node docs/appeal-sample/render.mjs docs/appeal-sample/appeal-sample-simple.pdf
 ```
 글꼴은 Pretendard(OFL)를 쓴다. `fonts/`에 없으면 CDN에서 받는다.

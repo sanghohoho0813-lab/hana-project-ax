@@ -1,5 +1,5 @@
-// appeal.html → PDF (A4) · 쪽 미리보기 PNG
-// 실행: node docs/appeal-sample/render.mjs <출력 PDF 경로> [미리보기 폴더]
+// appeal.html(또는 APPEAL_HTML=simple.html) → PDF (A4) · 쪽 미리보기 PNG
+// 실행: [APPEAL_HTML=simple.html] node docs/appeal-sample/render.mjs <출력 PDF 경로> [미리보기 폴더]
 import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
@@ -18,7 +18,7 @@ try {
 const exe = "/opt/pw-browsers/chromium";
 const bro = await pw.chromium.launch(existsSync(exe) ? { executablePath: exe } : {});
 const page = await bro.newPage();
-await page.goto(pathToFileURL(join(here, "appeal.html")).href, { waitUntil: "networkidle" });
+await page.goto(pathToFileURL(join(here, process.env.APPEAL_HTML ?? "appeal.html")).href, { waitUntil: "networkidle" });
 await page.evaluate(() => document.fonts.ready);
 // 쪽 넘침 점검 — 내용이 쪽 높이를 넘으면 알린다
 const over = await page.evaluate(() =>
