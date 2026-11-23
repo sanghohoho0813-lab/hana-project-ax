@@ -1,0 +1,899 @@
+{
+ "__meta": {
+  "date": "2026-11-22",
+  "P": "11:00",
+  "steps": [
+   {
+    "id": "setup_board",
+    "title": "관리자 일정판 — 김현장 기사 하루 3곳",
+    "img": "01_setup_board.jpg",
+    "device": "pc",
+    "at": "10:48:15",
+    "crop": {
+     "img": "01_setup_board_crop.jpg",
+     "w": 1024,
+     "h": 326,
+     "marks": [
+      {
+       "x": 0.01953125,
+       "y": 0.254601226993865,
+       "w": 0.9609375,
+       "h": 0.2285276073619632
+      },
+      {
+       "x": 0.01953125,
+       "y": 0.4831288343558282,
+       "w": 0.9609375,
+       "h": 0.2285276073619632
+      },
+      {
+       "x": 0.01953125,
+       "y": 0.7116564417177914,
+       "w": 0.9609375,
+       "h": 0.22699386503067484
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_field_first",
+    "title": "기사 첫 화면 — ① 시작 전 안전점검 → ② 작업 시작",
+    "img": "02_p2_field_first.jpg",
+    "device": "phone",
+    "at": "10:56:02",
+    "crop": {
+     "img": "02_p2_field_first_crop.jpg",
+     "w": 358,
+     "h": 407,
+     "marks": [
+      {
+       "x": 0.055865921787709494,
+       "y": 0.30651105651105653,
+       "w": 0.888268156424581,
+       "h": 0.43796068796068793
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_gate_start",
+    "title": "점검 없이 '작업 시작'을 누르면 먼저 묻는다",
+    "img": "03_p2_gate_start.jpg",
+    "device": "phone",
+    "at": "10:56:34",
+    "crop": {
+     "img": "03_p2_gate_start.jpg",
+     "w": 390,
+     "h": 844,
+     "marks": [
+      {
+       "x": 0.08205128205128205,
+       "y": 0.5589454976303317,
+       "w": 0.8358974358974359,
+       "h": 0.03376777251184834
+      },
+      {
+       "x": 0.08205128205128205,
+       "y": 0.8199052132701422,
+       "w": 0.8358974358974359,
+       "h": 0.061611374407582936
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_pre_check",
+    "title": "시작 전 안전점검 — 항목 확인 + 착용 사진",
+    "img": "04_p2_pre_check.jpg",
+    "device": "phone",
+    "at": "10:56:35",
+    "crop": {
+     "img": "04_p2_pre_check.jpg",
+     "w": 390,
+     "h": 844,
+     "marks": [
+      {
+       "x": 0.15384615384615385,
+       "y": -0.26418098341232227,
+       "w": 0.6923076923076923,
+       "h": 0.11687277843601895
+      },
+      {
+       "x": 0.15384615384615385,
+       "y": 0.4499222452606635,
+       "w": 0.6923076923076923,
+       "h": 0.10030361374407583
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_started",
+    "title": "점검을 낸 뒤 작업 시작 — 바로 기록",
+    "img": "05_p2_started.jpg",
+    "device": "phone",
+    "at": "11:00:03"
+   },
+   {
+    "id": "p2_admin_review",
+    "title": "안전관리 — 시작 전 점검 사진 확인 대기",
+    "img": "06_p2_admin_review.jpg",
+    "device": "pc",
+    "at": "11:00:04",
+    "crop": {
+     "img": "06_p2_admin_review_crop.jpg",
+     "w": 1024,
+     "h": 456.5,
+     "marks": [
+      {
+       "x": 0.01953125,
+       "y": 0.3422782037239869,
+       "w": 0.9609375,
+       "h": 0.3247535596933187
+      },
+      {
+       "x": 0.03125,
+       "y": 0.8335158817086528,
+       "w": 0.1716461181640625,
+       "h": 0.0963855421686747
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_admin_stage1",
+    "title": "현장별 3단계 현황 — 시작 전 '적합(육안)'",
+    "img": "07_p2_admin_stage1.jpg",
+    "device": "pc",
+    "at": "11:00:06",
+    "crop": {
+     "img": "07_p2_admin_stage1_crop.jpg",
+     "w": 1024,
+     "h": 256.75,
+     "marks": [
+      {
+       "x": 0.015625,
+       "y": 0.31353456669912366,
+       "w": 0.96875,
+       "h": 0.16066212268743915
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_field_ask",
+    "title": "30분째 진행 보고 없음 — 휴대폰이 먼저 묻는다",
+    "img": "08_p1_field_ask.jpg",
+    "device": "phone",
+    "at": "11:30:05",
+    "crop": {
+     "img": "08_p1_field_ask_crop.jpg",
+     "w": 358,
+     "h": 422.25,
+     "marks": [
+      {
+       "x": 0.09497206703910614,
+       "y": 0.3285968028419183,
+       "w": 0.8100558659217877,
+       "h": 0.1172291296625222
+      },
+      {
+       "x": 0.09497206703910614,
+       "y": 0.5855535820011841,
+       "w": 0.2551064944134078,
+       "h": 0.1349911190053286
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_admin_watch",
+    "title": "관리자 대시보드 — 연락 없이 늦어지는 현장 (중간 확인)",
+    "img": "09_p1_admin_watch.jpg",
+    "device": "pc",
+    "at": "11:30:06",
+    "crop": {
+     "img": "09_p1_admin_watch_crop.jpg",
+     "w": 500,
+     "h": 258,
+     "marks": [
+      {
+       "x": 0,
+       "y": 0.1511627906976744,
+       "w": 1,
+       "h": 0.4883720930232558
+      },
+      {
+       "x": 0.62196875,
+       "y": 0.2131782945736434,
+       "w": 0.34603125,
+       "h": 0.17054263565891473
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_admin_watch_full",
+    "title": "관리자 대시보드 전체 — 안전 · 연락 없이 늦어짐이 맨 앞",
+    "img": "10_p1_admin_watch_full.jpg",
+    "device": "pc",
+    "at": "11:30:07"
+   },
+   {
+    "id": "p1_report_type",
+    "title": "문제 보고 ① 유형 — 예상과 다른 설치환경",
+    "img": "11_p1_report_type.jpg",
+    "device": "phone",
+    "at": "11:30:07"
+   },
+   {
+    "id": "p1_report_state",
+    "title": "② 지금 상태 · 문제를 처음 발견한 시각",
+    "img": "12_p1_report_state.jpg",
+    "device": "phone",
+    "at": "11:30:08"
+   },
+   {
+    "id": "p1_report_need_end",
+    "title": "③ 필요한 지원 · ④ 바뀐 예상 종료",
+    "img": "13_p1_report_need_end.jpg",
+    "device": "phone",
+    "at": "11:30:09",
+    "crop": {
+     "img": "13_p1_report_need_end.jpg",
+     "w": 390,
+     "h": 844,
+     "marks": [
+      {
+       "x": 0.4096153846153846,
+       "y": 0.13196090047393366,
+       "w": 0.34142628205128206,
+       "h": 0.052132701421800945
+      },
+      {
+       "x": 0.08205128205128205,
+       "y": 0.6011552132701422,
+       "w": 0.8358974358974359,
+       "h": 0.0740521327014218
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_report_photo",
+    "title": "⑤ 사진 (촬영정보 지우고 비공개 저장)",
+    "img": "14_p1_report_photo.jpg",
+    "device": "phone",
+    "at": "11:30:10"
+   },
+   {
+    "id": "p1_report_sent",
+    "title": "⑥ 보고 완료 — 사건번호 · 본사 확인 전",
+    "img": "15_p1_report_sent.jpg",
+    "device": "phone",
+    "at": "11:30:11",
+    "crop": {
+     "img": "15_p1_report_sent_crop.jpg",
+     "w": 326,
+     "h": 282.5,
+     "marks": [
+      {
+       "x": 0.04294478527607362,
+       "y": 0.049557522123893805,
+       "w": 0.3109183282208589,
+       "h": 0.07964601769911504
+      }
+     ]
+    }
+   },
+   {
+    "id": "p13_admin_dash",
+    "title": "관리자 대시보드 — 새 보고 · 다음 현장 지연 위험",
+    "img": "16_p13_admin_dash.jpg",
+    "device": "pc",
+    "at": "11:30:12",
+    "crop": {
+     "img": "16_p13_admin_dash_crop.jpg",
+     "w": 377.34375,
+     "h": 226,
+     "marks": [
+      {
+       "x": 0.04240165631469979,
+       "y": 0.17256637168141592,
+       "w": 0.9151966873706004,
+       "h": 0.2997787610619469
+      },
+      {
+       "x": 0.04240165631469979,
+       "y": 0.4723451327433628,
+       "w": 0.9151966873706004,
+       "h": 0.29535398230088494
+      }
+     ]
+    }
+   },
+   {
+    "id": "p13_case_card",
+    "title": "문제·지원 — 우선 확인 이유(지원 요청 · 후속 현장 위험 계산값)",
+    "img": "17_p13_case_card.jpg",
+    "device": "pc",
+    "at": "11:30:13",
+    "crop": {
+     "img": "17_p13_case_card_crop.jpg",
+     "w": 1024,
+     "h": 662.75,
+     "marks": [
+      {
+       "x": 0.01953125,
+       "y": 0.15164089023010185,
+       "w": 0.9609375,
+       "h": 0.05695963787250094
+      },
+      {
+       "x": 0.01953125,
+       "y": 0.33006412674462465,
+       "w": 0.9609375,
+       "h": 0.08977744247453791
+      }
+     ]
+    }
+   },
+   {
+    "id": "p3_chain_report",
+    "title": "사건 상세 — 보고 직후 연쇄 영향 (보령 → 홍성 → 예산)",
+    "img": "18_p3_chain_report.jpg",
+    "device": "pc",
+    "at": "11:30:14",
+    "crop": {
+     "img": "18_p3_chain_report_crop.jpg",
+     "w": 992,
+     "h": 397.5,
+     "marks": [
+      {
+       "x": 0.3893649193548387,
+       "y": 0.5921383647798742,
+       "w": 0.1485320060483871,
+       "h": 0.05408805031446541
+      },
+      {
+       "x": 0.3893649193548387,
+       "y": 0.709748427672956,
+       "w": 0.14850050403225806,
+       "h": 0.05408805031446541
+      },
+      {
+       "x": 0.6653225806451613,
+       "y": 0.20943396226415095,
+       "w": 0.31451612903225806,
+       "h": 0.18679245283018867
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_admin_support",
+    "title": "접수 → 지원 결정 (숙련 직원 투입)",
+    "img": "19_p1_admin_support.jpg",
+    "device": "pc",
+    "at": "11:30:16",
+    "crop": {
+     "img": "19_p1_admin_support_crop.jpg",
+     "w": 984,
+     "h": 267.25,
+     "marks": [
+      {
+       "x": 0.13571836890243902,
+       "y": 0.20018709073900842,
+       "w": 0.11336064532520325,
+       "h": 0.146866230121609
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_admin_deliver",
+    "title": "현장 전달 — 기사에게 보낼 말",
+    "img": "20_p1_admin_deliver.jpg",
+    "device": "pc",
+    "at": "11:30:18",
+    "crop": {
+     "img": "20_p1_admin_deliver_crop.jpg",
+     "w": 984,
+     "h": 216,
+     "marks": [
+      {
+       "x": 0.016260162601626018,
+       "y": 0.46296296296296297,
+       "w": 0.967479674796748,
+       "h": 0.2037037037037037
+      }
+     ]
+    }
+   },
+   {
+    "id": "p1_field_hq",
+    "title": "기사 휴대폰 — 본사에서 온 소식",
+    "img": "21_p1_field_hq.jpg",
+    "device": "phone",
+    "at": "11:30:20",
+    "crop": {
+     "img": "21_p1_field_hq_crop.jpg",
+     "w": 358,
+     "h": 129.75,
+     "marks": [
+      {
+       "x": 0,
+       "y": 0.2697495183044316,
+       "w": 1,
+       "h": 0.7302504816955684
+      }
+     ]
+    }
+   },
+   {
+    "id": "p3_adjust1_form",
+    "title": "1차 조치 — 홍성 물류센터 시작을 늦춤",
+    "img": "22_p3_adjust1_form.jpg",
+    "device": "pc",
+    "at": "11:30:21",
+    "crop": {
+     "img": "22_p3_adjust1_form_crop.jpg",
+     "w": 984,
+     "h": 259.25,
+     "marks": [
+      {
+       "x": 0.016260162601626018,
+       "y": 0.2063645130183221,
+       "w": 0.4796747967479675,
+       "h": 0.16972034715525555
+      },
+      {
+       "x": 0.5040650406504065,
+       "y": 0.2063645130183221,
+       "w": 0.23577235772357724,
+       "h": 0.16972034715525555
+      }
+     ]
+    }
+   },
+   {
+    "id": "p3_adjust1_result",
+    "title": "1차 조치 직후 재판단 — 풀린 위험 · 남은 위험",
+    "img": "23_p3_adjust1_result.jpg",
+    "device": "pc",
+    "at": "11:30:22",
+    "crop": {
+     "img": "23_p3_adjust1_result_crop.jpg",
+     "w": 1024,
+     "h": 70.5,
+     "marks": []
+    }
+   },
+   {
+    "id": "p3_adjust2_form",
+    "title": "2차 조치 — 예산 매장 시작을 늦춤",
+    "img": "24_p3_adjust2_form.jpg",
+    "device": "pc",
+    "at": "11:30:23",
+    "crop": {
+     "img": "24_p3_adjust2_form_crop.jpg",
+     "w": 984,
+     "h": 259.25,
+     "marks": [
+      {
+       "x": 0.016260162601626018,
+       "y": 0.2063645130183221,
+       "w": 0.4796747967479675,
+       "h": 0.16972034715525555
+      },
+      {
+       "x": 0.5040650406504065,
+       "y": 0.2063645130183221,
+       "w": 0.23577235772357724,
+       "h": 0.16972034715525555
+      }
+     ]
+    }
+   },
+   {
+    "id": "p3_adjust2_result",
+    "title": "2차 조치 직후 재판단 — 남은 위험 0",
+    "img": "25_p3_adjust2_result.jpg",
+    "device": "pc",
+    "at": "11:30:25",
+    "crop": {
+     "img": "25_p3_adjust2_result_crop.jpg",
+     "w": 1024,
+     "h": 70.5,
+     "marks": []
+    }
+   },
+   {
+    "id": "p3_case_summary",
+    "title": "사건 상세 — 조치로 풀린 위험 / 남은 위험",
+    "img": "26_p3_case_summary.jpg",
+    "device": "pc",
+    "at": "11:30:26"
+   },
+   {
+    "id": "p3_chain_after",
+    "title": "연쇄 영향 그림 — 보고 직후 vs 조치 후",
+    "img": "27_p3_chain_after.jpg",
+    "device": "pc",
+    "at": "11:30:27",
+    "crop": {
+     "img": "27_p3_chain_after_crop.jpg",
+     "w": 992,
+     "h": 397.5,
+     "marks": [
+      {
+       "x": 0.6244014616935484,
+       "y": 0.5921383647798742,
+       "w": 0.1128874747983871,
+       "h": 0.05408805031446541
+      },
+      {
+       "x": 0.6243699596774194,
+       "y": 0.709748427672956,
+       "w": 0.1197234122983871,
+       "h": 0.05408805031446541
+      },
+      {
+       "x": 0.6653225806451613,
+       "y": 0.20943396226415095,
+       "w": 0.31451612903225806,
+       "h": 0.18679245283018867
+      }
+     ]
+    }
+   },
+   {
+    "id": "p3_board_after",
+    "title": "일정판 — 조정된 시각과 다음 현장 판단",
+    "img": "28_p3_board_after.jpg",
+    "device": "pc",
+    "at": "11:30:28",
+    "crop": {
+     "img": "28_p3_board_after_crop.jpg",
+     "w": 1024,
+     "h": 326,
+     "marks": [
+      {
+       "x": 0.01953125,
+       "y": 0.4831288343558282,
+       "w": 0.9609375,
+       "h": 0.2285276073619632
+      },
+      {
+       "x": 0.01953125,
+       "y": 0.7116564417177914,
+       "w": 0.9609375,
+       "h": 0.22699386503067484
+      }
+     ]
+    }
+   },
+   {
+    "id": "p3_field_next",
+    "title": "기사 휴대폰 — 조정된 다음 현장 시각",
+    "img": "29_p3_field_next.jpg",
+    "device": "phone",
+    "at": "11:30:29",
+    "crop": {
+     "img": "29_p3_field_next_crop.jpg",
+     "w": 358,
+     "h": 599,
+     "marks": []
+    }
+   },
+   {
+    "id": "p2_mid_deficient",
+    "title": "진행 중 점검 — '미흡'이면 작업 멈춤 · 직접 전화 안내",
+    "img": "30_p2_mid_deficient.jpg",
+    "device": "phone",
+    "at": "11:30:30",
+    "crop": {
+     "img": "30_p2_mid_deficient.jpg",
+     "w": 390,
+     "h": 844,
+     "marks": [
+      {
+       "x": 0.15384615384615385,
+       "y": 0.41911655805687204,
+       "w": 0.6923076923076923,
+       "h": 0.1617298578199052
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_admin_dash_safety",
+    "title": "관리자 대시보드 — 안전 확인 필요(1순위)에 미흡",
+    "img": "31_p2_admin_dash_safety.jpg",
+    "device": "pc",
+    "at": "11:30:33",
+    "crop": {
+     "img": "31_p2_admin_dash_safety_crop.jpg",
+     "w": 500,
+     "h": 207.5,
+     "marks": [
+      {
+       "x": 0,
+       "y": 0.18795180722891566,
+       "w": 1,
+       "h": 0.40481927710843374
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_admin_supp_req",
+    "title": "미흡 점검 — '적합'은 막히고 보완 요청만",
+    "img": "32_p2_admin_supp_req.jpg",
+    "device": "pc",
+    "at": "11:30:34",
+    "crop": {
+     "img": "32_p2_admin_supp_req_crop.jpg",
+     "w": 1024,
+     "h": 506.25,
+     "marks": [
+      {
+       "x": 0.2640380859375,
+       "y": 0.2276543209876543,
+       "w": 0.15557861328125,
+       "h": 0.05728395061728395
+      },
+      {
+       "x": 0.03125,
+       "y": 0.8498765432098765,
+       "w": 0.1716461181640625,
+       "h": 0.08691358024691358
+      },
+      {
+       "x": 0.2107086181640625,
+       "y": 0.8498765432098765,
+       "w": 0.0852813720703125,
+       "h": 0.08691358024691358
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_field_supp",
+    "title": "보완 요청 도착 → 보완 사진 · 내용 제출",
+    "img": "33_p2_field_supp.jpg",
+    "device": "phone",
+    "at": "11:30:35",
+    "crop": {
+     "img": "33_p2_field_supp_crop.jpg",
+     "w": 298,
+     "h": 393.65625,
+     "marks": [
+      {
+       "x": 0.04697986577181208,
+       "y": 0.8323410335794237,
+       "w": 0.9060402684563759,
+       "h": 0.13209494324045407
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_admin_supp_done",
+    "title": "보완 확인 → 조치 완료 (확인 이력이 남음)",
+    "img": "34_p2_admin_supp_done.jpg",
+    "device": "pc",
+    "at": "11:30:37",
+    "crop": {
+     "img": "34_p2_admin_supp_done_crop.jpg",
+     "w": 1024,
+     "h": 538.75,
+     "marks": [
+      {
+       "x": 0.01953125,
+       "y": 0.679814385150812,
+       "w": 0.9609375,
+       "h": 0.17308584686774942
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_gate_end",
+    "title": "마무리 점검 없이 '작업 종료'를 누르면 먼저 묻는다",
+    "img": "35_p2_gate_end.jpg",
+    "device": "phone",
+    "at": "11:31:02",
+    "crop": {
+     "img": "35_p2_gate_end.jpg",
+     "w": 390,
+     "h": 844,
+     "marks": [
+      {
+       "x": 0.08205128205128205,
+       "y": 0.5589454976303317,
+       "w": 0.8358974358974359,
+       "h": 0.03376777251184834
+      },
+      {
+       "x": 0.08205128205128205,
+       "y": 0.8199052132701422,
+       "w": 0.8358974358974359,
+       "h": 0.061611374407582936
+      }
+     ]
+    }
+   },
+   {
+    "id": "p2_ended",
+    "title": "마무리 점검 → 작업 종료",
+    "img": "36_p2_ended.jpg",
+    "device": "phone",
+    "at": "11:31:05"
+   },
+   {
+    "id": "p2_admin_stage3",
+    "title": "현장별 3단계 현황 — 시작 전 · 진행 중 · 마친 뒤",
+    "img": "37_p2_admin_stage3.jpg",
+    "device": "pc",
+    "at": "11:31:08",
+    "crop": {
+     "img": "37_p2_admin_stage3_crop.jpg",
+     "w": 1024,
+     "h": 256.75,
+     "marks": [
+      {
+       "x": 0.015625,
+       "y": 0.31353456669912366,
+       "w": 0.96875,
+       "h": 0.16066212268743915
+      }
+     ]
+    }
+   },
+   {
+    "id": "ev_case_top",
+    "title": "사건 상세 — 처리 흐름(시각 기록)",
+    "img": "38_ev_case_top.jpg",
+    "device": "pc",
+    "at": "11:31:09"
+   },
+   {
+    "id": "ev_case_print",
+    "title": "사건 증빙 — 핵심 흐름 요약",
+    "img": "39_ev_case_print.jpg",
+    "device": "pc",
+    "at": "11:31:10",
+    "crop": {
+     "img": "39_ev_case_print_crop.jpg",
+     "w": 952,
+     "h": 803.5,
+     "marks": []
+    }
+   },
+   {
+    "id": "ev_measures",
+    "title": "성과 측정 — 측정 항목 (이 시험 기록 기준)",
+    "img": "40_ev_measures.jpg",
+    "device": "pc",
+    "at": "11:31:11"
+   },
+   {
+    "id": "ev_dash_end",
+    "title": "하루 마감 대시보드",
+    "img": "41_ev_dash_end.jpg",
+    "device": "pc",
+    "at": "11:31:12"
+   }
+  ],
+  "cases": "HT-20261122-001:해결"
+ },
+ "__facts": {
+  "case_no": "HT-20261122-001",
+  "discovered": "11:20",
+  "reported": "11:30",
+  "disc_to_report": "10분",
+  "new_end": "13:00",
+  "decided": "11:30",
+  "adjust1": "11:30",
+  "adjust2": "11:30",
+  "report_to_ack": "5초",
+  "ack_to_decide": "2초",
+  "decide_to_deliver": "2초",
+  "steps": [
+   [
+    "접수",
+    "11:30"
+   ],
+   [
+    "지원 조치 결정",
+    "11:30"
+   ],
+   [
+    "현장 전달",
+    "11:30"
+   ],
+   [
+    "일정 조정",
+    "11:30"
+   ],
+   [
+    "일정 조정",
+    "11:30"
+   ],
+   [
+    "현장 해결 보고",
+    "11:30"
+   ],
+   [
+    "해결 확인",
+    "11:31"
+   ]
+  ],
+  "started": "11:00",
+  "ended": "11:31",
+  "checks": {
+   "작업 전": {
+    "at": "10:56",
+    "review": "11:00"
+   },
+   "작업 중": {
+    "at": "11:30",
+    "review": "11:30"
+   },
+   "작업 종료": {
+    "at": "11:31",
+    "review": "11:31"
+   }
+  }
+ },
+ "shot:k01_nextsite": "<i class=\"mk\" style=\"left:3.18%;top:15.50%;width:93.64%;height:33.50%\"><b>1</b></i><i class=\"mk\" style=\"left:3.18%;top:45.47%;width:93.64%;height:33.05%\"><b>2</b></i>",
+ "shot:k01_before": "<i class=\"mk\" style=\"left:22.03%;top:64.58%;width:19.86%;height:11.33%\"><b>1</b></i><i class=\"mk\" style=\"left:22.03%;top:82.54%;width:19.86%;height:11.33%\"><b>2</b></i><i class=\"mk\" style=\"left:57.03%;top:6.15%;width:40.92%;height:31.59%\"><b>3</b></i>",
+ "shot:k01_after": "<i class=\"mk\" style=\"left:51.97%;top:64.72%;width:15.30%;height:11.33%\"><b>1</b></i><i class=\"mk\" style=\"left:51.96%;top:82.69%;width:16.17%;height:11.33%\"><b>2</b></i><i class=\"mk\" style=\"left:57.14%;top:6.24%;width:40.82%;height:31.60%\"><b>3</b></i>",
+ "shot:k01_ask": "<i class=\"mk\" style=\"left:5.15%;top:30.42%;width:89.70%;height:13.48%\"><b>1</b></i><i class=\"mk\" style=\"left:5.15%;top:56.77%;width:29.49%;height:15.30%\"><b>2</b></i>",
+ "shot:k01_watch": "<i class=\"mk\" style=\"left:0.00%;top:13.57%;width:100.00%;height:51.94%\"><b>1</b></i>",
+ "shot:k01_hq": "<i class=\"mk\" style=\"left:0.00%;top:24.67%;width:100.00%;height:75.33%\"><b>1</b></i>",
+ "shot:k01_gate": "<i class=\"mk\" style=\"left:5.85%;top:20.37%;width:88.30%;height:7.34%\"><b>1</b></i><i class=\"mk\" style=\"left:5.85%;top:67.23%;width:88.30%;height:12.34%\"><b>2</b></i>",
+ "shot:k01_safety": "<i class=\"mk\" style=\"left:0.00%;top:16.87%;width:100.00%;height:44.33%\"><b>1</b></i>",
+ "shot:k01_def": "<i class=\"mk\" style=\"left:5.48%;top:31.67%;width:89.03%;height:36.77%\"><b>1</b></i>",
+ "shot:k04_ask": "<i class=\"mk\" style=\"left:5.15%;top:25.32%;width:89.70%;height:16.00%\"><b>1</b></i><i class=\"mk\" style=\"left:5.15%;top:56.60%;width:29.49%;height:18.16%\"><b>2</b></i>",
+ "shot:k04_gate": "<i class=\"mk\" style=\"left:4.64%;top:13.94%;width:90.71%;height:8.95%\"><b>1</b></i><i class=\"mk\" style=\"left:4.64%;top:71.08%;width:90.71%;height:15.05%\"><b>2</b></i>",
+ "shot:s05_board": "<i class=\"mk\" style=\"left:1.56%;top:24.24%;width:96.88%;height:25.30%\"><b>1</b></i><i class=\"mk\" style=\"left:1.56%;top:47.09%;width:96.88%;height:25.30%\"><b>2</b></i><i class=\"mk\" style=\"left:1.56%;top:69.94%;width:96.88%;height:25.14%\"><b>3</b></i>",
+ "shot:s05_ask": "<i class=\"mk\" style=\"left:8.66%;top:32.15%;width:82.68%;height:13.14%\"><b>1</b></i><i class=\"mk\" style=\"left:8.66%;top:57.85%;width:27.19%;height:14.92%\"><b>2</b></i>",
+ "shot:s05_watch": "<i class=\"mk\" style=\"left:0.00%;top:13.57%;width:100.00%;height:51.94%\"><b>1</b></i><i class=\"mk\" style=\"left:61.40%;top:19.77%;width:36.20%;height:20.16%\"><b>2</b></i>",
+ "shot:s05_r1": "",
+ "shot:s05_r2": "",
+ "shot:s05_r3": "<i class=\"mk\" style=\"left:40.09%;top:6.69%;width:36.05%;height:9.33%\"><b>1</b></i><i class=\"mk\" style=\"left:6.99%;top:80.57%;width:86.01%;height:12.78%\"><b>2</b></i>",
+ "shot:s05_r4": "",
+ "shot:s05_r5": "<i class=\"mk\" style=\"left:3.37%;top:3.90%;width:32.93%;height:10.08%\"><b>1</b></i>",
+ "shot:s05_case": "<i class=\"mk\" style=\"left:1.56%;top:24.51%;width:96.88%;height:11.62%\"><b>1</b></i><i class=\"mk\" style=\"left:1.56%;top:54.55%;width:96.88%;height:17.15%\"><b>2</b></i>",
+ "shot:s05_support": "<i class=\"mk\" style=\"left:29.73%;top:24.80%;width:40.30%;height:51.11%\"><b>1</b></i>",
+ "shot:s05_deliver": "<i class=\"mk\" style=\"left:1.22%;top:44.46%;width:97.56%;height:24.05%\"><b>1</b></i>",
+ "shot:s05_hq": "<i class=\"mk\" style=\"left:0.00%;top:24.67%;width:100.00%;height:75.33%\"><b>1</b></i>",
+ "shot:s05_first": "<i class=\"mk\" style=\"left:4.75%;top:29.92%;width:90.50%;height:45.27%\"><b>1</b></i>",
+ "shot:s05_gate": "<i class=\"mk\" style=\"left:5.85%;top:28.11%;width:88.30%;height:6.61%\"><b>1</b></i><i class=\"mk\" style=\"left:5.85%;top:70.31%;width:88.30%;height:11.11%\"><b>2</b></i>",
+ "shot:s05_pre": "<i class=\"mk\" style=\"left:6.88%;top:39.76%;width:86.25%;height:20.40%\"><b>1</b></i>",
+ "shot:s05_review": "<i class=\"mk\" style=\"left:1.56%;top:33.35%;width:96.88%;height:34.22%\"><b>1</b></i><i class=\"mk\" style=\"left:2.73%;top:82.48%;width:17.95%;height:11.39%\"><b>2</b></i>",
+ "shot:s05_stage1": "<i class=\"mk\" style=\"left:1.17%;top:29.80%;width:97.66%;height:19.18%\"><b>1</b></i>",
+ "shot:s05_def": "<i class=\"mk\" style=\"left:6.88%;top:30.84%;width:86.25%;height:38.31%\"><b>1</b></i>",
+ "shot:s05_dsafe": "<i class=\"mk\" style=\"left:0.00%;top:16.87%;width:100.00%;height:44.33%\"><b>1</b></i>",
+ "shot:s05_suppreq": "<i class=\"mk\" style=\"left:33.95%;top:5.52%;width:21.32%;height:8.97%\"><b>1</b></i><i class=\"mk\" style=\"left:3.57%;top:81.90%;width:23.42%;height:12.60%\"><b>2</b></i><i class=\"mk\" style=\"left:26.99%;top:81.90%;width:12.15%;height:12.60%\"><b>3</b></i>",
+ "shot:s05_fsupp": "<i class=\"mk\" style=\"left:3.69%;top:70.97%;width:92.62%;height:24.39%\"><b>1</b></i>",
+ "shot:s05_suppdone": "<i class=\"mk\" style=\"left:1.56%;top:67.24%;width:96.88%;height:18.79%\"><b>1</b></i>",
+ "shot:s05_gateend": "<i class=\"mk\" style=\"left:5.85%;top:28.11%;width:88.30%;height:6.61%\"><b>1</b></i><i class=\"mk\" style=\"left:5.85%;top:70.31%;width:88.30%;height:11.11%\"><b>2</b></i>",
+ "shot:s05_ended": "",
+ "shot:s05_stage3": "<i class=\"mk\" style=\"left:1.17%;top:29.80%;width:97.66%;height:19.18%\"><b>1</b></i>",
+ "shot:s05_next": "<i class=\"mk\" style=\"left:3.18%;top:15.50%;width:93.64%;height:33.50%\"><b>1</b></i><i class=\"mk\" style=\"left:3.18%;top:45.47%;width:93.64%;height:33.05%\"><b>2</b></i>",
+ "shot:s05_chain1": "<i class=\"mk\" style=\"left:38.53%;top:58.21%;width:15.66%;height:7.42%\"><b>1</b></i><i class=\"mk\" style=\"left:38.53%;top:69.97%;width:15.66%;height:7.42%\"><b>2</b></i><i class=\"mk\" style=\"left:66.13%;top:19.94%;width:32.26%;height:20.69%\"><b>3</b></i>",
+ "shot:s05_a1f": "<i class=\"mk\" style=\"left:1.22%;top:19.10%;width:48.78%;height:20.05%\"><b>1</b></i><i class=\"mk\" style=\"left:50.00%;top:19.10%;width:24.39%;height:20.05%\"><b>2</b></i>",
+ "shot:s05_a1r": "",
+ "shot:s05_a2f": "<i class=\"mk\" style=\"left:1.22%;top:19.10%;width:48.78%;height:20.05%\"><b>1</b></i><i class=\"mk\" style=\"left:50.00%;top:19.10%;width:24.39%;height:20.05%\"><b>2</b></i>",
+ "shot:s05_a2r": "",
+ "shot:s05_chain2": "<i class=\"mk\" style=\"left:53.51%;top:64.72%;width:14.81%;height:11.33%\"><b>1</b></i><i class=\"mk\" style=\"left:53.50%;top:82.69%;width:15.65%;height:11.33%\"><b>2</b></i><i class=\"mk\" style=\"left:58.52%;top:6.24%;width:39.51%;height:31.60%\"><b>3</b></i>",
+ "shot:s05_board2": "<i class=\"mk\" style=\"left:1.56%;top:47.09%;width:96.88%;height:25.30%\"><b>1</b></i><i class=\"mk\" style=\"left:1.56%;top:69.94%;width:96.88%;height:25.14%\"><b>2</b></i>",
+ "shot:s05_fnext": "",
+ "shot:s05_print": "",
+ "shot:s05_casetop": "",
+ "shot:s05_measures": "",
+ "shot:k10_measures": ""
+}
