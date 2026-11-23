@@ -3,7 +3,7 @@
 // 실행: APPEAL_OUT=<폴더> APPEAL_DATE=2026-11-22 node tests-pilot/e2e/appeal-extra-shots.mjs
 //   APPEAL_J1 · APPEAL_J2 · APPEAL_J3 = 판단 기록 id (보고 직후 · 1차 조치 · 2차 조치) — 없으면 그 날짜 기록에서 찾는다
 // 화면마다 전체 화면(fullPage)과, 지정한 부분만 2배 해상도로 자른 jpg를 남기고 목록을 extra.json에 적는다.
-//   부분 지정: ["이름", 요소 선택자] 또는 ["이름", { from: 시작 글자, to: 끝 글자 }] — 두 글자 사이를 본문 폭으로 자른다
+//   부분 지정: ["이름", 요소 선택자] 또는 ["이름", { from: 시작 글자, to: 끝 글자, click? }] — 두 글자 사이를 본문 폭으로 자른다 (click: 먼저 누를 것)
 import { mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -65,6 +65,10 @@ async function snap(pg, id, path, parts = []) {
       }
       clip = await docBox(t);
     } else {
+      if (spec.click) {
+        await pg.locator(spec.click).first().click().catch(() => {});
+        await pg.waitForTimeout(500);
+      }
       const a = pg.getByText(spec.from, { exact: false }).nth(spec.fromN ?? 0);
       const b = spec.to ? pg.getByText(spec.to, { exact: false }).nth(spec.toN ?? 0) : null;
       if (!(await a.count()) || (b && !(await b.count()))) {
@@ -113,7 +117,9 @@ if (J1)
     ["basis1", { from: "바뀐 연결의 판단 근거", to: "[연쇄위험 감지]", toN: 1 }],
     ["basis2", { from: "[연쇄위험 감지]", fromN: 1, to: "대응 우선순위 (판단 후" }],
     ["prio", { from: "대응 우선순위 (판단 후", to: "계기 현장의 작업상태 편차" }],
-    ["dev", { from: "계기 현장의 작업상태 편차", to: "판단 입력 (판단 후" , padBottom: 30 }],
+    ["dev", { from: "계기 현장의 작업상태 편차", to: "판단 입력 (판단 후", padBottom: 30 }],
+    // 마지막: '점수 계산 근거'를 펼친 우선순위 (펼치면 아래 위치가 바뀌므로 맨 끝에)
+    ["prio_open", { from: "대응 우선순위 (판단 후", to: "계기 현장의 작업상태 편차", click: "text=점수 계산 근거" }],
   ]);
 if (J2) await snap(a, "x_judg_adjust1", `/pilot/admin/judgments/${J2}`, JUD);
 if (J3) await snap(a, "x_judg_adjust2", `/pilot/admin/judgments/${J3}`, JUD);

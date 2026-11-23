@@ -95,7 +95,7 @@ def docs(K):
             table(["#", "원리", "기존 방식", "이 시스템"], [[f"<b>{a}</b>", f"<b>{b}</b>", c, d] for a, b, c, d in uniq], cls="lg", widths=["5%", "25%", "25%", "45%"], hl=(1, 2)),
             grid([
                 K.xshot("x_judg_report__basis1.jpg", "k06_basis", t="판단 근거 — 원리 1 · 2 · 4가 한 화면에", cap="입력 6칸(출처 · 실시간 교통정보 아님 표시) → 계산 과정 → 판단 근거 → 권장 확인 → 적용 규칙"),
-                col(K.xshot("x_judg_report__prio.jpg", "k06_prio", t="원리 5 — 우선순위와 점수 근거", cap="1순위 130점 · 영향 현장 2곳 · 남은 시간 60분"),
+                col(K.xshot("x_judg_report__prio_open.jpg", "k06_prio", t="원리 5 — 우선순위와 점수 근거", mk=[(0.015, 0.17, 0.97, 0.12), (0.015, 0.48, 0.97, 0.42)], cap="① 1순위 130점 ② 요소별 점수 60 + 50 + 10 + 10 + 0"),
                     K.xshot("x_judg_report__info.jpg", "k06_info", t="원리 6 — 판단 기록", cap="규칙 버전 · 프로그램 버전 · 지문 · 재계산 확인")),
             ], "g2"),
         ]))
@@ -168,7 +168,7 @@ def docs(K):
             head("기술구성 대응표 ②", "기술구성 ⑤~⑧ — <em>시공간 · 위험도 · 우선순위 · 재판단</em>"),
             table(hdr, rows(comps[4:]), cls="", widths=w),
             grid([K.xshot("x_judg_report__basis1.jpg", "k07_basis", t="⑤⑥ 판단 근거", cap="⑤ 입력 6칸 · ⑥ 계산 과정 · 등급"),
-                  col(K.xshot("x_judg_report__prio.jpg", "k07_prio", t="⑦ 대응 우선순위", cap="1순위 130점 · 근거"),
+                  col(K.xshot("x_judg_report__prio_open.jpg", "k07_prio", t="⑦ 대응 우선순위", mk=[(0.015, 0.17, 0.97, 0.12), (0.015, 0.48, 0.97, 0.42)], cap="① 1순위 130점 ② 점수 계산 근거"),
                       K.xshot("x_judg_adjust2__ba.jpg", "k07_ba", t="⑧ 재판단 — 2차 조치 후", cap="위험 연결 1 → 0"))], "g2"),
         ]))
         pg.append("".join([
