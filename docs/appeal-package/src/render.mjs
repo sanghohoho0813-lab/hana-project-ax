@@ -1,5 +1,6 @@
 // html/*.html → pdf/*.pdf (A4) · 쪽 넘침 점검 · 미리보기 PNG(선택)
 // 실행: node docs/appeal-package/src/render.mjs [이름 일부 …]   (예: 04 05)  PREVIEW=<폴더> 이면 쪽 그림도 남긴다
+//       RENDER_DIR · PDF_DIR 로 읽을 html 폴더 · 쓸 pdf 폴더를 바꿀 수 있다 (합본 차례용)
 import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
@@ -15,17 +16,19 @@ try {
   pw = require(execSync("npm root -g", { encoding: "utf8" }).trim() + "/playwright");
 }
 const want = process.argv.slice(2);
-const files = readdirSync(join(root, "html"))
+const htmlDir = join(root, process.env.RENDER_DIR ?? "html");
+const pdfDir = join(root, process.env.PDF_DIR ?? "pdf");
+const files = readdirSync(htmlDir)
   .filter((f) => f.endsWith(".html"))
   .filter((f) => !want.length || want.some((w) => f.includes(w)))
   .sort();
 const exe = "/opt/pw-browsers/chromium";
 const bro = await pw.chromium.launch(existsSync(exe) ? { executablePath: exe } : {});
-mkdirSync(join(root, "pdf"), { recursive: true });
+mkdirSync(pdfDir, { recursive: true });
 let bad = 0;
 for (const f of files) {
   const page = await bro.newPage();
-  await page.goto(pathToFileURL(join(root, "html", f)).href, { waitUntil: "networkidle" });
+  await page.goto(pathToFileURL(join(htmlDir, f)).href, { waitUntil: "networkidle" });
   await page.evaluate(() => document.fonts.ready);
   const r = await page.evaluate(() => {
     const out = [];
@@ -41,7 +44,7 @@ for (const f of files) {
     });
     return { n: pages.length, out };
   });
-  const pdf = join(root, "pdf", f.replace(/\.html$/, ".pdf"));
+  const pdf = join(pdfDir, f.replace(/\.html$/, ".pdf"));
   await page.pdf({ path: pdf, format: "A4", printBackground: true, margin: { top: 0, right: 0, bottom: 0, left: 0 }, preferCSSPageSize: true });
   await page.close();
   bad += r.out.length;
