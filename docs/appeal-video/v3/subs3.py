@@ -17,8 +17,6 @@ ref = []
 for i, l in enumerate(LINES):
     if i == 27:
         ref.append("세 번째 문제, 복수 현장의 연쇄적인 작업 지연.")
-    if i in (6, 7, 42):  # 4판 녹음에 없는 말: 첫 번째 문제 제목 · 정보통신공사 현장에서는… · 기술개발 성과 제목
-        continue
     ref.append(T.get(i, l))
 a, b = norm("".join(ref)), norm("".join(c.replace("**", "") for c in CH))
 if a != b:
