@@ -1,10 +1,11 @@
 """녹음 + 실제 화면 → 영상 플레이어 HTML (player.html) 과 시간표(timeline.json)"""
 import json
+import subprocess
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from player_lib import (rphoto, ASR, CAP, FULL, PH, VID, XCAP, art, at, badge, cam_frame, photo, seg_end, seg_start, shot, show, size, uri, wt, xshot)  # noqa: E402
+from player_lib import (rphoto, ASR, SIL_END, CAP, FULL, PH, VID, XCAP, art, at, badge, cam_frame, photo, seg_end, seg_start, shot, show, size, uri, wt, xshot)  # noqa: E402
 from player_assets import page  # noqa: E402
 
 LINES = [
@@ -67,10 +68,18 @@ LINES = [
 assert len(LINES) == len(ASR) == 55, (len(LINES), len(ASR))
 S = [seg_start(i) for i in range(55)]
 E = [seg_end(i) for i in range(55)]
-END = 440.0
+# 새 녹음에만 있는 말: "세 번째 문제, 복수 현장의 연쇄적인 작업 지연." (없으면 문장 27 시작)
+_x = VID / "asr_extra.json"
+_t3 = [x for x in (json.loads(_x.read_text()) if _x.exists() else []) if "세 번째 문제" in x["text"]]
+T3 = min(SIL_END, key=lambda s: abs(s - _t3[0]["start"])) if _t3 else S[27]
+if _t3 and abs(T3 - _t3[0]["start"]) > 0.9:
+    T3 = _t3[0]["start"]
+END = float(int(float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(VID / "narration.wav")])) + 2.5))
 SUBS = []
 for i, txt in enumerate(LINES):
     nxt = S[i + 1] if i + 1 < 55 else END
+    if S[i] < T3 < nxt:
+        nxt = T3
     SUBS.append([round(S[i], 2), round(min(nxt, E[i] + 1.2), 2), txt])
 
 CHAPS = ["도입", "① 지원 요청 지연", "② 안전 확인 누락", "③ 연쇄 일정 지연", "성과 · 계획"]
@@ -89,12 +98,12 @@ def scene(start, chap, body, dark=False, bg=None):
     SCENES.append([start, chap, dark, bgh + (hdr(chap, dark) if chap is not None else "") + body])
 
 
-def title_card(start, num, kicker, title, sub, bg):
+def title_card(start, num, kicker, title, sub, bg, sub_at=None):
     scene(start, None, f"""<div class="abs" style="left:150px;top:300px;right:150px">
 {at(start + 0.2, "fade", "secnum", body=num)}
 {at(start + 0.5, "up", "kicker", body=kicker, style="margin-top:18px;font-size:30px")}
 {at(start + 0.7, "up", "", "h1", title, style="font-size:84px;margin-top:10px")}
-{at(start + 1.4, "up", "note", body=sub, style="font-size:30px;margin-top:22px")}</div>""", dark=True, bg=bg)
+{at(sub_at if sub_at else start + 1.4, "up", "note", body=sub, style="font-size:30px;margin-top:22px")}</div>""", dark=True, bg=bg)
 
 
 A_MARKS = lambda st: {n: st + 0.6 + 0.9 * (n - 1) for n in range(1, 5)}  # noqa: E731
@@ -276,7 +285,7 @@ st = S[25] - 0.3
 scene(st, 2, show(st, S[26] - 0.2, f"""
 <div class="ttl">{at(st + 0.2, "up", "kicker", body="해결 ② 점검 과정 · 조치 이력 기록 — 실제 화면")}{at(st + 0.4, "up", "", "h2", "점검 과정과 조치 이력이 <em>끊김 없이 남습니다</em>")}</div>
 <div class="abs" style="left:250px;top:290px">{at(st + 0.6, "up", "", body=xshot(FULL / "f_safety.jpg", 1420, "안전관리 화면 (스크롤)", "11:31", box=(320 / 1440, 380 / 2034, 1040 / 1440, 560 / 2034), keys=[[st + 1.0, 320 / 1440, 380 / 2034, 1040 / 1440, 560 / 2034], [S[26] - 1.5, 320 / 1440, 1200 / 2034, 1040 / 1440, 560 / 2034]]))}</div>""")
-      + show(S[26] - 0.2, S[27], f"""
+      + show(S[26] - 0.2, T3 - 0.3, f"""
 <div class="abs" style="left:96px;right:96px;top:240px;text-align:center">
 {at(S[26], "up", "kicker", body="문제 ② 정리")}
 {at(S[26] + 0.3, "up", "", "h1", "점검표 전산화가 아니라<br><em>누락 발견 → 대응 → 재확인</em>", style="margin-top:16px")}</div>
@@ -284,7 +293,7 @@ scene(st, 2, show(st, S[26] - 0.2, f"""
 {at(S[26] + 2.2, "pop", "chip", body="누락 · 미흡 발견")}{at(S[26] + 2.9, "fade", "arrow", body="→")}{at(S[26] + 3.1, "pop", "chip", body="본사 1순위 표시")}{at(S[26] + 3.8, "fade", "arrow", body="→")}{at(S[26] + 4.0, "pop", "chip", body="보완 요청 · 조치")}{at(S[26] + 4.7, "fade", "arrow", body="→")}{at(S[26] + 4.9, "pop", "chip n", body="재확인 · 기록")}</div>"""), dark=False)
 
 # ════ 문제 3 ════
-title_card(S[27] - 0.3, "03", "세 번째 문제 · 핵심 기술", "복수 현장의 연쇄적인 작업 지연", "하나정보통신이 가장 중점적으로 개발한 기술입니다", "ai-van")
+title_card(T3 - 0.3, "03", "세 번째 문제 · 핵심 기술", "복수 현장의 연쇄적인 작업 지연", "하나정보통신이 가장 중점적으로 개발한 기술입니다", "ai-van", sub_at=max(T3 + 1.4, S[27]))
 
 st = S[28] - 0.3
 sites = [("보령 지사", "11:00 – 12:00"), ("홍성 물류센터", "12:30 – 13:30"), ("예산 매장", "14:00 – 14:50")]

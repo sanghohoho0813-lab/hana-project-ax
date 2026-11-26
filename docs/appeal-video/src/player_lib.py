@@ -1,5 +1,6 @@
 """영상 장면 조립 도구 — 실제 화면(촬영본) 위에 카메라 · 표시 · 누름 효과를 시간에 맞춰 얹는 HTML을 만든다."""
 import json
+import re
 import subprocess
 from functools import lru_cache
 from pathlib import Path
@@ -16,11 +17,8 @@ FONT = REPO / "docs/appeal-sample/fonts/PretendardVariable.woff2"
 
 STEPS = {s["id"]: s for s in json.loads((CAP / "steps.json").read_text())["steps"]}
 ASR = json.loads((VID / "asr.json").read_text())
-SIL = []
-for line in (VID / "sil.txt").read_text().split("\n"):
-    p = line.split()
-    if len(p) == 2 and p[0].startswith("silence_"):
-        SIL.append((p[0].rstrip(":"), float(p[1])))
+# ffmpeg silencedetect 출력에서 무음 시작/끝을 뽑는다 (진행 표시 줄에 붙어 나온 항목도 놓치지 않게 정규식으로)
+SIL = [(m.group(1), float(m.group(2))) for m in re.finditer(r"(silence_start|silence_end): ([0-9.]+)", (VID / "sil.txt").read_text())]
 SIL_END = [t for k, t in SIL if k == "silence_end"]
 SIL_START = [t for k, t in SIL if k == "silence_start"]
 
@@ -34,7 +32,8 @@ def size(p) -> tuple[int, int]:
 def seg_start(i: int) -> float:
     t = ASR[i]["start"]
     if i == 0:
-        return SIL_END[0]
+        # 녹음이 무음으로 시작할 때만 첫 무음 끝을 쓴다 (말이 0초부터 시작하면 받아쓰기 시각 그대로)
+        return SIL[0][1] if SIL and SIL[0][0] == "silence_end" and SIL[0][1] < 6 else t
     near = [s for s in SIL_END if abs(s - t) < 0.9]
     return min(near, key=lambda s: abs(s - t)) if near else t
 
