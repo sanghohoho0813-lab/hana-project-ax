@@ -11,11 +11,14 @@ CH = [l for l in (H / "chunks.txt").read_text().strip().split("\n")]
 src = (H.parent / "vid" / "make_player.py").read_text()
 LINES = re.findall(r'^    "(.*)",', src.split("LINES = [")[1].split("]\nassert")[0], re.M)
 LINES = [l for l in re.findall(r'^    "(.*?)",', src.split("LINES = [")[1].split("\n]\n")[0], re.M)]
+LINES[2] = "오랜 기간 여러 현장을 운영하면서 반복적으로 경험해 온 3가지 문제들이 있었습니다."  # 4판 녹음에서 바뀐 문장
 T = {6: "첫 번째 문제, 현장 지원 요청의 지연.", 16: "두 번째 문제, 현장 안전 확인의 누락.", 42: "기술개발 성과 및 향후 방향"}
 ref = []
 for i, l in enumerate(LINES):
     if i == 27:
         ref.append("세 번째 문제, 복수 현장의 연쇄적인 작업 지연.")
+    if i in (6, 7, 42):  # 4판 녹음에 없는 말: 첫 번째 문제 제목 · 정보통신공사 현장에서는… · 기술개발 성과 제목
+        continue
     ref.append(T.get(i, l))
 a, b = norm("".join(ref)), norm("".join(c.replace("**", "") for c in CH))
 if a != b:
@@ -32,7 +35,7 @@ for i, c in enumerate(CH):
     n = norm(c.replace("**", "")); sc += list(n); owner += [i] * len(n)
 script = "".join(sc)
 ac, at0, at1 = [], [], []
-for sg in json.load(open(H.parent / "vid" / "asr_raw2_trim.json")):
+for sg in json.load(open(H / "asr_raw.json")):
     for w in sg["words"]:
         n = norm(w["w"])
         if not n:

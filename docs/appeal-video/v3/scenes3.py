@@ -57,7 +57,7 @@ cards = [("01", "현장 지원 요청의 지연", "막혀도 본사가 늦게 �
 cb = ""
 for k, (n, ttl, d, src, kind, tt) in enumerate(cards):
     cb += box(110 + k * 580, 300, at(tt, "card", "glass", f'{photo(src, 500, 280, kind, kb=0)}<div style="padding:26px 6px 4px"><div class="pill">{n}</div><h3 style="font-size:42px;font-weight:800;margin-top:16px;letter-spacing:-1px">{ttl}</h3><p class="note" style="font-size:27px;margin-top:8px;color:var(--ink2)">{d}</p></div>', style="padding:20px"), w=540)
-scene(t, head(t, "오랜 기간 여러 현장을 운영하며", "반복적으로 경험해 온 <em>세 가지 문제</em>") + cb)
+scene(t, head(t, "오랜 기간 여러 현장을 운영하며", "반복적으로 경험해 온 <em>3가지 문제</em>") + cb)
 
 t = K("하나정보통신은 이러한 문제를") - 0.4
 aw = 1150
@@ -72,21 +72,19 @@ scene(t, f"""
 {at(t + 0.1, "up", "eyebrow", "하나정보통신이 개발한 신청기술")}
 <div style="display:flex;align-items:baseline;gap:28px;margin-top:10px">{at(t + 0.25, "up", "title", "복수 현장 업무 위험관리 <em>AX 시스템</em>", style="margin-top:0")}{at(t + 0.6, "fade", "pill", "특허출원 10-2026-0173957")}</div>
 </div>
-{box(250, 196, at(t + 0.5, "card", "", browser("p13_admin_dash", 1000, 600, [(t, 0, 0, 1080), (K("개발했습니다") - 0.2, 0, 0, 1080), (K("개발했습니다") + 1.1, 200, 230, 780)], label="본사 관리자 PC")))}
+{box(250, 196, at(t + 0.5, "card", "", browser("p13_admin_dash", 1000, 600, [(t, 0, 0, 1080), (K("개발했습니다") - 1.7, 0, 0, 1080), (K("개발했습니다") - 0.3, 200, 230, 780)], label="본사 관리자 PC")))}
 {box(1330, 196, at(t + 0.9, "card", "", phone("p1_field_ask", 290, label="현장 직원 휴대폰")))}
 """)
 
 # ════════ 문제 ① ════════
-title_card(K("첫 번째 문제") - 0.4, "01", "첫 번째 문제", "현장 지원 요청의 지연", "문제가 커지기 전에, 본사가 먼저 알아야 합니다", 47)
+GAP = json.loads((H / "gaps.json").read_text())
+title_card(GAP["P1"] - 0.15, "01", "첫 번째 문제", "현장 지원 요청의 지연", "문제가 커지기 전에, 본사가 먼저 알아야 합니다", 47)
 
-t = K("정보통신공사 현장에서는") - 0.4
 tb = K("하지만 현장 직원이")
-scene(t, head(t, "문제 ① 현장에서는 수시로", "예상하지 못한 상황은 <em>언제든</em> 생깁니다")
+t = tb - 0.4
+scene(t, head(t, "문제 ① 현장에서는", "혼자 해결하려다 <em>보고가 늦어집니다</em>")
       + box(110, 220, photo(ai("ai-stuck"), 700, 525, "ai", "광분배함 앞 — 예상과 다른 배선 상태 (연출)", t=t + 0.3))
-      + show(t, tb - 0.1, f"""<div class="abs" style="left:900px;top:250px;width:900px;display:flex;flex-direction:column;gap:26px;align-items:flex-start">
-{at(K("장비 이상이나"), "left", "chip", "<i></i>장비 이상")}{at(K("자재 부족", K("장비 이상이나")), "left", "chip", "<i></i>자재 부족")}{at(K("기술적인 문제 등"), "left", "chip", "<i></i>기술적인 문제")}
-{at(K("예상하지 못한 상황"), "up", "body", "→ <span class='em'>예상하지 못한 상황</span>이 수시로", style="margin-top:20px;font-size:46px;color:var(--ink)")}</div>""")
-      + show(tb - 0.1, 9999, f"""<div class="abs" style="left:900px;top:250px;width:910px">
+      + show(t, 9999, f"""<div class="abs" style="left:900px;top:250px;width:910px">
 {at(tb, "up", "body", "혼자 해결하려다, 작업에 집중하다 보면…", style="font-size:40px;color:var(--ink)")}
 <div style="position:relative;height:300px;margin-top:50px">
 {at(tb + 0.6, "fade", "abs", '<i style="display:block;width:26px;height:26px;border-radius:50%;background:var(--teal2);box-shadow:0 0 0 7px rgba(47,151,141,.25)"></i>', style="left:0;top:137px")}
@@ -365,7 +363,7 @@ scene(t, head(t, "문제 ③ 정리 — 핵심 차별성", "시작 전 현장까
 {at(K("핵심 차별성"), "card", "glass card gline", '<div class="eyebrow">하나정보통신 기술의</div><div class="h1" style="font-size:72px;margin-top:6px"><em>핵심 차별성</em></div>', style="margin-top:12px;background:rgba(210,164,95,.14)")}</div>""", chap=3)
 
 # ════════ 성과 · 계획 ════════
-title_card(K("기술개발 성과") - 0.4, "→", "기술개발 성과 및 향후 방향", "현장 경험을 기술로", "개발 · 특허 · 자체시험, 그리고 정식 운영으로", 47)
+title_card(GAP["P2"] - 0.15, "→", "기술개발 성과 및 향후 방향", "현장 경험을 기술로", "개발 · 특허 · 자체시험, 그리고 정식 운영으로", 47)
 
 t = K("하나정보통신은 이러한 현장 문제를") - 0.4
 M = lambda m: round(200 + (m - 6) * 175)  # 2026년 m월 위치 (6월=0)  # noqa: E731
