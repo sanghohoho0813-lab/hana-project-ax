@@ -4,7 +4,7 @@
 import { createRequire } from "node:module";
 import { execSync, spawn } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -13,7 +13,8 @@ let pw;
 try { pw = require("playwright"); } catch { pw = require(execSync("npm root -g", { encoding: "utf8" }).trim() + "/playwright"); }
 const exe = "/opt/pw-browsers/chromium";
 const TL = JSON.parse(readFileSync(join(here, "timeline.json"), "utf8"));
-const [mode, out, ...rest] = process.argv.slice(2);
+const [mode, outArg, ...rest] = process.argv.slice(2);
+const out = resolve(outArg); // 상대 경로면 concat 목록이 out/out/… 으로 꼬인다
 
 async function openPage(bro) {
   const page = await bro.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
