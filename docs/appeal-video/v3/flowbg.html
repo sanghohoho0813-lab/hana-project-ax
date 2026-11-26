@@ -1,0 +1,27 @@
+<!doctype html><html><body style="margin:0;background:#0f1216"><canvas id=c width=2400 height=1350></canvas><script>
+// 시드 고정 흐름선 배경 (가이드 §2-5): 왼쪽 청록 → 오른쪽 금, 가운데는 어둡게
+const seed=+(new URLSearchParams(location.search).get('seed')||47);
+let s=seed>>>0;const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+const P=new Uint8Array(512);{const p=[...Array(256).keys()];for(let i=255;i>0;i--){const j=Math.floor(rnd()*(i+1));[p[i],p[j]]=[p[j],p[i]]}for(let i=0;i<512;i++)P[i]=p[i&255]}
+const fade=t=>t*t*t*(t*(t*6-15)+10),lerp=(a,b,t)=>a+(b-a)*t;
+const grad=(h,x,y)=>{const g=h&7;const u=g<4?x:y,v=g<4?y:x;return((g&1)?-u:u)+((g&2)?-2*v:2*v)};
+function noise(x,y){const X=Math.floor(x)&255,Y=Math.floor(y)&255;x-=Math.floor(x);y-=Math.floor(y);const u=fade(x),v=fade(y);
+const a=P[X]+Y,b=P[X+1]+Y;return lerp(lerp(grad(P[a],x,y),grad(P[b],x-1,y),u),lerp(grad(P[a+1],x,y-1),grad(P[b+1],x-1,y-1),u),v)/2}
+const c=document.getElementById('c'),g=c.getContext('2d'),W=2400,H=1350;
+const bg=g.createLinearGradient(0,0,W*0.35,H);bg.addColorStop(0,'#111820');bg.addColorStop(.45,'#171b20');bg.addColorStop(1,'#0d1218');g.fillStyle=bg;g.fillRect(0,0,W,H);
+const T1=[63,133,133],T2=[47,151,141],G1=[210,164,95],G2=[224,181,111];
+const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+g.lineCap='round';
+for(let n=0;n<2600;n++){
+  let x=rnd()*W,y=rnd()*H;const k=x/W;const col=k<.5?mix(T1,T2,rnd()):mix(G1,G2,rnd());const cc=mix(col,mix(T2,G1,.5),Math.max(0,1-Math.abs(k-.5)*4)*.6);
+  g.beginPath();g.moveTo(x,y);
+  for(let i=0;i<220;i++){const a=noise(x*0.0011+seed,y*0.0011)*Math.PI*2.2;x+=Math.cos(a)*3;y+=Math.sin(a)*3;
+    // 가운데(가로 60% × 세로 45%)는 흐리게
+    const dx=(x-W/2)/(W*0.30),dy=(y-H*0.47)/(H*0.225);const d=Math.sqrt(dx*dx+dy*dy);
+    const al=Math.min(1,Math.max(0,(d-0.7)/0.9))*0.16+0.012;
+    g.strokeStyle=`rgba(${cc[0]},${cc[1]},${cc[2]},${al.toFixed(3)})`;g.lineWidth=1.3;g.lineTo(x,y);g.stroke();g.beginPath();g.moveTo(x,y);
+    if(x<0||x>W||y<0||y>H)break}
+}
+const v=g.createRadialGradient(W/2,H*0.47,0,W/2,H*0.47,W*0.55);v.addColorStop(0,'rgba(13,18,24,.55)');v.addColorStop(.6,'rgba(13,18,24,.15)');v.addColorStop(1,'rgba(13,18,24,0)');g.fillStyle=v;g.fillRect(0,0,W,H);
+document.title='done';
+</script></body></html>
